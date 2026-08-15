@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\MCLCS.Core\MCLCS.Core.csproj" />
+    <ProjectReference Include="..\..\src\MCLCS.Linux.App\MCLCS.Linux.App.csproj" />
   </ItemGroup>
 
 </Project>
