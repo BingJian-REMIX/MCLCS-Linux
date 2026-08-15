@@ -1,43 +1,99 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:conv="clr-namespace:MCLCS.Linux.App.Converters"
+        xmlns:vm="clr-namespace:MCLCS.Linux.App.ViewModels"
         x:Class="MCLCS.Linux.App.MainWindow"
         Title="MCLCS-Linux"
-        Width="920" Height="620"
+        Width="920" Height="640"
         Background="#1e1e1e">
   <Window.Resources>
     <conv:HexToBrushConverter x:Key="HexToBrush"/>
+    <conv:KeyToTextConverter x:Key="KeyToText"/>
+    <conv:KindToBrushConverter x:Key="KindToBrush"/>
   </Window.Resources>
 
-  <Grid ColumnDefinitions="150,200,*" RowDefinitions="Auto,*">
+  <Grid ColumnDefinitions="160,210,*" RowDefinitions="Auto,*">
     <TextBlock Grid.ColumnSpan="3" Margin="12,10" FontSize="18" Foreground="White"
-               Text="MCLCS-Linux — 复用 MCLCS.Core 引擎（四色标签 + 侧边栏 + Java 检测）"/>
+               Text="MCLCS-Linux — 复用 MCLCS.Core 引擎（四色标签 + 侧边栏 + Java 检测 + 主题）"/>
 
-    <!-- 四色主标签：直接绑定 Core.UI.MainTabs.All -->
+    <!-- 四色主标签：颜色来自 Core.TabThemeConfig（可被设置页实时自定义），标题经本地化层转中文 -->
     <ItemsControl Grid.Row="1" Grid.Column="0" ItemsSource="{Binding Tabs}"
                   VerticalAlignment="Top" Margin="8">
       <ItemsControl.ItemTemplate>
         <DataTemplate>
           <Button Margin="0,4" Height="56" CornerRadius="8"
-                  Background="{Binding DefaultColor, Converter={StaticResource HexToBrush}}"
-                  Foreground="White" FontWeight="Bold"
-                  Content="{Binding Title}"
+                  Background="{Binding Kind, Converter={StaticResource KindToBrush}}"
+                  Foreground="White" FontWeight="Bold" FontSize="15"
+                  Content="{Binding Title, Converter={StaticResource KeyToText}}"
                   Click="Tab_Click"/>
         </DataTemplate>
       </ItemsControl.ItemTemplate>
     </ItemsControl>
 
-    <!-- 侧边栏副标签：绑定 Core.UI.Sidebar.For(当前主标签) -->
+    <!-- 侧边栏副标签：可点击选中，标题经本地化层转中文 -->
     <ListBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding SidebarItems}"
-             DisplayMemberBinding="{Binding Title}"
-             Background="#252526" Foreground="White" Margin="4"/>
+             SelectionChanged="Sidebar_SelectionChanged"
+             Background="#252526" Foreground="White" Margin="4">
+      <ListBox.ItemTemplate>
+        <DataTemplate>
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Text="{Binding Title, Converter={StaticResource KeyToText}}" FontSize="14"/>
+            <TextBlock Text="{Binding Group, Converter={StaticResource KeyToText}}"
+                       Foreground="#888" FontSize="11" VerticalAlignment="Center"/>
+          </StackPanel>
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
 
-    <!-- 右：Java 检测面板（调用 Core 的 JavaDetector） -->
-    <StackPanel Grid.Row="1" Grid.Column="2" Margin="14" Spacing="10">
-      <TextBlock Text="{Binding Status}" Foreground="White"/>
-      <Button Content="检测本机 Java" Click="DetectJava_Click" HorizontalAlignment="Left"/>
-      <ListBox ItemsSource="{Binding JavaList}"
-               Background="#252526" Foreground="White"/>
-    </StackPanel>
+    <!-- 右：内容面板 -->
+    <ScrollViewer Grid.Row="1" Grid.Column="2" Margin="14">
+      <StackPanel Spacing="12">
+        <!-- 选中项标题 + 分组 + 描述 -->
+        <StackPanel Spacing="4">
+          <TextBlock Text="{Binding PanelTitle}" FontSize="20" FontWeight="Bold" Foreground="White"/>
+          <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding PanelGroup, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+            <TextBlock Text="分组：" Foreground="#888"/>
+            <TextBlock Text="{Binding PanelGroup}" Foreground="#9cdcfe"/>
+          </StackPanel>
+          <TextBlock Text="{Binding PanelDescription}" Foreground="#bbb" TextWrapping="Wrap"/>
+        </StackPanel>
+
+        <!-- 主题编辑器（设置 → 外观）：真实读写 Core.TabThemeConfig，改色即时反映到左侧标签 -->
+        <Border IsVisible="{Binding ShowThemeEditor}" Background="#252526" CornerRadius="8" Padding="14">
+          <StackPanel Spacing="10">
+            <TextBlock Text="四色主题自定义（Core.TabThemeConfig）" FontWeight="Bold" Foreground="White"/>
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <TextBlock Text="游戏" VerticalAlignment="Center" Width="48" Foreground="White"/>
+              <TextBox Text="{Binding Theme.Game}" Width="110" Tag="game" TextChanged="ThemeColor_Changed"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <TextBlock Text="下载" VerticalAlignment="Center" Width="48" Foreground="White"/>
+              <TextBox Text="{Binding Theme.Download}" Width="110" Tag="download" TextChanged="ThemeColor_Changed"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <TextBlock Text="工具箱" VerticalAlignment="Center" Width="48" Foreground="White"/>
+              <TextBox Text="{Binding Theme.Toolbox}" Width="110" Tag="toolbox" TextChanged="ThemeColor_Changed"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <TextBlock Text="设置" VerticalAlignment="Center" Width="48" Foreground="White"/>
+              <TextBox Text="{Binding Theme.Settings}" Width="110" Tag="settings" TextChanged="ThemeColor_Changed"/>
+            </StackPanel>
+            <TextBlock Text="修改后立即反映到左侧主标签颜色；非法值（非 #RRGGBB）会被 Core 自动回退默认色。"
+                       Foreground="#888" TextWrapping="Wrap" FontSize="11"/>
+          </StackPanel>
+        </Border>
+
+        <!-- Java 环境检测（调用 Core.JavaDetector，真实扫描本机） -->
+        <Border Background="#252526" CornerRadius="8" Padding="14">
+          <StackPanel Spacing="10">
+            <TextBlock Text="Java 环境检测" FontWeight="Bold" Foreground="White"/>
+            <TextBlock Text="{Binding Status}" Foreground="#bbb"/>
+            <Button Content="检测本机 Java" Click="DetectJava_Click" HorizontalAlignment="Left"/>
+            <ListBox ItemsSource="{Binding JavaList}"
+                     Background="#1e1e1e" Foreground="White" MaxHeight="180"/>
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </ScrollViewer>
   </Grid>
 </Window>
