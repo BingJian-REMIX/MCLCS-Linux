@@ -6,7 +6,7 @@
 set -euo pipefail
 
 CNB_URL="${CNB_URL:-https://cnb.cool/RLRS-Studio/MCLCS-Linux.git}"
-GH_URL="${GH_URL:-git@github.com:RLRS-Studio/MCLCS-Linux.git}"
+GH_URL="${GH_URL:-git@github.com:BingJian-REMIX/MCLCS-Linux.git}"
 
 if [[ "${1:-}" == "--setup" ]]; then
   shift

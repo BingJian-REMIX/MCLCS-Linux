@@ -26,10 +26,10 @@ main:
               exit 0
             fi
             if [ -f .git/shallow ]; then git fetch --unshallow origin || true; fi
-            git remote add github "https://x-access-token:${GITHUB_TOKEN}@github.com/RLRS-Studio/MCLCS-Linux.git" 2>/dev/null || \
-              git remote set-url github "https://x-access-token:${GITHUB_TOKEN}@github.com/RLRS-Studio/MCLCS-Linux.git"
-            git push github main
-            echo "[mirror] 已推送 main → github.com/RLRS-Studio/MCLCS-Linux"
+            git remote add github "https://x-access-token:${GITHUB_TOKEN}@github.com/BingJian-REMIX/MCLCS-Linux.git" 2>/dev/null || \
+              git remote set-url github "https://x-access-token:${GITHUB_TOKEN}@github.com/BingJian-REMIX/MCLCS-Linux.git"
+            git push github main --force
+            echo "[mirror] 已推送 main → github.com/BingJian-REMIX/MCLCS-Linux"
 
   pull_request:
     - runner: { cpus: 4 }

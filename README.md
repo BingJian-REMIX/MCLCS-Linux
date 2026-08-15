@@ -2,7 +2,7 @@
 
 [MCLCS-WPF](https://cnb.cool/RLRS-Studio/MCLCS-WPF) 的 Linux 版本 —— 同一套 `MCLCS.Core` 引擎，Linux 原生界面（Avalonia）与命令行。
 
-> 主库：https://cnb.cool/RLRS-Studio/MCLCS-Linux ｜ GitHub 镜像：github.com/RLRS-Studio/MCLCS-Linux（由 cnb CI 自动同步，见下）。
+> 主库：https://cnb.cool/RLRS-Studio/MCLCS-Linux ｜ GitHub 镜像：https://github.com/BingJian-REMIX/MCLCS-Linux（由 cnb CI 自动同步，见下）。
 
 ## 项目结构
 
@@ -87,8 +87,8 @@ dotnet run --project src/MCLCS.Linux.App -c Release
 两种方式（可并用）：
 
 1. **CI 自动镜像（推荐）**：在 cnb 仓库「设置 → 密钥/环境变量」添加 `GITHUB_TOKEN`
-   （GitHub PAT，需对镜像仓库有写权限）。之后每次 push 到 cnb，
-   `.cnb.yml` 的 `mirror-to-github` 阶段自动把 main 推到 GitHub 同名仓库。
+   （GitHub PAT，需对 `BingJian-REMIX/MCLCS-Linux` 有写权限）。之后每次 push 到 cnb，
+   `.cnb.yml` 的 `mirror-to-github` 阶段自动把 main 强制推到 `github.com/BingJian-REMIX/MCLCS-Linux`。
 2. **本地双推**：`./push-all.sh --setup <cnb-url> <github-url>` 配置一次，
    之后每次 `./push-all.sh` 同时推送两个远端。
 
