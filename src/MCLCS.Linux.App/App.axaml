@@ -5,6 +5,60 @@
              RequestedThemeVariant="Dark">
     <Application.Styles>
         <fluent:FluentTheme />
+
+        <!-- 全局隐式控件样式：圆角 + 主题色描边悬停（对齐 WPF Controls.xaml 设计语言）-->
+        <Style Selector="Button">
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlBorder}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="{DynamicResource ControlBackground}"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryForeground}"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button:pointerover">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+        </Style>
+        <Style Selector="Button:disabled">
+            <Setter Property="Opacity" Value="0.5"/>
+        </Style>
+
+        <Style Selector="TextBox">
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource InputBorder}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="{DynamicResource InputBackground}"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryForeground}"/>
+            <Setter Property="Padding" Value="8,4"/>
+        </Style>
+        <Style Selector="TextBox:pointerover">
+            <Setter Property="BorderBrush" Value="{DynamicResource InputFocusBorder}"/>
+        </Style>
+        <Style Selector="TextBox:focus">
+            <Setter Property="BorderBrush" Value="{DynamicResource InputFocusBorder}"/>
+        </Style>
+
+        <Style Selector="ComboBox">
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlBorder}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="{DynamicResource ControlBackground}"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryForeground}"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="MinHeight" Value="30"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="ComboBox:pointerover">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+        </Style>
+
+        <!-- 关闭按钮：常态透明、悬停转危险红（对齐 WPF 标题栏关闭按钮）-->
+        <Style Selector="Button#BtnClose">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button#BtnClose:pointerover">
+            <Setter Property="Background" Value="{DynamicResource DangerBrush}"/>
+        </Style>
     </Application.Styles>
 
     <!-- 暗色配色板：对齐 MCLCS-WPF 的 DarkTheme.xaml / Palette.xaml -->
@@ -13,6 +67,9 @@
         <SolidColorBrush x:Key="ControlBackground" Color="#1A1D24"/>
         <SolidColorBrush x:Key="ControlBorder" Color="#2A2F3A"/>
         <SolidColorBrush x:Key="ControlHoverBackground" Color="#252830"/>
+
+        <SolidColorBrush x:Key="CardBackground" Color="#B31A1D24"/>
+        <SolidColorBrush x:Key="CardBorderHover" Color="#3B82F6"/>
 
         <SolidColorBrush x:Key="PrimaryForeground" Color="#FFFFFF"/>
         <SolidColorBrush x:Key="SecondaryForeground" Color="#C8CDD6"/>

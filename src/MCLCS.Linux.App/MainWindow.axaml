@@ -76,8 +76,8 @@
           <DataTemplate>
             <Button Tag="{Binding Kind}" Click="Tab_Click"
                     Width="{Binding IsExpanded, Converter={StaticResource TabWidth}}"
-                    Height="34" Margin="0" Padding="0"
-                    CornerRadius="{Binding Order, Converter={StaticResource TabCorner}}"
+                    Height="34" Margin="0" Padding="0" BorderThickness="0"
+                    CornerRadius="{Binding, Converter={StaticResource TabCorner}}"
                     Cursor="Hand">
               <Button.Background>
                 <Binding Path="." Converter="{StaticResource TabBg}"/>
@@ -134,7 +134,7 @@
             </Grid>
           </Grid>
         </Button>
-        <Button x:Name="BtnClose" Width="36" Height="30" Background="Transparent"
+        <Button x:Name="BtnClose" Width="36" Height="30"
                 BorderThickness="0" Foreground="White" Click="BtnClose_Click">
           <Image Width="12" Height="12">
             <Image.Source>
@@ -236,8 +236,9 @@
             </StackPanel>
 
             <!-- 主题编辑器（设置 → 外观）：真实读写 Core.TabThemeConfig -->
-            <Border IsVisible="{Binding ShowThemeEditor}" Background="{DynamicResource ControlBackground}"
-                    CornerRadius="8" Padding="14" BorderThickness="1" BorderBrush="{DynamicResource ControlBorder}">
+            <Border IsVisible="{Binding ShowThemeEditor}" Background="{DynamicResource CardBackground}"
+                    CornerRadius="12" Padding="14" BorderThickness="1" BorderBrush="{DynamicResource ControlBorder}"
+                    BoxShadow="0 2 10 0 #00000028">
               <StackPanel Spacing="10">
                 <TextBlock Text="{Binding ThemeEditorTitle}" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"/>
                 <StackPanel Orientation="Horizontal" Spacing="10">
@@ -262,8 +263,9 @@
             </Border>
 
             <!-- Java 环境检测（调用 Core.JavaDetector，真实扫描本机）-->
-            <Border Background="{DynamicResource ControlBackground}" CornerRadius="8"
-                    Padding="14" BorderThickness="1" BorderBrush="{DynamicResource ControlBorder}">
+            <Border Background="{DynamicResource CardBackground}" CornerRadius="12"
+                    Padding="14" BorderThickness="1" BorderBrush="{DynamicResource ControlBorder}"
+                    BoxShadow="0 2 10 0 #00000028">
               <StackPanel Spacing="10">
                 <TextBlock Text="{Binding JavaSectionTitle}" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"/>
                 <TextBlock Text="{Binding Status}" Foreground="{DynamicResource SecondaryForeground}"/>

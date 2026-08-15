@@ -18,6 +18,10 @@ public static class ThemePalettes
         { "ControlBorder", new SolidColorBrush(Color.Parse("#2A2F3A")) },
         { "ControlHoverBackground", new SolidColorBrush(Color.Parse("#252830")) },
 
+        // 卡片：半透明玻璃质感（对齐 WPF CardBackground=#B31A1D24，alpha≈0.70）
+        { "CardBackground", new SolidColorBrush(Color.Parse("#B31A1D24")) },
+        { "CardBorderHover", new SolidColorBrush(Color.Parse("#3B82F6")) },
+
         { "PrimaryForeground", new SolidColorBrush(Color.Parse("#FFFFFF")) },
         { "SecondaryForeground", new SolidColorBrush(Color.Parse("#C8CDD6")) },
         { "StatusForeground", new SolidColorBrush(Color.Parse("#C8CDD6")) },
@@ -35,17 +39,21 @@ public static class ThemePalettes
     /// <summary>亮色调色板（同键名，浅色可读配色）。</summary>
     public static ResourceDictionary Light() => new()
     {
-        { "WindowBackground", new SolidColorBrush(Color.Parse("#F5F6F8")) },
+        { "WindowBackground", new SolidColorBrush(Color.Parse("#F5F5F5")) },
         { "ControlBackground", new SolidColorBrush(Color.Parse("#FFFFFF")) },
         { "ControlBorder", new SolidColorBrush(Color.Parse("#D0D5DD")) },
         { "ControlHoverBackground", new SolidColorBrush(Color.Parse("#EDEFF3")) },
+
+        // 卡片：近白玻璃（对齐 WPF Light CardBackground=#E6FFFFFF，alpha≈0.90）
+        { "CardBackground", new SolidColorBrush(Color.Parse("#E6FFFFFF")) },
+        { "CardBorderHover", new SolidColorBrush(Color.Parse("#2563EB")) },
 
         { "PrimaryForeground", new SolidColorBrush(Color.Parse("#1A1D24")) },
         { "SecondaryForeground", new SolidColorBrush(Color.Parse("#5B6472")) },
         { "StatusForeground", new SolidColorBrush(Color.Parse("#5B6472")) },
 
-        { "AccentBrush", new SolidColorBrush(Color.Parse("#3B82F6")) },
-        { "DangerBrush", new SolidColorBrush(Color.Parse("#E74C3C")) },
+        { "AccentBrush", new SolidColorBrush(Color.Parse("#2563EB")) },
+        { "DangerBrush", new SolidColorBrush(Color.Parse("#DC2626")) },
 
         { "InputBackground", new SolidColorBrush(Color.Parse("#FFFFFF")) },
         { "InputBorder", new SolidColorBrush(Color.Parse("#D0D5DD")) },
