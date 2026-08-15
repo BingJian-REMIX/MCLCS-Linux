@@ -31,3 +31,8 @@ logs/
 # 系统
 .DS_Store
 Thumbs.db
+
+# 验证/构建产物（不入库，避免污染源码历史）
+/screenshot-*.png
+/proof-*.png
+/xdotool-*.txt
