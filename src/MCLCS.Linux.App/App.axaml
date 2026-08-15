@@ -6,4 +6,25 @@
     <Application.Styles>
         <fluent:FluentTheme />
     </Application.Styles>
+
+    <!-- 暗色配色板：对齐 MCLCS-WPF 的 DarkTheme.xaml / Palette.xaml -->
+    <Application.Resources>
+        <SolidColorBrush x:Key="WindowBackground" Color="#0F1115"/>
+        <SolidColorBrush x:Key="ControlBackground" Color="#1A1D24"/>
+        <SolidColorBrush x:Key="ControlBorder" Color="#2A2F3A"/>
+        <SolidColorBrush x:Key="ControlHoverBackground" Color="#252830"/>
+
+        <SolidColorBrush x:Key="PrimaryForeground" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="SecondaryForeground" Color="#C8CDD6"/>
+        <SolidColorBrush x:Key="StatusForeground" Color="#C8CDD6"/>
+
+        <SolidColorBrush x:Key="AccentBrush" Color="#3B82F6"/>
+        <SolidColorBrush x:Key="DangerBrush" Color="#E74C3C"/>
+
+        <SolidColorBrush x:Key="InputBackground" Color="#14161C"/>
+        <SolidColorBrush x:Key="InputBorder" Color="#2A2F3A"/>
+        <SolidColorBrush x:Key="InputFocusBorder" Color="#3B82F6"/>
+
+        <SolidColorBrush x:Key="ProgressBackground" Color="#2A2F3A"/>
+    </Application.Resources>
 </Application>

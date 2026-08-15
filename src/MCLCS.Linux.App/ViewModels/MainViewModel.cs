@@ -27,13 +27,35 @@ public class MainViewModel : ObservableObject
     /// <summary>单例引用，供 KindToBrushConverter 在 XAML 模板加载时取主题色。</summary>
     public static MainViewModel? Instance { get; set; }
 
-    /// <summary>四色主标签（来自 Core.UI.MainTabs.All）。</summary>
+    /// <summary>四色主标签（来自 Core.UI.MainTabs.All），保留以兼容既有绑定。</summary>
     public IReadOnlyList<MainTabDefinition> Tabs => MainTabs.All;
+
+    /// <summary>四色主标签的可绑定包装集合，驱动索引贴的展开 / 选中动画与重叠 Z 序。</summary>
+    public ObservableCollection<TabItemViewModel> TabItems { get; }
 
     /// <summary>主题配色配置（Core.TabThemeConfig，可被用户自定义并持久化）。</summary>
     public TabThemeConfig Theme { get; } = new();
 
-    private MainTabDefinition _selectedTab = MainTabs.Get(MainTabKind.Download);
+    private MainTabDefinition _selectedTab = MainTabs.Get(MainTabKind.Game);
+
+    public MainViewModel()
+    {
+        var all = MainTabs.All;
+        var items = new ObservableCollection<TabItemViewModel>();
+        for (var i = 0; i < all.Count; i++)
+            items.Add(new TabItemViewModel(all[i], i, all.Count));
+        TabItems = items;
+        _selectedTab = MainTabs.Get(MainTabKind.Game);
+        _selectedSidebarId = Sidebar.For(_selectedTab.Kind).FirstOrDefault()?.Id ?? "";
+        SyncTabSelection();
+    }
+
+    /// <summary>把 TabItems 的 IsSelected 对齐到当前 SelectedTab，驱动索引贴展开 / Z 序动画。</summary>
+    private void SyncTabSelection()
+    {
+        foreach (var t in TabItems)
+            t.IsSelected = t.Kind == _selectedTab.Kind;
+    }
 
     /// <summary>当前选中的主标签；切换时联动侧边栏集合与右面板标题。</summary>
     public MainTabDefinition SelectedTab
@@ -49,6 +71,10 @@ public class MainViewModel : ObservableObject
                 OnPropertyChanged(nameof(PanelGroup));
                 OnPropertyChanged(nameof(PanelDescription));
                 OnPropertyChanged(nameof(ShowThemeEditor));
+                OnPropertyChanged(nameof(TitleBarColor));
+                OnPropertyChanged(nameof(HasSidebar));
+                OnPropertyChanged(nameof(SidebarItems));
+                SyncTabSelection();
             }
         }
     }
@@ -56,7 +82,7 @@ public class MainViewModel : ObservableObject
     /// <summary>当前主标签下的副标签集合（来自 Core.UI.Sidebar.For）。</summary>
     public IReadOnlyList<SidebarItem> SidebarItems => Sidebar.For(_selectedTab.Kind);
 
-    private string _selectedSidebarId = Sidebar.Download[0].Id;
+    private string _selectedSidebarId = "";
 
     /// <summary>当前选中的副标签 Id；变化时联动右面板。</summary>
     public string SelectedSidebarId
@@ -90,8 +116,55 @@ public class MainViewModel : ObservableObject
     public bool ShowThemeEditor =>
         _selectedTab.Kind == MainTabKind.Settings && _selectedSidebarId == "appearance";
 
-    /// <summary>主题色被改后，强制刷新主标签的 ItemsSource 以重算颜色。</summary>
-    public void RefreshTabs() => OnPropertyChanged(nameof(Tabs));
+    /// <summary>主题色被改后，强制刷新主标签的 ItemsSource 以重算颜色，
+    /// 并通知 SelectedTab 让标题栏底色 / 内容渐隐带 / 侧栏指示线一并按新色重算。</summary>
+    public void RefreshTabs()
+    {
+        OnPropertyChanged(nameof(Tabs));
+        OnPropertyChanged(nameof(TitleBarColor));
+        OnPropertyChanged(nameof(SelectedTab));
+    }
+
+    /// <summary>标题栏背景色：跟随当前主标签（对齐 WPF 的 TitleBarBrush）。</summary>
+    public string TitleBarColor => Theme.ColorOf(_selectedTab.Kind);
+
+    private bool _sidebarExpanded;
+    /// <summary>侧边栏是否展开（折叠时仅图标，悬停展开显示文字）。由界面层悬停事件驱动。</summary>
+    public bool SidebarExpanded
+    {
+        get => _sidebarExpanded;
+        set => SetField(ref _sidebarExpanded, value);
+    }
+
+    /// <summary>当前主标签是否带侧边栏（游戏页无侧边栏，对齐 WPF 规格 2.1）。</summary>
+    public bool HasSidebar => Sidebar.For(_selectedTab.Kind).Count > 0;
+
+    // ===== 状态栏（对齐 WPF 底部 StatusBar）=====
+    private string _javaVersionText = "未检测";
+    /// <summary>状态栏：Java 版本（检测后填入最高大版本）。</summary>
+    public string JavaVersionText
+    {
+        get => _javaVersionText;
+        private set => SetField(ref _javaVersionText, value);
+    }
+
+    /// <summary>状态栏：已安装实例数（占位，待接入 Core 实例管理）。</summary>
+    public string InstalledCountText => "已安装 0 个";
+
+    /// <summary>状态栏：运行中的实例数（占位）。</summary>
+    public string RunningInstancesText => "运行实例 0";
+
+    /// <summary>状态栏：下载进度文本（占位）。</summary>
+    public string DownloadText => "下载 0%";
+
+    /// <summary>状态栏：下载进度（0-100，占位）。</summary>
+    public double DownloadProgress => 0;
+
+    /// <summary>状态栏：网络是否正常（占位，默认正常）。</summary>
+    public bool IsNetworkOk => true;
+
+    /// <summary>状态栏：网络状态文本。</summary>
+    public string NetworkStatusText => "网络正常";
 
     /// <summary>已检测到的 Java 列表。</summary>
     public ObservableCollection<JavaEntry> JavaList { get; } = new();
@@ -112,5 +185,51 @@ public class MainViewModel : ObservableObject
         foreach (var j in list.OrderByDescending(j => j.MajorVersion))
             JavaList.Add(new JavaEntry { Exe = j.JavaExe, Major = j.MajorVersion, Raw = j.RawVersion });
         Status = $"检测到 {JavaList.Count} 个 Java 安装";
+        JavaVersionText = JavaList.Count > 0 ? $"Java {JavaList[0].Major}" : "未检测到 Java";
+    }
+}
+
+/// <summary>
+/// 四色索引贴的可绑定包装：驱动选中展开 / 折叠动画与重叠 Z 序。
+/// 几何对齐 WPF Core.UI.MainTabDefinition 的 MainTabs 规则：
+/// 选中页或游戏页（AlwaysExpanded）展开显示文字，其余折叠为色条；左压右叠放。
+/// </summary>
+public class TabItemViewModel : ObservableObject
+{
+    public MainTabDefinition Def { get; }
+    public MainTabKind Kind => Def.Kind;
+    /// <summary>本地化后的显示名（Def.Title 是 l10n key）。</summary>
+    public string DisplayName => Localization.Get(Def.Title);
+    /// <summary>游戏页恒展开（WPF 规格：AlwaysExpanded=true）。</summary>
+    public bool AlwaysExpanded => Kind == MainTabKind.Game;
+    /// <summary>在四色序列中的次序（0=游戏）。决定重叠方向与默认 Z 序。</summary>
+    public int Order { get; }
+    public int TotalTabs { get; }
+
+    private bool _isSelected;
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set
+        {
+            if (SetField(ref _isSelected, value))
+            {
+                OnPropertyChanged(nameof(IsExpanded));
+                OnPropertyChanged(nameof(ZIndex));
+            }
+        }
+    }
+
+    /// <summary>是否展开显示文字：游戏页恒展开，其余仅选中时展开。</summary>
+    public bool IsExpanded => AlwaysExpanded || _isSelected;
+
+    /// <summary>Z 序：选中页置顶（100），其余按「左压右」由 Order 决定（Order 越小越高）。</summary>
+    public int ZIndex => _isSelected ? 100 : (TotalTabs - Order);
+
+    public TabItemViewModel(MainTabDefinition def, int order, int total)
+    {
+        Def = def;
+        Order = order;
+        TotalTabs = total;
     }
 }

@@ -3,97 +3,287 @@
         xmlns:conv="clr-namespace:MCLCS.Linux.App.Converters"
         xmlns:vm="clr-namespace:MCLCS.Linux.App.ViewModels"
         x:Class="MCLCS.Linux.App.MainWindow"
-        Title="MCLCS-Linux"
-        Width="920" Height="640"
-        Background="#1e1e1e">
+        Title="MCLCS"
+        Width="1100" Height="720" MinWidth="900" MinHeight="600"
+        Background="{DynamicResource WindowBackground}"
+        SystemDecorations="None"
+        WindowStartupLocation="Manual">
+
   <Window.Resources>
     <conv:HexToBrushConverter x:Key="HexToBrush"/>
     <conv:KeyToTextConverter x:Key="KeyToText"/>
     <conv:KindToBrushConverter x:Key="KindToBrush"/>
+    <conv:TokenToBitmapConverter x:Key="TokenToBitmap"/>
+    <conv:EqualsConverter x:Key="Equals"/>
+    <conv:TabActiveBrushConverter x:Key="TabActiveBrush"/>
+    <conv:BoolToColorConverter x:Key="BoolColor"/>
+    <conv:TabTintConverter x:Key="TabTint"/>
+    <conv:TabWidthConverter x:Key="TabWidth"/>
+    <conv:TabBackgroundConverter x:Key="TabBg"/>
+    <conv:TabMarginConverter x:Key="TabMargin"/>
+    <conv:TabCornerConverter x:Key="TabCorner"/>
   </Window.Resources>
 
-  <Grid ColumnDefinitions="160,210,*" RowDefinitions="Auto,*">
-    <TextBlock Grid.ColumnSpan="3" Margin="12,10" FontSize="18" Foreground="White"
-               Text="MCLCS-Linux — 复用 MCLCS.Core 引擎（四色标签 + 侧边栏 + Java 检测 + 主题）"/>
+  <Grid RowDefinitions="52,* 30">
+    <!-- ===== 标题栏（52px，背景跟随当前主标签色，对齐 WPF TitleBarBrush）===== -->
+    <Grid x:Name="TitleBar" Grid.Row="0"
+          Background="{Binding SelectedTab.Kind, Converter={StaticResource KindToBrush}}"
+          PointerPressed="TitleBar_PointerPressed">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="272"/>
+        <ColumnDefinition Width="*"/>
+        <ColumnDefinition Width="Auto"/>
+      </Grid.ColumnDefinitions>
 
-    <!-- 四色主标签：颜色来自 Core.TabThemeConfig（可被设置页实时自定义），标题经本地化层转中文 -->
-    <ItemsControl Grid.Row="1" Grid.Column="0" ItemsSource="{Binding Tabs}"
-                  VerticalAlignment="Top" Margin="8">
-      <ItemsControl.ItemTemplate>
-        <DataTemplate>
-          <Button Margin="0,4" Height="56" CornerRadius="8"
-                  Background="{Binding Kind, Converter={StaticResource KindToBrush}}"
-                  Foreground="White" FontWeight="Bold" FontSize="15"
-                  Content="{Binding Title, Converter={StaticResource KeyToText}}"
-                  Click="Tab_Click"/>
-        </DataTemplate>
-      </ItemsControl.ItemTemplate>
-    </ItemsControl>
+      <TextBlock Grid.Column="0" Text="MCLCS" FontSize="17" FontWeight="Bold"
+                 Foreground="White" VerticalAlignment="Center" Margin="16,0,0,0"/>
 
-    <!-- 侧边栏副标签：可点击选中，标题经本地化层转中文 -->
-    <ListBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding SidebarItems}"
-             SelectionChanged="Sidebar_SelectionChanged"
-             Background="#252526" Foreground="White" Margin="4">
-      <ListBox.ItemTemplate>
-        <DataTemplate>
-          <StackPanel Orientation="Horizontal" Spacing="8">
-            <TextBlock Text="{Binding Title, Converter={StaticResource KeyToText}}" FontSize="14"/>
-            <TextBlock Text="{Binding Group, Converter={StaticResource KeyToText}}"
-                       Foreground="#888" FontSize="11" VerticalAlignment="Center"/>
-          </StackPanel>
-        </DataTemplate>
-      </ListBox.ItemTemplate>
-    </ListBox>
+      <!-- 全局搜索 + 下载队列入口（占位，对齐 WPF 搜索栏 + 下载按钮）-->
+      <Grid Grid.Column="1" Margin="12,0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <TextBox Grid.Column="0" VerticalAlignment="Center" Padding="8,4" FontSize="12"
+                 Background="#30FFFFFF" Foreground="White" CaretBrush="White"
+                 BorderBrush="#40FFFFFF" BorderThickness="1" Watermark="搜索资源 / 版本…"/>
+        <Button Grid.Column="1" Width="34" Height="28" Margin="6,0,0,0" Cursor="Hand"
+                Background="#30FFFFFF" BorderThickness="0" ToolTip.Tip="下载队列">
+          <Image Width="14" Height="14">
+            <Image.Source>
+              <Binding Source="download" Converter="{StaticResource TokenToBitmap}"/>
+            </Image.Source>
+          </Image>
+        </Button>
+      </Grid>
 
-    <!-- 右：内容面板 -->
-    <ScrollViewer Grid.Row="1" Grid.Column="2" Margin="14">
-      <StackPanel Spacing="12">
-        <!-- 选中项标题 + 分组 + 描述 -->
-        <StackPanel Spacing="4">
-          <TextBlock Text="{Binding PanelTitle}" FontSize="20" FontWeight="Bold" Foreground="White"/>
-          <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding PanelGroup, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-            <TextBlock Text="分组：" Foreground="#888"/>
-            <TextBlock Text="{Binding PanelGroup}" Foreground="#9cdcfe"/>
-          </StackPanel>
-          <TextBlock Text="{Binding PanelDescription}" Foreground="#bbb" TextWrapping="Wrap"/>
-        </StackPanel>
+      <!-- 四色索引贴主标签：重叠 + 展开动画（对齐 WPF MainTabs 几何：选中/游戏页展开 132 显文字，其余折叠 56 色条；左压右叠放；200ms 过渡）-->
+      <ItemsControl Grid.Column="2" ItemsSource="{Binding TabItems}"
+                    HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,8,0">
+        <ItemsControl.ItemContainerTheme>
+          <ControlTheme TargetType="ContentPresenter">
+            <Setter Property="Panel.ZIndex" Value="{Binding ZIndex}"/>
+            <Setter Property="Margin" Value="{Binding Order, Converter={StaticResource TabMargin}}"/>
+          </ControlTheme>
+        </ItemsControl.ItemContainerTheme>
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <StackPanel Orientation="Horizontal"/>
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Button Tag="{Binding Kind}" Click="Tab_Click"
+                    Width="{Binding IsExpanded, Converter={StaticResource TabWidth}}"
+                    Height="34" Margin="0" Padding="0"
+                    CornerRadius="{Binding Order, Converter={StaticResource TabCorner}}"
+                    Cursor="Hand">
+              <Button.Background>
+                <Binding Path="." Converter="{StaticResource TabBg}"/>
+              </Button.Background>
+              <Button.Transitions>
+                <Transitions>
+                  <DoubleTransition Property="Width" Duration="0:0:0.2"/>
+                  <BrushTransition Property="Background" Duration="0:0:0.15"/>
+                </Transitions>
+              </Button.Transitions>
+              <Grid>
+                <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center"
+                           HorizontalAlignment="Center" FontWeight="Bold" FontSize="13"
+                           Foreground="White" IsVisible="{Binding IsExpanded}"/>
+                <Rectangle Height="3" VerticalAlignment="Bottom" HorizontalAlignment="Stretch"
+                           Fill="White" IsVisible="{Binding IsSelected}"/>
+              </Grid>
+            </Button>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
 
-        <!-- 主题编辑器（设置 → 外观）：真实读写 Core.TabThemeConfig，改色即时反映到左侧标签 -->
-        <Border IsVisible="{Binding ShowThemeEditor}" Background="#252526" CornerRadius="8" Padding="14">
-          <StackPanel Spacing="10">
-            <TextBlock Text="四色主题自定义（Core.TabThemeConfig）" FontWeight="Bold" Foreground="White"/>
-            <StackPanel Orientation="Horizontal" Spacing="10">
-              <TextBlock Text="游戏" VerticalAlignment="Center" Width="48" Foreground="White"/>
-              <TextBox Text="{Binding Theme.Game}" Width="110" Tag="game" TextChanged="ThemeColor_Changed"/>
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" Spacing="10">
-              <TextBlock Text="下载" VerticalAlignment="Center" Width="48" Foreground="White"/>
-              <TextBox Text="{Binding Theme.Download}" Width="110" Tag="download" TextChanged="ThemeColor_Changed"/>
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" Spacing="10">
-              <TextBlock Text="工具箱" VerticalAlignment="Center" Width="48" Foreground="White"/>
-              <TextBox Text="{Binding Theme.Toolbox}" Width="110" Tag="toolbox" TextChanged="ThemeColor_Changed"/>
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" Spacing="10">
-              <TextBlock Text="设置" VerticalAlignment="Center" Width="48" Foreground="White"/>
-              <TextBox Text="{Binding Theme.Settings}" Width="110" Tag="settings" TextChanged="ThemeColor_Changed"/>
-            </StackPanel>
-            <TextBlock Text="修改后立即反映到左侧主标签颜色；非法值（非 #RRGGBB）会被 Core 自动回退默认色。"
-                       Foreground="#888" TextWrapping="Wrap" FontSize="11"/>
-          </StackPanel>
-        </Border>
-
-        <!-- Java 环境检测（调用 Core.JavaDetector，真实扫描本机） -->
-        <Border Background="#252526" CornerRadius="8" Padding="14">
-          <StackPanel Spacing="10">
-            <TextBlock Text="Java 环境检测" FontWeight="Bold" Foreground="White"/>
-            <TextBlock Text="{Binding Status}" Foreground="#bbb"/>
-            <Button Content="检测本机 Java" Click="DetectJava_Click" HorizontalAlignment="Left"/>
-            <ListBox ItemsSource="{Binding JavaList}"
-                     Background="#1e1e1e" Foreground="White" MaxHeight="180"/>
-          </StackPanel>
-        </Border>
+      <!-- 窗口控制（最小 / 最大化 / 关闭）-->
+      <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
+        <Button x:Name="BtnMin" Width="36" Height="30" Background="Transparent"
+                BorderThickness="0" Foreground="White" Click="BtnMin_Click">
+          <Image Width="12" Height="12">
+            <Image.Source>
+              <Binding Source="minimize" Converter="{StaticResource TokenToBitmap}"/>
+            </Image.Source>
+          </Image>
+        </Button>
+        <Button x:Name="BtnMax" Width="36" Height="30" Background="Transparent"
+                BorderThickness="0" Foreground="White" Click="BtnMax_Click">
+          <Grid>
+            <Rectangle x:Name="MaxIconNormal" Width="12" Height="12" Stroke="White" StrokeThickness="1.5"/>
+            <Grid x:Name="MaxIconRestored" IsVisible="False">
+              <Rectangle Width="12" Height="12" Stroke="White" StrokeThickness="1.5"/>
+              <Rectangle Width="8" Height="8" Stroke="White" StrokeThickness="1.5" Margin="4,4,0,0"/>
+            </Grid>
+          </Grid>
+        </Button>
+        <Button x:Name="BtnClose" Width="36" Height="30" Background="Transparent"
+                BorderThickness="0" Foreground="White" Click="BtnClose_Click">
+          <Image Width="12" Height="12">
+            <Image.Source>
+              <Binding Source="close" Converter="{StaticResource TokenToBitmap}"/>
+            </Image.Source>
+          </Image>
+        </Button>
       </StackPanel>
-    </ScrollViewer>
+    </Grid>
+
+    <!-- ===== 主体 ===== -->
+    <Grid Grid.Row="1">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+
+      <!-- 可折叠图标侧边栏（56↔152，悬停展开；对齐 WPF SidebarRoot）-->
+      <Border x:Name="SidebarRoot" Grid.Column="0" Width="56"
+              Background="{DynamicResource ControlBackground}"
+              BorderThickness="0,0,1,0" BorderBrush="{DynamicResource ControlBorder}"
+              IsVisible="{Binding HasSidebar}"
+              PointerEntered="Sidebar_Enter" PointerExited="Sidebar_Leave">
+        <Border.Transitions>
+          <Transitions>
+            <DoubleTransition Property="Width" Duration="0:0:0.2"/>
+          </Transitions>
+        </Border.Transitions>
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <ListBox x:Name="SidebarList" ItemsSource="{Binding SidebarItems}"
+                   Background="Transparent" BorderThickness="0"
+                   SelectionChanged="Sidebar_SelectionChanged">
+            <ListBox.Styles>
+              <Style Selector="ListBoxItem">
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="CornerRadius" Value="6"/>
+              </Style>
+              <Style Selector="ListBoxItem:pointerover">
+                <Setter Property="Background" Value="#1FFFFFFF"/>
+              </Style>
+              <Style Selector="ListBoxItem:selected">
+                <Setter Property="Background" Value="#26FFFFFF"/>
+              </Style>
+            </ListBox.Styles>
+            <ListBox.ItemTemplate>
+              <DataTemplate>
+                <Grid Height="40" Margin="6,2">
+                  <!-- 选中指示竖线（当前主标签色）-->
+                  <Rectangle Width="3" HorizontalAlignment="Left" VerticalAlignment="Stretch"
+                             Fill="{Binding DataContext.SelectedTab.Kind, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource KindToBrush}}">
+                    <Rectangle.IsVisible>
+                      <MultiBinding Converter="{StaticResource Equals}">
+                        <Binding Path="Id"/>
+                        <Binding Path="DataContext.SelectedSidebarId"
+                                 RelativeSource="{RelativeSource AncestorType=Window}"/>
+                      </MultiBinding>
+                    </Rectangle.IsVisible>
+                  </Rectangle>
+                  <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0">
+                    <Image Width="18" Height="18" Source="{Binding Icon, Converter={StaticResource TokenToBitmap}}"/>
+                    <TextBlock Text="{Binding Title, Converter={StaticResource KeyToText}}"
+                               FontSize="13" Foreground="{DynamicResource SecondaryForeground}"
+                               Margin="10,0,0,0" VerticalAlignment="Center">
+                      <TextBlock.IsVisible>
+                        <Binding Path="DataContext.SidebarExpanded"
+                                 RelativeSource="{RelativeSource AncestorType=Window}"/>
+                      </TextBlock.IsVisible>
+                    </TextBlock>
+                  </StackPanel>
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </ScrollViewer>
+      </Border>
+
+      <!-- 内容宿主：顶部同色渐隐带，使选中索引贴与页面「粘连一体」（对齐 WPF ApplyPageTint）-->
+      <Border Grid.Column="1"
+              Background="{Binding SelectedTab.Kind, Converter={StaticResource TabTint}}">
+        <ScrollViewer Margin="18">
+          <StackPanel Spacing="12">
+            <!-- 选中项标题 + 分组 + 描述 -->
+            <StackPanel Spacing="4" IsVisible="{Binding HasSidebar}">
+              <TextBlock Text="{Binding PanelTitle}" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"/>
+              <StackPanel Orientation="Horizontal" Spacing="8"
+                          IsVisible="{Binding PanelGroup, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                <TextBlock Text="分组：" Foreground="{DynamicResource SecondaryForeground}"/>
+                <TextBlock Text="{Binding PanelGroup}" Foreground="#9cdcfe"/>
+              </StackPanel>
+              <TextBlock Text="{Binding PanelDescription}" Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"/>
+            </StackPanel>
+
+            <!-- 游戏页（无侧边栏）占位 -->
+            <StackPanel Spacing="6" IsVisible="{Binding HasSidebar, Converter={x:Static BoolConverters.Not}}">
+              <TextBlock Text="游戏" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"/>
+              <TextBlock Text="启动器主页（待接入 Core.GameLauncher：版本选择 / 启动游戏 / 实例管理）。"
+                         Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"/>
+            </StackPanel>
+
+            <!-- 主题编辑器（设置 → 外观）：真实读写 Core.TabThemeConfig -->
+            <Border IsVisible="{Binding ShowThemeEditor}" Background="{DynamicResource ControlBackground}"
+                    CornerRadius="8" Padding="14" BorderThickness="1" BorderBrush="{DynamicResource ControlBorder}">
+              <StackPanel Spacing="10">
+                <TextBlock Text="四色主题自定义（Core.TabThemeConfig）" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"/>
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                  <TextBlock Text="游戏" VerticalAlignment="Center" Width="48" Foreground="{DynamicResource PrimaryForeground}"/>
+                  <TextBox Text="{Binding Theme.Game}" Width="110" Tag="game" TextChanged="ThemeColor_Changed"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                  <TextBlock Text="下载" VerticalAlignment="Center" Width="48" Foreground="{DynamicResource PrimaryForeground}"/>
+                  <TextBox Text="{Binding Theme.Download}" Width="110" Tag="download" TextChanged="ThemeColor_Changed"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                  <TextBlock Text="工具箱" VerticalAlignment="Center" Width="48" Foreground="{DynamicResource PrimaryForeground}"/>
+                  <TextBox Text="{Binding Theme.Toolbox}" Width="110" Tag="toolbox" TextChanged="ThemeColor_Changed"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                  <TextBlock Text="设置" VerticalAlignment="Center" Width="48" Foreground="{DynamicResource PrimaryForeground}"/>
+                  <TextBox Text="{Binding Theme.Settings}" Width="110" Tag="settings" TextChanged="ThemeColor_Changed"/>
+                </StackPanel>
+                <TextBlock Text="修改后立即反映到标题栏与侧栏选中色；非法值（非 #RRGGBB）会被 Core 自动回退默认色。"
+                           Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap" FontSize="11"/>
+              </StackPanel>
+            </Border>
+
+            <!-- Java 环境检测（调用 Core.JavaDetector，真实扫描本机）-->
+            <Border Background="{DynamicResource ControlBackground}" CornerRadius="8"
+                    Padding="14" BorderThickness="1" BorderBrush="{DynamicResource ControlBorder}">
+              <StackPanel Spacing="10">
+                <TextBlock Text="Java 环境检测" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"/>
+                <TextBlock Text="{Binding Status}" Foreground="{DynamicResource SecondaryForeground}"/>
+                <Button Content="检测本机 Java" Click="DetectJava_Click" HorizontalAlignment="Left"/>
+                <ListBox ItemsSource="{Binding JavaList}" Background="#14161C"
+                         Foreground="{DynamicResource PrimaryForeground}" MaxHeight="180"/>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </Border>
+    </Grid>
+
+    <!-- ===== 状态栏（30px，对齐 WPF StatusBar）===== -->
+    <DockPanel Grid.Row="2" Background="{DynamicResource ControlBackground}"
+               LastChildFill="False" Margin="8,0">
+      <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" Spacing="14"
+                  VerticalAlignment="Center">
+        <TextBlock Text="{Binding JavaVersionText}"/>
+        <TextBlock Text="{Binding InstalledCountText}"/>
+        <TextBlock Text="{Binding RunningInstancesText}"/>
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <ProgressBar Width="120" Height="12" Minimum="0" Maximum="100"
+                        Value="{Binding DownloadProgress}"
+                        Foreground="{DynamicResource AccentBrush}"
+                        Background="{DynamicResource ProgressBackground}"/>
+          <TextBlock Text="{Binding DownloadText}"/>
+        </StackPanel>
+      </StackPanel>
+      <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" Spacing="6"
+                  VerticalAlignment="Center">
+        <Ellipse Width="8" Height="8" Fill="{Binding IsNetworkOk, Converter={StaticResource BoolColor}}"/>
+        <TextBlock Text="{Binding NetworkStatusText}"/>
+      </StackPanel>
+    </DockPanel>
   </Grid>
 </Window>

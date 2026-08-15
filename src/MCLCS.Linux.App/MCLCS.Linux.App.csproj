@@ -21,4 +21,9 @@
     <ProjectReference Include="..\MCLCS.Core\MCLCS.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- 复用自 MCLCS-WPF 的图标资源（token 与 Core.SidebarItem.Icon 一致），供 Avalonia 通过 avares:// 加载 -->
+    <AvaloniaResource Include="Resources\Icons\*.png" />
+  </ItemGroup>
+
 </Project>
