@@ -1,5 +1,9 @@
-# cnb.cool CI：构建 + 测试（Linux, .NET 10）
+# cnb.cool CI：构建 + 测试 + GitHub 镜像推送（Linux, .NET 10）
 # 文档: https://docs.cnb.cool/
+#
+# GitHub 镜像：在仓库「设置 → 密钥/环境变量」中配置 GITHUB_TOKEN
+# （GitHub PAT，需 contents 写权限），每次 push 自动镜像到 GitHub 同名仓库。
+# 未配置时该阶段自动跳过，不影响构建结果。
 
 main:
   push:
@@ -15,6 +19,17 @@ main:
           script: |
             dotnet run --project tools/MCLCS.Linux.Cli -c Release --no-build -- version
             dotnet run --project tools/MCLCS.Linux.Cli -c Release --no-build -- tabs
+        - name: mirror-to-github
+          script: |
+            if [ -z "${GITHUB_TOKEN:-}" ]; then
+              echo "[mirror] GITHUB_TOKEN 未配置，跳过 GitHub 镜像推送"
+              exit 0
+            fi
+            if [ -f .git/shallow ]; then git fetch --unshallow origin || true; fi
+            git remote add github "https://x-access-token:${GITHUB_TOKEN}@github.com/RLRS-Studio/MCLCS-Linux.git" 2>/dev/null || \
+              git remote set-url github "https://x-access-token:${GITHUB_TOKEN}@github.com/RLRS-Studio/MCLCS-Linux.git"
+            git push github main
+            echo "[mirror] 已推送 main → github.com/RLRS-Studio/MCLCS-Linux"
 
   pull_request:
     - runner: { cpus: 4 }
