@@ -1,0 +1,43 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:conv="clr-namespace:MCLCS.Linux.App.Converters"
+        x:Class="MCLCS.Linux.App.MainWindow"
+        Title="MCLCS-Linux"
+        Width="920" Height="620"
+        Background="#1e1e1e">
+  <Window.Resources>
+    <conv:HexToBrushConverter x:Key="HexToBrush"/>
+  </Window.Resources>
+
+  <Grid ColumnDefinitions="150,200,*" RowDefinitions="Auto,*">
+    <TextBlock Grid.ColumnSpan="3" Margin="12,10" FontSize="18" Foreground="White"
+               Text="MCLCS-Linux — 复用 MCLCS.Core 引擎（四色标签 + 侧边栏 + Java 检测）"/>
+
+    <!-- 四色主标签：直接绑定 Core.UI.MainTabs.All -->
+    <ItemsControl Grid.Row="1" Grid.Column="0" ItemsSource="{Binding Tabs}"
+                  VerticalAlignment="Top" Margin="8">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate>
+          <Button Margin="0,4" Height="56" CornerRadius="8"
+                  Background="{Binding DefaultColor, Converter={StaticResource HexToBrush}}"
+                  Foreground="White" FontWeight="Bold"
+                  Content="{Binding Title}"
+                  Click="Tab_Click"/>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+
+    <!-- 侧边栏副标签：绑定 Core.UI.Sidebar.For(当前主标签) -->
+    <ListBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding SidebarItems}"
+             DisplayMemberBinding="{Binding Title}"
+             Background="#252526" Foreground="White" Margin="4"/>
+
+    <!-- 右：Java 检测面板（调用 Core 的 JavaDetector） -->
+    <StackPanel Grid.Row="1" Grid.Column="2" Margin="14" Spacing="10">
+      <TextBlock Text="{Binding Status}" Foreground="White"/>
+      <Button Content="检测本机 Java" Click="DetectJava_Click" HorizontalAlignment="Left"/>
+      <ListBox ItemsSource="{Binding JavaList}"
+               Background="#252526" Foreground="White"/>
+    </StackPanel>
+  </Grid>
+</Window>

@@ -1,0 +1,27 @@
+# cnb.cool CI：构建 + 测试（Linux, .NET 10）
+# 文档: https://docs.cnb.cool/
+
+main:
+  push:
+    - runner: { cpus: 4 }
+      docker:
+        image: mcr.microsoft.com/dotnet/sdk:10.0
+      stages:
+        - name: build
+          script: dotnet build MCLCS-Linux.sln -c Release
+        - name: test
+          script: dotnet test tests/MCLCS.Linux.Tests/MCLCS.Linux.Tests.csproj -c Release --no-build
+        - name: cli-smoke
+          script: |
+            dotnet run --project tools/MCLCS.Linux.Cli -c Release --no-build -- version
+            dotnet run --project tools/MCLCS.Linux.Cli -c Release --no-build -- tabs
+
+  pull_request:
+    - runner: { cpus: 4 }
+      docker:
+        image: mcr.microsoft.com/dotnet/sdk:10.0
+      stages:
+        - name: build-and-test
+          script: |
+            dotnet build MCLCS-Linux.sln -c Release
+            dotnet test tests/MCLCS.Linux.Tests/MCLCS.Linux.Tests.csproj -c Release --no-build

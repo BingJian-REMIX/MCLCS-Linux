@@ -1,0 +1,33 @@
+# .NET 构建产物
+bin/
+obj/
+out/
+artifacts/
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# Rider / VS for Mac
+*.DotSettings.user
+
+# 测试与覆盖率
+TestResults/
+*.coverage
+*.trx
+
+# 发布打包
+publish/
+*.nupkg
+
+# 运行期数据（启动器本地目录，不入库）
+.minecraft/
+logs/
+*.log
+
+# 系统
+.DS_Store
+Thumbs.db
