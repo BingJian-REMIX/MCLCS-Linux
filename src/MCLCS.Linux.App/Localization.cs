@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using MCLCS.Core.Localization;
 
 namespace MCLCS.Linux.App;
 
@@ -11,64 +12,10 @@ namespace MCLCS.Linux.App;
 /// </summary>
 public static class Localization
 {
-    private static readonly Dictionary<string, string> TitleMap = new()
-    {
-        // 四色主标签
-        ["tab.game"] = "游戏",
-        ["tab.download"] = "下载",
-        ["tab.toolbox"] = "工具箱",
-        ["tab.settings"] = "设置",
-
-        // 下载页副标签
-        ["tab.minecraft"] = "Minecraft 版本",
-        ["tab.mods"] = "模组",
-        ["tab.shader"] = "光影",
-        ["tab.resourcepack"] = "资源包",
-        ["lbl.modpack"] = "整合包",
-        ["tab.map"] = "地图",
-
-        // 工具箱分组名
-        ["tool.group.diag"] = "诊断与排障",
-        ["tool.group.resource"] = "资源与内容",
-        ["tool.group.dev"] = "开发工具",
-        ["tool.group.other"] = "其他",
-
-        // 设置页副标签
-        ["settings.general"] = "通用",
-        ["settings.launch"] = "启动",
-        ["settings.download"] = "下载设置",
-        ["settings.recommend"] = "推荐配置",
-        ["settings.account"] = "账户",
-        ["settings.ai"] = "AI 助手",
-        ["settings.appearance"] = "外观",
-        ["settings.about"] = "关于",
-
-        // 工具箱 20 项
-        ["tool.log"] = "日志",
-        ["tool.crash"] = "崩溃分析",
-        ["tool.perf"] = "性能监控",
-        ["tool.network"] = "网络诊断",
-        ["tool.filewatch"] = "文件监控",
-        ["tool.datapack"] = "数据包",
-        ["tool.saves"] = "存档管理",
-        ["tool.backup"] = "备份与恢复",
-        ["tool.screenshot"] = "截图库",
-        ["tool.clean"] = "清理",
-        ["tool.modpackio"] = "整合包导入",
-        ["tool.music"] = "音乐管理",
-        ["tool.moddev"] = "模组开发",
-        ["tool.packmaker"] = "整合包制作",
-        ["tool.nbt"] = "NBT 编辑",
-        ["tool.command"] = "命令生成",
-        ["tool.skin"] = "皮肤",
-        ["tool.shortcut"] = "桌面快捷方式",
-        ["tool.afk"] = "挂机助手",
-        ["tool.aichat"] = "AI 聊天",
-    };
-
-    /// <summary>把 key 翻译为显示名；未知 key 原样返回。</summary>
+    /// <summary>把 key 翻译为显示名；委托 Core 的 LocaleManager（zh_CN + en_US 完整框架）。
+    /// 未知 key 原样返回，空 key 返回空串（保持与既有单测约定一致）。</summary>
     public static string Get(string? key) =>
-        key is null ? "" : (TitleMap.TryGetValue(key, out var v) ? v : key);
+        key is null ? "" : LocaleManager.T(key);
 
     /// <summary>按副标签 Id 取一句话功能描述（用于右面板说明，标注「待接入」的属未来工作）。</summary>
     private static readonly Dictionary<string, string> DescMap = new()

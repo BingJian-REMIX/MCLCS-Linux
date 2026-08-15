@@ -331,7 +331,15 @@ public static class LocaleManager
   ""msg.saved"": ""已保存"",
   ""msg.connected"": ""已连接"",
   ""msg.disconnected"": ""未连接"",
-  ""msg.connecting"": ""连接中...""
+  ""msg.connecting"": ""连接中..."",
+  ""status.ready"": ""就绪"",
+  ""home.game.desc"": ""启动器主页（版本选择 / 启动游戏 / 实例管理）。"",
+  ""theme.editor.title"": ""四色主题自定义（Core.TabThemeConfig）"",
+  ""theme.editor.hint"": ""修改后立即反映到标题栏与侧栏选中色；非法值（非 #RRGGBB）会被 Core 自动回退默认色。"",
+  ""java.title"": ""Java 环境检测"",
+  ""java.detect"": ""检测本机 Java"",
+  ""java.scanning"": ""正在扫描 Java（JAVA_HOME / /usr/lib/jvm / /opt/java / PATH）..."",
+  ""java.detected"": ""检测到 {0} 个 Java 安装""
 }";
 
     private static string BuiltInEnUS() => @"{
@@ -605,6 +613,14 @@ public static class LocaleManager
   ""msg.saved"": ""Saved"",
   ""msg.connected"": ""Connected"",
   ""msg.disconnected"": ""Disconnected"",
-  ""msg.connecting"": ""Connecting...""
+  ""msg.connecting"": ""Connecting..."",
+  ""status.ready"": ""Ready"",
+  ""home.game.desc"": ""Launcher home (version select / launch game / instance management)."",
+  ""theme.editor.title"": ""Four-color theme (Core.TabThemeConfig)"",
+  ""theme.editor.hint"": ""Changes apply to title bar and sidebar selection color instantly; invalid values (not #RRGGBB) fall back to Core defaults."",
+  ""java.title"": ""Java Environment"",
+  ""java.detect"": ""Detect Local Java"",
+  ""java.scanning"": ""Scanning Java (JAVA_HOME / /usr/lib/jvm / /opt/java / PATH)..."",
+  ""java.detected"": ""Detected {0} Java installation(s)""
 }";
 }

@@ -2,6 +2,9 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
+using MCLCS.Core.Localization;
+using MCLCS.Core.Theme;
 using MCLCS.Core.UI;
 using MCLCS.Linux.App.ViewModels;
 using System.Diagnostics;
@@ -21,6 +24,13 @@ public partial class MainWindow : Window
         InitializeComponent();
         SyncSidebarSelection();
         UpdateMaxIcon();
+        // 语言 / 主题切换控件初始态（与当前 LocaleManager / ThemeManager 对齐）
+        if (LangCombo is not null)
+            LangCombo.SelectedIndex = LocaleManager.CurrentLocale == "en_US" ? 1 : 0;
+        if (ThemeCombo is not null)
+            ThemeCombo.SelectedIndex = ThemeManager.Current == ThemeType.Light ? 1 : 0;
+        // 语言切换时重绑侧栏（走 KeyToTextConverter 的项需重绑才能刷新）
+        LocaleManager.LocaleChanged += OnLocaleChanged;
         // 上屏且屏幕信息就绪后再铺满（构造函数里 Screens.Primary 尚未可用）
         Opened += (_, _) => FitToScreen();
     }
@@ -151,6 +161,36 @@ public partial class MainWindow : Window
     }
 
     private void BtnClose_Click(object? sender, RoutedEventArgs e) => Close();
+
+    // ===== 语言 / 主题切换 =====
+    private void LangCombo_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (LangCombo is null) return;
+        LocaleManager.CurrentLocale = LangCombo.SelectedIndex == 1 ? "en_US" : "zh_CN";
+    }
+
+    private void ThemeCombo_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (ThemeCombo is null) return;
+        var t = ThemeCombo.SelectedIndex == 1 ? ThemeType.Light : ThemeType.Dark;
+        if (ThemeManager.Current == t) return; // 初始设定或重复选择不重复保存
+        ThemeManager.Current = t;
+        ThemeManager.SavePreference(AppConfig.DataRoot);
+    }
+
+    /// <summary>语言切换时重绑侧栏列表（走 KeyToTextConverter 的项需重建项才能刷新文本）；
+    /// 其余由 {loc:Loc} 绑定自动刷新。</summary>
+    private void OnLocaleChanged(string _)
+    {
+        Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            if (SidebarList is not null)
+            {
+                SidebarList.ItemsSource = null;
+                SidebarList.ItemsSource = _vm.SidebarItems;
+            }
+        });
+    }
 
     // ===== Java 检测 / 主题编辑（保留既有逻辑）=====
     private async void DetectJava_Click(object? sender, RoutedEventArgs e)

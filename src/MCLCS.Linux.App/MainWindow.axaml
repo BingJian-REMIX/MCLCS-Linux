@@ -45,9 +45,9 @@
           <ColumnDefinition Width="*"/>
           <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
-        <TextBox Grid.Column="0" VerticalAlignment="Center" Padding="8,4" FontSize="12"
+          <TextBox Grid.Column="0" VerticalAlignment="Center" Padding="8,4" FontSize="12"
                  Background="#30FFFFFF" Foreground="White" CaretBrush="White"
-                 BorderBrush="#40FFFFFF" BorderThickness="1" Watermark="搜索资源 / 版本…"/>
+                 BorderBrush="#40FFFFFF" BorderThickness="1" Watermark="{Binding SearchWatermark}"/>
         <Button Grid.Column="1" Width="34" Height="28" Margin="6,0,0,0" Cursor="Hand"
                 Background="#30FFFFFF" BorderThickness="0" ToolTip.Tip="下载队列">
           <Image Width="14" Height="14">
@@ -100,8 +100,22 @@
         </ItemsControl.ItemTemplate>
       </ItemsControl>
 
-      <!-- 窗口控制（最小 / 最大化 / 关闭）-->
-      <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
+      <!-- 窗口控制（语言 / 主题 / 最小 / 最大化 / 关闭）-->
+      <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0" Spacing="6">
+        <!-- 语言切换：简体中文 / English -->
+        <ComboBox x:Name="LangCombo" Width="100" Height="26" Background="#30FFFFFF"
+                  BorderThickness="0" Foreground="White" SelectedIndex="0"
+                  SelectionChanged="LangCombo_SelectionChanged">
+          <ComboBoxItem Content="{Binding LangChinese}"/>
+          <ComboBoxItem Content="{Binding LangEnglish}"/>
+        </ComboBox>
+        <!-- 主题切换：暗色 / 亮色 -->
+        <ComboBox x:Name="ThemeCombo" Width="84" Height="26" Background="#30FFFFFF"
+                  BorderThickness="0" Foreground="White" SelectedIndex="0"
+                  SelectionChanged="ThemeCombo_SelectionChanged">
+          <ComboBoxItem Content="{Binding ThemeDarkLabel}"/>
+          <ComboBoxItem Content="{Binding ThemeLightLabel}"/>
+        </ComboBox>
         <Button x:Name="BtnMin" Width="36" Height="30" Background="Transparent"
                 BorderThickness="0" Foreground="White" Click="BtnMin_Click">
           <Image Width="12" Height="12">
@@ -216,8 +230,8 @@
 
             <!-- 游戏页（无侧边栏）占位 -->
             <StackPanel Spacing="6" IsVisible="{Binding HasSidebar, Converter={x:Static BoolConverters.Not}}">
-              <TextBlock Text="游戏" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"/>
-              <TextBlock Text="启动器主页（待接入 Core.GameLauncher：版本选择 / 启动游戏 / 实例管理）。"
+              <TextBlock Text="{Binding GameHomeTitle}" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"/>
+              <TextBlock Text="{Binding GameHomeDesc}"
                          Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"/>
             </StackPanel>
 
@@ -225,24 +239,24 @@
             <Border IsVisible="{Binding ShowThemeEditor}" Background="{DynamicResource ControlBackground}"
                     CornerRadius="8" Padding="14" BorderThickness="1" BorderBrush="{DynamicResource ControlBorder}">
               <StackPanel Spacing="10">
-                <TextBlock Text="四色主题自定义（Core.TabThemeConfig）" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"/>
+                <TextBlock Text="{Binding ThemeEditorTitle}" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"/>
                 <StackPanel Orientation="Horizontal" Spacing="10">
-                  <TextBlock Text="游戏" VerticalAlignment="Center" Width="48" Foreground="{DynamicResource PrimaryForeground}"/>
+                  <TextBlock Text="{Binding LabelGame}" VerticalAlignment="Center" Width="48" Foreground="{DynamicResource PrimaryForeground}"/>
                   <TextBox Text="{Binding Theme.Game}" Width="110" Tag="game" TextChanged="ThemeColor_Changed"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Spacing="10">
-                  <TextBlock Text="下载" VerticalAlignment="Center" Width="48" Foreground="{DynamicResource PrimaryForeground}"/>
+                  <TextBlock Text="{Binding LabelDownload}" VerticalAlignment="Center" Width="48" Foreground="{DynamicResource PrimaryForeground}"/>
                   <TextBox Text="{Binding Theme.Download}" Width="110" Tag="download" TextChanged="ThemeColor_Changed"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Spacing="10">
-                  <TextBlock Text="工具箱" VerticalAlignment="Center" Width="48" Foreground="{DynamicResource PrimaryForeground}"/>
+                  <TextBlock Text="{Binding LabelToolbox}" VerticalAlignment="Center" Width="48" Foreground="{DynamicResource PrimaryForeground}"/>
                   <TextBox Text="{Binding Theme.Toolbox}" Width="110" Tag="toolbox" TextChanged="ThemeColor_Changed"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Spacing="10">
-                  <TextBlock Text="设置" VerticalAlignment="Center" Width="48" Foreground="{DynamicResource PrimaryForeground}"/>
+                  <TextBlock Text="{Binding LabelSettings}" VerticalAlignment="Center" Width="48" Foreground="{DynamicResource PrimaryForeground}"/>
                   <TextBox Text="{Binding Theme.Settings}" Width="110" Tag="settings" TextChanged="ThemeColor_Changed"/>
                 </StackPanel>
-                <TextBlock Text="修改后立即反映到标题栏与侧栏选中色；非法值（非 #RRGGBB）会被 Core 自动回退默认色。"
+                <TextBlock Text="{Binding ThemeEditorHint}"
                            Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap" FontSize="11"/>
               </StackPanel>
             </Border>
@@ -251,10 +265,10 @@
             <Border Background="{DynamicResource ControlBackground}" CornerRadius="8"
                     Padding="14" BorderThickness="1" BorderBrush="{DynamicResource ControlBorder}">
               <StackPanel Spacing="10">
-                <TextBlock Text="Java 环境检测" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"/>
+                <TextBlock Text="{Binding JavaSectionTitle}" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"/>
                 <TextBlock Text="{Binding Status}" Foreground="{DynamicResource SecondaryForeground}"/>
-                <Button Content="检测本机 Java" Click="DetectJava_Click" HorizontalAlignment="Left"/>
-                <ListBox ItemsSource="{Binding JavaList}" Background="#14161C"
+                <Button Content="{Binding JavaDetectButton}" Click="DetectJava_Click" HorizontalAlignment="Left"/>
+                <ListBox ItemsSource="{Binding JavaList}" Background="{DynamicResource InputBackground}"
                          Foreground="{DynamicResource PrimaryForeground}" MaxHeight="180"/>
               </StackPanel>
             </Border>

@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using MCLCS.Core.Launcher;
+using MCLCS.Core.Localization;
 using MCLCS.Core.Mvvm;
 using MCLCS.Core.UI;
 using MCLCS.Linux.App;
@@ -48,6 +49,39 @@ public class MainViewModel : ObservableObject
         _selectedTab = MainTabs.Get(MainTabKind.Game);
         _selectedSidebarId = Sidebar.For(_selectedTab.Kind).FirstOrDefault()?.Id ?? "";
         SyncTabSelection();
+        // 语言切换时刷新所有数据驱动文本与索引贴显示名
+        LocaleManager.LocaleChanged += OnLocaleChanged;
+    }
+
+    /// <summary>语言切换回调：刷新索引贴显示名与所有本地化文本属性。</summary>
+    private void OnLocaleChanged(string _)
+    {
+        foreach (var t in TabItems)
+            t.RaiseDisplayNameChanged();
+        OnPropertyChanged(nameof(PanelTitle));
+        OnPropertyChanged(nameof(PanelGroup));
+        OnPropertyChanged(nameof(PanelDescription));
+        OnPropertyChanged(nameof(InstalledCountText));
+        OnPropertyChanged(nameof(RunningInstancesText));
+        OnPropertyChanged(nameof(NetworkStatusText));
+        OnPropertyChanged(nameof(JavaVersionText));
+        OnPropertyChanged(nameof(Status));
+        // 界面文案（标题栏 / 游戏主页 / 主题编辑器 / Java 区 / 下拉项）
+        OnPropertyChanged(nameof(SearchWatermark));
+        OnPropertyChanged(nameof(GameHomeTitle));
+        OnPropertyChanged(nameof(GameHomeDesc));
+        OnPropertyChanged(nameof(ThemeEditorTitle));
+        OnPropertyChanged(nameof(ThemeEditorHint));
+        OnPropertyChanged(nameof(LabelGame));
+        OnPropertyChanged(nameof(LabelDownload));
+        OnPropertyChanged(nameof(LabelToolbox));
+        OnPropertyChanged(nameof(LabelSettings));
+        OnPropertyChanged(nameof(JavaSectionTitle));
+        OnPropertyChanged(nameof(JavaDetectButton));
+        OnPropertyChanged(nameof(LangChinese));
+        OnPropertyChanged(nameof(LangEnglish));
+        OnPropertyChanged(nameof(ThemeDarkLabel));
+        OnPropertyChanged(nameof(ThemeLightLabel));
     }
 
     /// <summary>把 TabItems 的 IsSelected 对齐到当前 SelectedTab，驱动索引贴展开 / Z 序动画。</summary>
@@ -140,19 +174,19 @@ public class MainViewModel : ObservableObject
     public bool HasSidebar => Sidebar.For(_selectedTab.Kind).Count > 0;
 
     // ===== 状态栏（对齐 WPF 底部 StatusBar）=====
-    private string _javaVersionText = "未检测";
-    /// <summary>状态栏：Java 版本（检测后填入最高大版本）。</summary>
+    private string? _javaVersionText;
+    /// <summary>状态栏：Java 版本（检测后填入最高大版本；未检测时本地化占位）。</summary>
     public string JavaVersionText
     {
-        get => _javaVersionText;
+        get => _javaVersionText ?? LocaleManager.T("status.no_java");
         private set => SetField(ref _javaVersionText, value);
     }
 
     /// <summary>状态栏：已安装实例数（占位，待接入 Core 实例管理）。</summary>
-    public string InstalledCountText => "已安装 0 个";
+    public string InstalledCountText => LocaleManager.Tf("status.installed", 0);
 
     /// <summary>状态栏：运行中的实例数（占位）。</summary>
-    public string RunningInstancesText => "运行实例 0";
+    public string RunningInstancesText => LocaleManager.Tf("status.running", 0);
 
     /// <summary>状态栏：下载进度文本（占位）。</summary>
     public string DownloadText => "下载 0%";
@@ -163,13 +197,46 @@ public class MainViewModel : ObservableObject
     /// <summary>状态栏：网络是否正常（占位，默认正常）。</summary>
     public bool IsNetworkOk => true;
 
-    /// <summary>状态栏：网络状态文本。</summary>
-    public string NetworkStatusText => "网络正常";
+    /// <summary>状态栏：网络状态文本（本地化）。</summary>
+    public string NetworkStatusText =>
+        IsNetworkOk ? LocaleManager.T("status.network_ok") : LocaleManager.T("status.network_offline");
+
+    // ===== 本地化展示属性：标题栏 / 侧栏 / 状态栏之外的界面文案，随语言切换刷新 =====
+    /// <summary>搜索框占位（lbl.search_mods）。</summary>
+    public string SearchWatermark => LocaleManager.T("lbl.search_mods");
+    /// <summary>游戏主页标题（tab.game）。</summary>
+    public string GameHomeTitle => LocaleManager.T("tab.game");
+    /// <summary>游戏主页描述（home.game.desc）。</summary>
+    public string GameHomeDesc => LocaleManager.T("home.game.desc");
+    /// <summary>四色主题编辑器标题（theme.editor.title）。</summary>
+    public string ThemeEditorTitle => LocaleManager.T("theme.editor.title");
+    /// <summary>四色主题编辑器提示（theme.editor.hint）。</summary>
+    public string ThemeEditorHint => LocaleManager.T("theme.editor.hint");
+    /// <summary>主题编辑器四色标签：游戏。</summary>
+    public string LabelGame => LocaleManager.T("tab.game");
+    /// <summary>主题编辑器四色标签：下载。</summary>
+    public string LabelDownload => LocaleManager.T("tab.download");
+    /// <summary>主题编辑器四色标签：工具箱。</summary>
+    public string LabelToolbox => LocaleManager.T("tab.toolbox");
+    /// <summary>主题编辑器四色标签：设置。</summary>
+    public string LabelSettings => LocaleManager.T("tab.settings");
+    /// <summary>Java 环境检测区标题（java.title）。</summary>
+    public string JavaSectionTitle => LocaleManager.T("java.title");
+    /// <summary>Java 检测按钮文案（java.detect）。</summary>
+    public string JavaDetectButton => LocaleManager.T("java.detect");
+    /// <summary>语言下拉：简体中文（lbl.chinese）。</summary>
+    public string LangChinese => LocaleManager.T("lbl.chinese");
+    /// <summary>语言下拉：English（lbl.english）。</summary>
+    public string LangEnglish => LocaleManager.T("lbl.english");
+    /// <summary>主题下拉：暗色（lbl.dark）。</summary>
+    public string ThemeDarkLabel => LocaleManager.T("lbl.dark");
+    /// <summary>主题下拉：亮色（lbl.light）。</summary>
+    public string ThemeLightLabel => LocaleManager.T("lbl.light");
 
     /// <summary>已检测到的 Java 列表。</summary>
     public ObservableCollection<JavaEntry> JavaList { get; } = new();
 
-    private string _status = "就绪";
+    private string _status = LocaleManager.T("status.ready");
     public string Status
     {
         get => _status;
@@ -179,13 +246,13 @@ public class MainViewModel : ObservableObject
     /// <summary>调用 Core 的 JavaDetector 在 Linux 上扫描 Java。</summary>
     public async Task DetectJavaAsync()
     {
-        Status = "正在扫描 Java（JAVA_HOME / /usr/lib/jvm / /opt/java / PATH）...";
+        Status = LocaleManager.T("java.scanning");
         var list = await JavaDetector.DetectAsync();
         JavaList.Clear();
         foreach (var j in list.OrderByDescending(j => j.MajorVersion))
             JavaList.Add(new JavaEntry { Exe = j.JavaExe, Major = j.MajorVersion, Raw = j.RawVersion });
-        Status = $"检测到 {JavaList.Count} 个 Java 安装";
-        JavaVersionText = JavaList.Count > 0 ? $"Java {JavaList[0].Major}" : "未检测到 Java";
+        Status = LocaleManager.Tf("java.detected", JavaList.Count);
+        JavaVersionText = JavaList.Count > 0 ? $"Java {JavaList[0].Major}" : LocaleManager.T("status.no_java");
     }
 }
 
@@ -222,6 +289,9 @@ public class TabItemViewModel : ObservableObject
 
     /// <summary>是否展开显示文字：游戏页恒展开，其余仅选中时展开。</summary>
     public bool IsExpanded => AlwaysExpanded || _isSelected;
+
+    /// <summary>语言切换时由 VM 调用，强制刷新显示名（DisplayName 依赖当前语言）。</summary>
+    public void RaiseDisplayNameChanged() => OnPropertyChanged(nameof(DisplayName));
 
     /// <summary>Z 序：选中页置顶（100），其余按「左压右」由 Order 决定（Order 越小越高）。</summary>
     public int ZIndex => _isSelected ? 100 : (TotalTabs - Order);

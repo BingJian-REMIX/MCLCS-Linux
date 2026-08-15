@@ -2,6 +2,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Media;
 using MCLCS.Core.Launcher;
+using MCLCS.Core.Localization;
+using MCLCS.Core.Theme;
 using MCLCS.Core.UI;
 using MCLCS.Linux.App;
 using MCLCS.Linux.App.Converters;
@@ -122,5 +124,54 @@ public class AppRuntimeTests
         // 未知类型降级
         var bad = conv.Convert(123, typeof(SolidColorBrush), null, null);
         Assert.IsType<SolidColorBrush>(bad);
+    }
+
+    [Fact]
+    public void LocaleManager_T_随语言切换返回对应文案()
+    {
+        var before = LocaleManager.CurrentLocale;
+        try
+        {
+            LocaleManager.CurrentLocale = "en_US";
+            Assert.Equal("Game", LocaleManager.T("tab.game"));
+            Assert.Equal("Download", LocaleManager.T("tab.download"));
+            // 未知 key 回退到 key 本身
+            Assert.Equal("ghost.key", LocaleManager.T("ghost.key"));
+            LocaleManager.CurrentLocale = "zh_CN";
+            Assert.Equal("游戏", LocaleManager.T("tab.game"));
+        }
+        finally
+        {
+            LocaleManager.CurrentLocale = before;
+        }
+    }
+
+    [Fact]
+    public void Localization_Get_委托_LocaleManager_且保留约定()
+    {
+        // 已知 key 走 Core 多语言框架
+        Assert.Equal("游戏", Localization.Get("tab.game"));
+        // 未知 key 原样返回，空 key 返回空串（与既有单测约定一致）
+        Assert.Equal("未知键", Localization.Get("未知键"));
+        Assert.Equal("", Localization.Get(null));
+    }
+
+    [Fact]
+    public void ThemeManager_切换触发_OnThemeChanged()
+    {
+        var before = ThemeManager.Current;
+        var fired = false;
+        void Handler(ThemeType t) => fired = true;
+        ThemeManager.OnThemeChanged += Handler;
+        try
+        {
+            ThemeManager.Current = before == ThemeType.Light ? ThemeType.Dark : ThemeType.Light;
+            Assert.True(fired, "主题切换应触发 OnThemeChanged，驱动 UI 换肤");
+        }
+        finally
+        {
+            ThemeManager.Current = before;
+            ThemeManager.OnThemeChanged -= Handler;
+        }
     }
 }
