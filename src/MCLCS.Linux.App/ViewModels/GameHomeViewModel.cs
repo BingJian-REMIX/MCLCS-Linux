@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using MCLCS.Core.Auth;
@@ -10,6 +12,9 @@ using MCLCS.Core.Localization;
 using MCLCS.Core.Models;
 using MCLCS.Core.Mvvm;
 using MCLCS.Core.Profiles;
+using MCLCS.Core.Recommend;
+using MCLCS.Core.Servers;
+using MCLCS.Core.Statistics;
 using MCLCS.Core.Utils;
 
 namespace MCLCS.Linux.App.ViewModels;
@@ -110,18 +115,143 @@ public class GameHomeViewModel : ObservableObject
     /// <summary>启动按钮可用性：未运行且已选版本与 Java。</summary>
     public bool CanLaunch => !IsBusy && SelectedVersion is not null && SelectedJava is not null;
 
+    // ===== 局域网游戏（对齐 WPF LanServerScanner）=====
+    private ObservableCollection<LanServer> _lanServers = new();
+    public ObservableCollection<LanServer> LanServers
+    {
+        get => _lanServers;
+        set => SetField(ref _lanServers, value);
+    }
+
+    private string _lanStatus = LocaleManager.T("status.ready");
+    public string LanStatus
+    {
+        get => _lanStatus;
+        set => SetField(ref _lanStatus, value);
+    }
+
+    // ===== 服务器列表（对齐 WPF ServerListStore）=====
+    private ObservableCollection<ServerEntry> _servers = new();
+    public ObservableCollection<ServerEntry> Servers
+    {
+        get => _servers;
+        set => SetField(ref _servers, value);
+    }
+
+    // ===== 智能推荐（对齐 WPF RecommendationEngine）=====
+    private ObservableCollection<RecommendationItem> _recommendations = new();
+    public ObservableCollection<RecommendationItem> Recommendations
+    {
+        get => _recommendations;
+        set => SetField(ref _recommendations, value);
+    }
+
+    private string _recommendStatus = "";
+    public string RecommendStatus
+    {
+        get => _recommendStatus;
+        set => SetField(ref _recommendStatus, value);
+    }
+
+    // ===== 统计（对齐 WPF PlaytimeTracker）=====
+    private PlayStats? _playStats;
+    public PlayStats? PlayStats
+    {
+        get => _playStats;
+        set => SetField(ref _playStats, value);
+    }
+
+    /// <summary>最近版本（统计卡片）。</summary>
+    public string RecentVersionText => PlayStats?.RecentVersion ?? "—";
+    /// <summary>本周时长文本。</summary>
+    public string WeeklyPlayText
+    {
+        get
+        {
+            var m = PlayStats?.WeeklyPlayMinutes ?? 0;
+            return m >= 60 ? $"{m / 60} 小时 {m % 60} 分" : $"{m} 分";
+        }
+    }
+    /// <summary>崩溃次数（年）。</summary>
+    public string CrashCountText => (PlayStats?.CrashCount ?? 0).ToString();
+
     public ICommand RefreshVersionsCommand { get; }
     public ICommand DetectJavaCommand { get; }
     public ICommand LaunchCommand { get; }
+    public ICommand RefreshLanCommand { get; }
+    public ICommand RefreshRecommendCommand { get; }
+    public ICommand RefreshServersCommand { get; }
 
     public GameHomeViewModel()
     {
         RefreshVersionsCommand = new RelayCommand(_ => RefreshVersions());
         DetectJavaCommand = new AsyncRelayCommand(_ => DetectJavaAsync());
         LaunchCommand = new AsyncRelayCommand(_ => LaunchAsync());
+        RefreshLanCommand = new AsyncRelayCommand(_ => RefreshLanAsync());
+        RefreshRecommendCommand = new AsyncRelayCommand(_ => RefreshRecommendAsync());
+        RefreshServersCommand = new RelayCommand(_ => RefreshServers());
         RefreshVersions();
         LoadAccounts();
+        RefreshServers();
+        LoadPlayStats();
         _ = DetectJavaAsync();
+        _ = RefreshLanAsync();
+        _ = RefreshRecommendAsync();
+    }
+
+    /// <summary>扫描局域网游戏（对齐 WPF LanServerScanner.ScanAsync）。</summary>
+    public async Task RefreshLanAsync()
+    {
+        try
+        {
+            LanStatus = LocaleManager.T("java.scanning");
+            var list = await LanServerScanner.ScanAsync(durationMs: 2500, ct: CancellationToken.None);
+            LanServers = new ObservableCollection<LanServer>(list);
+            LanStatus = list.Count > 0
+                ? $"{list.Count} 个局域网游戏"
+                : LocaleManager.T("game.no_lan");
+        }
+        catch (Exception ex)
+        {
+            LanStatus = $"扫描失败：{ex.Message}";
+        }
+    }
+
+    /// <summary>刷新智能推荐（对齐 WPF RecommendationEngine.BuildAsync）。</summary>
+    public async Task RefreshRecommendAsync()
+    {
+        try
+        {
+            RecommendStatus = "正在生成推荐…";
+            var profile = ProfileStore.Load(_gameRoot);
+            using var client = new HttpClient { Timeout = System.Threading.Timeout.InfiniteTimeSpan };
+            var items = await RecommendationEngine.BuildAsync(_gameRoot, profile, client, ct: CancellationToken.None);
+            Recommendations = new ObservableCollection<RecommendationItem>(items.Take(8));
+            RecommendStatus = Recommendations.Count > 0 ? "" : "暂无推荐";
+        }
+        catch (Exception ex)
+        {
+            RecommendStatus = $"推荐失败：{ex.Message}";
+        }
+    }
+
+    /// <summary>加载服务器列表（对齐 WPF ServerListStore.Load）。</summary>
+    private void RefreshServers()
+    {
+        try
+        {
+            Servers = new ObservableCollection<ServerEntry>(ServerListStore.Load(_gameRoot));
+        }
+        catch
+        {
+            Servers = new ObservableCollection<ServerEntry>();
+        }
+    }
+
+    /// <summary>加载游玩统计（对齐 WPF PlaytimeTracker.Load）。</summary>
+    private void LoadPlayStats()
+    {
+        PlayStats = PlaytimeTracker.Load(_gameRoot);
     }
 
     /// <summary>枚举 versions/ 下含 &lt;id&gt;/&lt;id&gt;.json 的目录（对齐 WPF LauncherService.ListInstalledVersions）。</summary>
