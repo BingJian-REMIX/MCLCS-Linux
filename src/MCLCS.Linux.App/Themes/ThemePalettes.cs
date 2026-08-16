@@ -21,6 +21,10 @@ public static class ThemePalettes
         // 卡片：半透明玻璃质感（对齐 WPF CardBackground=#B31A1D24，alpha≈0.70）
         { "CardBackground", new SolidColorBrush(Color.Parse("#B31A1D24")) },
         { "CardBorderHover", new SolidColorBrush(Color.Parse("#3B82F6")) },
+        { "CardShadow", BoxShadows.Parse("0 2 10 0 #00000047") },
+
+        { "ScrimBrush", new SolidColorBrush(Color.Parse("#00000080")) },
+        { "AccentHover", new SolidColorBrush(Color.Parse("#2B6FE0")) },
 
         { "PrimaryForeground", new SolidColorBrush(Color.Parse("#FFFFFF")) },
         { "SecondaryForeground", new SolidColorBrush(Color.Parse("#C8CDD6")) },
@@ -47,6 +51,10 @@ public static class ThemePalettes
         // 卡片：近白玻璃（对齐 WPF Light CardBackground=#E6FFFFFF，alpha≈0.90）
         { "CardBackground", new SolidColorBrush(Color.Parse("#E6FFFFFF")) },
         { "CardBorderHover", new SolidColorBrush(Color.Parse("#2563EB")) },
+        { "CardShadow", BoxShadows.Parse("0 2 10 0 #0000002E") },
+
+        { "ScrimBrush", new SolidColorBrush(Color.Parse("#00000059")) },
+        { "AccentHover", new SolidColorBrush(Color.Parse("#1D4ED8")) },
 
         { "PrimaryForeground", new SolidColorBrush(Color.Parse("#1A1D24")) },
         { "SecondaryForeground", new SolidColorBrush(Color.Parse("#5B6472")) },

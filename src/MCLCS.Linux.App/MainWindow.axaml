@@ -2,6 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:conv="clr-namespace:MCLCS.Linux.App.Converters"
         xmlns:vm="clr-namespace:MCLCS.Linux.App.ViewModels"
+        xmlns:views="clr-namespace:MCLCS.Linux.App.Views"
         x:Class="MCLCS.Linux.App.MainWindow"
         Title="MCLCS"
         Width="1100" Height="720" MinWidth="900" MinHeight="600"
@@ -48,8 +49,8 @@
           <TextBox Grid.Column="0" VerticalAlignment="Center" Padding="8,4" FontSize="12"
                  Background="#30FFFFFF" Foreground="White" CaretBrush="White"
                  BorderBrush="#40FFFFFF" BorderThickness="1" Watermark="{Binding SearchWatermark}"/>
-        <Button Grid.Column="1" Width="34" Height="28" Margin="6,0,0,0" Cursor="Hand"
-                Background="#30FFFFFF" BorderThickness="0" ToolTip.Tip="下载队列">
+        <Button x:Name="DownloadBtn" Grid.Column="1" Width="34" Height="28" Margin="6,0,0,0" Cursor="Hand"
+                Background="#30FFFFFF" BorderThickness="0" ToolTip.Tip="下载队列" Click="DownloadBtn_Click">
           <Image Width="14" Height="14">
             <Image.Source>
               <Binding Source="download" Converter="{StaticResource TokenToBitmap}"/>
@@ -213,8 +214,15 @@
       </Border>
 
       <!-- 内容宿主：顶部同色渐隐带，使选中索引贴与页面「粘连一体」（对齐 WPF ApplyPageTint）-->
-      <Border Grid.Column="1"
+      <!-- 内容宿主：切页时整体淡入 + 上移（对标 WPF PageTransform 切换动画）-->
+      <Border x:Name="ContentHost" Grid.Column="1"
               Background="{Binding SelectedTab.Kind, Converter={StaticResource TabTint}}">
+        <Border.Transitions>
+          <Transitions>
+            <DoubleTransition Property="Opacity" Duration="0:0:0.2"/>
+            <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2"/>
+          </Transitions>
+        </Border.Transitions>
         <ScrollViewer Margin="18">
           <StackPanel Spacing="12">
             <!-- 选中项标题 + 分组 + 描述 -->
@@ -236,9 +244,9 @@
             </StackPanel>
 
             <!-- 主题编辑器（设置 → 外观）：真实读写 Core.TabThemeConfig -->
-            <Border IsVisible="{Binding ShowThemeEditor}" Background="{DynamicResource CardBackground}"
-                    CornerRadius="12" Padding="14" BorderThickness="1" BorderBrush="{DynamicResource ControlBorder}"
-                    BoxShadow="0 2 10 0 #00000028">
+            <Border IsVisible="{Binding ShowThemeEditor}" Classes="card"
+                    Background="{DynamicResource CardBackground}"
+                    CornerRadius="12" Padding="14">
               <StackPanel Spacing="10">
                 <TextBlock Text="{Binding ThemeEditorTitle}" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"/>
                 <StackPanel Orientation="Horizontal" Spacing="10">
@@ -263,15 +271,27 @@
             </Border>
 
             <!-- Java 环境检测（调用 Core.JavaDetector，真实扫描本机）-->
-            <Border Background="{DynamicResource CardBackground}" CornerRadius="12"
-                    Padding="14" BorderThickness="1" BorderBrush="{DynamicResource ControlBorder}"
-                    BoxShadow="0 2 10 0 #00000028">
+            <Border Classes="card" Background="{DynamicResource CardBackground}" CornerRadius="12"
+                    Padding="14">
               <StackPanel Spacing="10">
                 <TextBlock Text="{Binding JavaSectionTitle}" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"/>
                 <TextBlock Text="{Binding Status}" Foreground="{DynamicResource SecondaryForeground}"/>
                 <Button Content="{Binding JavaDetectButton}" Click="DetectJava_Click" HorizontalAlignment="Left"/>
                 <ListBox ItemsSource="{Binding JavaList}" Background="{DynamicResource InputBackground}"
                          Foreground="{DynamicResource PrimaryForeground}" MaxHeight="180"/>
+              </StackPanel>
+            </Border>
+
+            <!-- 弹窗与通知演示（开发用：验证设计稿三种对话框变体 + Toast）-->
+            <Border Classes="card">
+              <StackPanel Spacing="10">
+                <TextBlock Text="弹窗与通知演示" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"/>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <Button Content="居中询问" Click="Demo_Center"/>
+                  <Button Content="右上队列" Click="Demo_Queue"/>
+                  <Button Content="右下播放列表" Click="Demo_Music"/>
+                  <Button Content="显示 Toast" Click="Demo_Toast"/>
+                </StackPanel>
               </StackPanel>
             </Border>
           </StackPanel>
@@ -301,5 +321,9 @@
         <TextBlock Text="{Binding NetworkStatusText}"/>
       </StackPanel>
     </DockPanel>
+
+    <!-- 全局弹层：模态对话框 + Toast（覆盖全窗，对齐设计稿 modalRoot / toasts）-->
+    <views:ModalHost Grid.RowSpan="3" IsHitTestVisible="False"/>
+    <views:ToastHost Grid.RowSpan="3" HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
   </Grid>
 </Window>

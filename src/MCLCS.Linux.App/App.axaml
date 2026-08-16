@@ -59,6 +59,87 @@
         <Style Selector="Button#BtnClose:pointerover">
             <Setter Property="Background" Value="{DynamicResource DangerBrush}"/>
         </Style>
+
+        <!-- 玻璃卡片（对齐设计稿 .card / .card:hover，150ms）：
+             悬停浮起 translateY(-6px) + 边框转主题色；阴影保持静止态。
+             视觉属性由本 Style 统一提供，避免 XAML 局部值盖过 :pointerover 的覆盖。-->
+        <Style Selector="Border.card">
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="14"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlBorder}"/>
+            <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+            <Setter Property="BoxShadow" Value="{DynamicResource CardShadow}"/>
+            <Setter Property="RenderTransform" Value="translateY(0px)"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15"/>
+                    <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.15"/>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.15"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.card:pointerover">
+            <Setter Property="RenderTransform" Value="translateY(-6px)"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorderHover}"/>
+        </Style>
+
+        <!-- 模态按钮（对齐设计稿 .btn / .btn.primary / .btn.ghost）-->
+        <Style Selector="Button.modal-btn">
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="MinHeight" Value="30"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlBorder}"/>
+            <Setter Property="Background" Value="{DynamicResource ControlBackground}"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryForeground}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.modal-btn:pointerover">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+        </Style>
+        <Style Selector="Button.modal-btn.primary">
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+        </Style>
+        <Style Selector="Button.modal-btn.primary:pointerover">
+            <Setter Property="Background" Value="{DynamicResource AccentHover}"/>
+        </Style>
+        <Style Selector="Button.modal-btn.ghost">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlBorder}"/>
+        </Style>
+        <!-- 模态关闭按钮 -->
+        <Style Selector="Button.modal-close">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="{DynamicResource SecondaryForeground}"/>
+            <Setter Property="Width" Value="28"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.modal-close:pointerover">
+            <Setter Property="Background" Value="{DynamicResource ControlHoverBackground}"/>
+        </Style>
+        <!-- Toast 关闭 / 操作按钮 -->
+        <Style Selector="Button.toast-close">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="{DynamicResource SecondaryForeground}"/>
+            <Setter Property="Width" Value="26"/>
+            <Setter Property="Height" Value="26"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.toast-action">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+            <Setter Property="Padding" Value="3,2"/>
+            <Setter Property="Margin" Value="0,7,0,0"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
     </Application.Styles>
 
     <!-- 暗色配色板：对齐 MCLCS-WPF 的 DarkTheme.xaml / Palette.xaml -->
@@ -70,6 +151,13 @@
 
         <SolidColorBrush x:Key="CardBackground" Color="#B31A1D24"/>
         <SolidColorBrush x:Key="CardBorderHover" Color="#3B82F6"/>
+        <BoxShadows x:Key="CardShadow">0 2 10 0 #00000047</BoxShadows>
+
+        <!-- 弹窗系统资源（对齐设计稿 scrim / modal / toast 阴影）-->
+        <SolidColorBrush x:Key="ScrimBrush" Color="#00000080"/>
+        <SolidColorBrush x:Key="AccentHover" Color="#2B6FE0"/>
+        <BoxShadows x:Key="ModalShadow">0 24 60 0 #00000080</BoxShadows>
+        <BoxShadows x:Key="ToastShadow">0 8 24 0 #00000073</BoxShadows>
 
         <SolidColorBrush x:Key="PrimaryForeground" Color="#FFFFFF"/>
         <SolidColorBrush x:Key="SecondaryForeground" Color="#C8CDD6"/>
