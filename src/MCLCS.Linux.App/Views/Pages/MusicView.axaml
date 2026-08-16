@@ -23,9 +23,14 @@
         <StackPanel Orientation="Horizontal" Spacing="8">
           <TextBlock Text="音量" VerticalAlignment="Center" Foreground="{DynamicResource SecondaryForeground}"/>
           <Slider Minimum="0" Maximum="100" Width="200" Value="{Binding Volume}"/>
-          <TextBlock Text="{Binding Volume, StringFormat={}{0}}" VerticalAlignment="Center"
+          <TextBlock Text="{Binding VolumeText}" VerticalAlignment="Center"
                      Foreground="{DynamicResource SecondaryForeground}"/>
         </StackPanel>
+
+        <ToggleSwitch IsChecked="{Binding AutoDuck}" Content="游戏内语音/音效时自动降低音乐音量" HorizontalAlignment="Left"/>
+
+        <Button Classes="modal-btn primary" Content="保存设置" Command="{Binding SaveCommand}"
+                HorizontalAlignment="Left"/>
       </StackPanel>
 
       <StackPanel Spacing="8">
