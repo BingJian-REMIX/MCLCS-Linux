@@ -50,26 +50,11 @@
                              Increment="256" Width="200"/>
             </StackPanel>
 
-            <!-- Java -->
-            <StackPanel Orientation="Horizontal" Spacing="12">
-              <TextBlock Text="Java" Width="72" VerticalAlignment="Center"
-                         Foreground="{DynamicResource SecondaryForeground}"/>
-              <ComboBox ItemsSource="{Binding JavaList}" SelectedItem="{Binding SelectedJava}"
-                        HorizontalAlignment="Stretch" MinWidth="320">
-                <ComboBox.ItemTemplate>
-                  <DataTemplate>
-                    <TextBlock Text="{Binding}"/>
-                  </DataTemplate>
-                </ComboBox.ItemTemplate>
-              </ComboBox>
-            </StackPanel>
-
             <!-- 操作 -->
             <StackPanel Orientation="Horizontal" Spacing="8">
               <Button Content="启动游戏" Command="{Binding LaunchCommand}"
                       IsEnabled="{Binding CanLaunch}" Classes="modal-btn primary"/>
               <Button Content="刷新版本" Command="{Binding RefreshVersionsCommand}"/>
-              <Button Content="扫描 Java" Command="{Binding DetectJavaCommand}"/>
             </StackPanel>
           </StackPanel>
 

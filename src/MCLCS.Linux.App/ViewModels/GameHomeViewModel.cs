@@ -21,7 +21,8 @@ namespace MCLCS.Linux.App.ViewModels;
 
 /// <summary>
 /// 游戏主页视图模型（对齐 WPF GameViewModel 的快速启动区）：
-/// 选择已安装版本 / 账户 / 内存 / Java，调用 Core.GameLauncher.LaunchAsync 启动游戏。
+/// 选择已安装版本 / 账户 / 内存，调用 Core.GameLauncher.LaunchAsync 启动游戏。
+/// Java 运行环境在「设置 → 启动」中配置（profile.JavaPath），启动时按路径解析（对齐 WPF）。
 /// 离线账户用 Core.OfflineAuthenticator 生成与官方一致的离线 UUID；微软/第三方账号则复用存储的令牌。
 /// </summary>
 public class GameHomeViewModel : ObservableObject
@@ -69,29 +70,12 @@ public class GameHomeViewModel : ObservableObject
         set => SetField(ref _username, value);
     }
 
-    // ===== 内存 / Java =====
+    // ===== 内存 =====
     private int _memoryMb = 2048;
     public int MemoryMb
     {
         get => _memoryMb;
         set => SetField(ref _memoryMb, value);
-    }
-
-    private ObservableCollection<JavaInfo> _javaList = new();
-    public ObservableCollection<JavaInfo> JavaList
-    {
-        get => _javaList;
-        set => SetField(ref _javaList, value);
-    }
-
-    private JavaInfo? _selectedJava;
-    public JavaInfo? SelectedJava
-    {
-        get => _selectedJava;
-        set
-        {
-            if (SetField(ref _selectedJava, value)) OnPropertyChanged(nameof(CanLaunch));
-        }
     }
 
     // ===== 状态 =====
@@ -112,8 +96,8 @@ public class GameHomeViewModel : ObservableObject
         }
     }
 
-    /// <summary>启动按钮可用性：未运行且已选版本与 Java。</summary>
-    public bool CanLaunch => !IsBusy && SelectedVersion is not null && SelectedJava is not null;
+    /// <summary>启动按钮可用性：未运行且已选版本（Java 在「设置 → 启动」中配置）。</summary>
+    public bool CanLaunch => !IsBusy && SelectedVersion is not null;
 
     // ===== 局域网游戏（对齐 WPF LanServerScanner）=====
     private ObservableCollection<LanServer> _lanServers = new();
@@ -176,7 +160,6 @@ public class GameHomeViewModel : ObservableObject
     public string CrashCountText => (PlayStats?.CrashCount ?? 0).ToString();
 
     public ICommand RefreshVersionsCommand { get; }
-    public ICommand DetectJavaCommand { get; }
     public ICommand LaunchCommand { get; }
     public ICommand RefreshLanCommand { get; }
     public ICommand RefreshRecommendCommand { get; }
@@ -185,7 +168,6 @@ public class GameHomeViewModel : ObservableObject
     public GameHomeViewModel()
     {
         RefreshVersionsCommand = new RelayCommand(_ => RefreshVersions());
-        DetectJavaCommand = new AsyncRelayCommand(_ => DetectJavaAsync());
         LaunchCommand = new AsyncRelayCommand(_ => LaunchAsync());
         RefreshLanCommand = new AsyncRelayCommand(_ => RefreshLanAsync());
         RefreshRecommendCommand = new AsyncRelayCommand(_ => RefreshRecommendAsync());
@@ -194,7 +176,6 @@ public class GameHomeViewModel : ObservableObject
         LoadAccounts();
         RefreshServers();
         LoadPlayStats();
-        _ = DetectJavaAsync();
         _ = RefreshLanAsync();
         _ = RefreshRecommendAsync();
     }
@@ -298,25 +279,18 @@ public class GameHomeViewModel : ObservableObject
         if (SelectedAccount is not null) Username = SelectedAccount.Username;
     }
 
-    public async Task DetectJavaAsync()
-    {
-        try
-        {
-            var list = await JavaDetector.DetectAsync();
-            JavaList = new ObservableCollection<JavaInfo>(list.OrderByDescending(j => j.MajorVersion));
-            if (SelectedJava is null) SelectedJava = JavaList.FirstOrDefault();
-        }
-        catch (Exception ex)
-        {
-            Status = $"Java 扫描失败：{ex.Message}";
-        }
-    }
-
     private async Task LaunchAsync()
     {
         var id = SelectedVersion?.Id;
         if (string.IsNullOrWhiteSpace(id)) { Status = "请先选择一个版本"; return; }
-        if (SelectedJava is null) { Status = "未检测到 Java，请先扫描或安装 Java"; return; }
+
+        var profile = ProfileStore.Load(_gameRoot);
+        var java = await ResolveJavaAsync(profile.JavaPath);
+        if (java is null)
+        {
+            Status = "未检测到 Java，请在「设置 → 启动」中配置 Java 路径";
+            return;
+        }
 
         IsBusy = true;
         try
@@ -342,7 +316,7 @@ public class GameHomeViewModel : ObservableObject
 
             Status = $"正在启动 {id} …";
             using var client = new HttpClient { Timeout = System.Threading.Timeout.InfiniteTimeSpan };
-            var result = await GameLauncher.LaunchAsync(_gameRoot, id, SelectedJava, opts, null);
+            var result = await GameLauncher.LaunchAsync(_gameRoot, id, java, opts, null);
             Status = result.Crashed
                 ? $"游戏已退出（崩溃，退出码 {result.ExitCode}）"
                 : $"游戏已退出（退出码 {result.ExitCode}）";
@@ -355,6 +329,20 @@ public class GameHomeViewModel : ObservableObject
         {
             IsBusy = false;
         }
+    }
+
+    /// <summary>从设置中保存的 Java 路径解析 JavaInfo；未配置则取检测到的版本最高者（对齐 WPF 从 profile.JavaPath 解析）。</summary>
+    private static async Task<JavaInfo?> ResolveJavaAsync(string? javaPath)
+    {
+        var list = await JavaDetector.DetectAsync();
+        if (list.Count == 0) return null;
+        if (!string.IsNullOrWhiteSpace(javaPath))
+        {
+            var match = list.FirstOrDefault(j =>
+                string.Equals(j.JavaExe, javaPath, StringComparison.OrdinalIgnoreCase));
+            if (match is not null) return match;
+        }
+        return list.OrderByDescending(j => j.MajorVersion).FirstOrDefault();
     }
 }
 

@@ -9,7 +9,7 @@ using MCLCS.Core.Utils;
 namespace MCLCS.Linux.App.ViewModels;
 
 /// <summary>
-/// 设置 → 启动（对齐 WPF LauncherProfile 的启动策略）：崩溃自动修复策略、
+/// 设置 → 启动（对齐 WPF Settings→Launch）：Java 路径 + 自动检测、崩溃自动修复策略、
 /// Java 发行商、缺失 Mod 依赖自动安装策略。
 /// </summary>
 public class LaunchSettingsViewModel : ObservableObject
@@ -47,6 +47,15 @@ public class LaunchSettingsViewModel : ObservableObject
         set => SetField(ref _autoInstall, value);
     }
 
+    /// <summary>Java 可执行文件路径（对齐 WPF Settings→Launch 的「Java 路径」）。
+    /// 留空表示启动时自动检测最优 Java。</summary>
+    private string _javaPath = "";
+    public string JavaPath
+    {
+        get => _javaPath;
+        set => SetField(ref _javaPath, value);
+    }
+
     private string _status = LocaleManager.T("status.ready");
     public string Status
     {
@@ -60,9 +69,13 @@ public class LaunchSettingsViewModel : ObservableObject
         _repairPolicy = _profile.RepairPolicy;
         _javaVendor = _profile.PreferredJavaVendor;
         _autoInstall = _profile.AutoInstallMissingMods;
+        _javaPath = _profile.JavaPath ?? "";
+        AutoDetectJavaCommand = new AsyncRelayCommand(_ => AutoDetectJavaAsync());
     }
 
     public ICommand SaveCommand => new RelayCommand(_ => Save());
+
+    public ICommand AutoDetectJavaCommand { get; }
 
     private void Save()
     {
@@ -71,12 +84,35 @@ public class LaunchSettingsViewModel : ObservableObject
             _profile.RepairPolicy = RepairPolicy;
             _profile.PreferredJavaVendor = JavaVendor;
             _profile.AutoInstallMissingMods = AutoInstall;
+            _profile.JavaPath = string.IsNullOrWhiteSpace(JavaPath) ? null : JavaPath;
             ProfileStore.Save(_profile);
             Status = "启动设置已保存";
         }
         catch (Exception ex)
         {
             Status = $"保存失败：{ex.Message}";
+        }
+    }
+
+    /// <summary>自动检测最优 Java（对齐 WPF AutoDetectJavaAsync）：取版本 ≥ 最低要求的 Java，写入 JavaPath。</summary>
+    private async Task AutoDetectJavaAsync()
+    {
+        try
+        {
+            var best = await JavaDetector.FindBestAsync(GameConstants.MinimumJavaMajorVersion);
+            if (best is not null)
+            {
+                JavaPath = best.JavaExe;
+                Status = $"已选择 Java {best.MajorVersion}（{best.JavaExe}）";
+            }
+            else
+            {
+                Status = $"未检测到 Java {GameConstants.MinimumJavaMajorVersion}+，请手动指定路径";
+            }
+        }
+        catch (Exception ex)
+        {
+            Status = $"Java 检测失败：{ex.Message}";
         }
     }
 }
