@@ -4,40 +4,39 @@
              x:Class="MCLCS.Linux.App.Views.Pages.PackMakerView">
   <ScrollViewer Margin="18">
     <StackPanel Spacing="14" MaxWidth="900" HorizontalAlignment="Left">
-      <TextBlock FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"
-                 Text="{Binding Source='tool.packmaker', Converter={StaticResource KeyToText}}"/>
-      <TextBlock Text="{Binding Source='tool.packmaker.desc', Converter={StaticResource KeyToText}}"
-                 Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"/>
 
-      <StackPanel Spacing="8">
-        <StackPanel Spacing="4">
-          <TextBlock Text="资源包名称" Foreground="{DynamicResource SecondaryForeground}"/>
-          <TextBox Text="{Binding PackName}" Watermark="my-resource-pack"/>
-        </StackPanel>
-        <StackPanel Spacing="4">
-          <TextBlock Text="描述" Foreground="{DynamicResource SecondaryForeground}"/>
-          <TextBox Text="{Binding Description}" Watermark="由 MCLCS 创建"/>
-        </StackPanel>
-        <StackPanel Spacing="4">
-          <TextBlock Text="命名空间" Foreground="{DynamicResource SecondaryForeground}"/>
-          <TextBox Text="{Binding Namespace}" Watermark="minecraft"/>
-        </StackPanel>
-        <StackPanel Spacing="4" Orientation="Horizontal">
-          <TextBlock Text="pack_format" VerticalAlignment="Center" Foreground="{DynamicResource SecondaryForeground}"/>
-          <NumericUpDown Value="{Binding PackFormat}" Minimum="1" Maximum="99" Width="120"/>
-        </StackPanel>
-        <StackPanel Spacing="4">
-          <TextBlock Text="目标目录" Foreground="{DynamicResource SecondaryForeground}"/>
-          <TextBox Text="{Binding TargetDir}" Watermark="/home/user/packs"/>
-        </StackPanel>
-      </StackPanel>
+      <Border Classes="card">
+        <StackPanel Spacing="12">
+          <StackPanel Spacing="4">
+            <TextBlock Text="资源包名称" Foreground="{DynamicResource SecondaryForeground}"/>
+            <TextBox Text="{Binding PackName}" Watermark="my-resource-pack"/>
+          </StackPanel>
+          <StackPanel Spacing="4">
+            <TextBlock Text="描述" Foreground="{DynamicResource SecondaryForeground}"/>
+            <TextBox Text="{Binding Description}" Watermark="由 MCLCS 创建"/>
+          </StackPanel>
+          <StackPanel Spacing="4">
+            <TextBlock Text="命名空间" Foreground="{DynamicResource SecondaryForeground}"/>
+            <TextBox Text="{Binding Namespace}" Watermark="minecraft"/>
+          </StackPanel>
+          <StackPanel Spacing="4" Orientation="Horizontal">
+            <TextBlock Text="pack_format" VerticalAlignment="Center" Foreground="{DynamicResource SecondaryForeground}"/>
+            <NumericUpDown Value="{Binding PackFormat}" Minimum="1" Maximum="99" Width="120"/>
+          </StackPanel>
+          <StackPanel Spacing="4">
+            <TextBlock Text="目标目录" Foreground="{DynamicResource SecondaryForeground}"/>
+            <TextBox Text="{Binding TargetDir}" Watermark="/home/user/packs"/>
+          </StackPanel>
 
-      <StackPanel Orientation="Horizontal" Spacing="8">
-        <Button Content="生成资源包" Command="{Binding GenerateCommand}" Classes="modal-btn primary"
-                IsEnabled="{Binding !Busy}"/>
-        <TextBlock Text="{Binding Status}" VerticalAlignment="Center"
-                   Foreground="{DynamicResource SecondaryForeground}"/>
-      </StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Content="生成资源包" Command="{Binding GenerateCommand}" Classes="modal-btn primary"
+                    IsEnabled="{Binding !Busy}"/>
+            <TextBlock Text="{Binding Status}" VerticalAlignment="Center"
+                       Foreground="{DynamicResource SecondaryForeground}"/>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
     </StackPanel>
   </ScrollViewer>
 </UserControl>

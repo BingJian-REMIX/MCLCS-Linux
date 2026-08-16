@@ -85,6 +85,15 @@
             <Setter Property="BorderBrush" Value="{DynamicResource CardBorderHover}"/>
         </Style>
 
+        <!-- 紧凑指标瓦片（对齐 WPF PerfView：圆角 6 / 内边距 12 / 实底控件色）-->
+        <Style Selector="Border.tile">
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="12"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlBorder}"/>
+            <Setter Property="Background" Value="{DynamicResource ControlBackground}"/>
+        </Style>
+
         <!-- 模态按钮（对齐设计稿 .btn / .btn.primary / .btn.ghost）-->
         <Style Selector="Button.modal-btn">
             <Setter Property="CornerRadius" Value="8"/>
