@@ -4,6 +4,7 @@ using Avalonia.Media;
 using MCLCS.Core.Launcher;
 using MCLCS.Core.Localization;
 using MCLCS.Core.Theme;
+using MCLCS.Core.Tokens;
 using MCLCS.Core.UI;
 using MCLCS.Linux.App;
 using MCLCS.Linux.App.Converters;
@@ -154,6 +155,31 @@ public class AppRuntimeTests
         // 未知 key 原样返回，空 key 返回空串（与既有单测约定一致）
         Assert.Equal("未知键", Localization.Get("未知键"));
         Assert.Equal("", Localization.Get(null));
+    }
+
+    [Fact]
+    public void Localization_ToolDescription_覆盖_下载页与设置页_desc_键()
+    {
+        // 下载页副标签的 desc 键应全部解析（Bug-3 修复）
+        foreach (var item in Sidebar.Download)
+            Assert.NotEqual("（待接入 Core 能力）", Localization.ToolDescription(item.Id));
+        // 设置页副标签的 desc 键应全部解析
+        foreach (var item in Sidebar.Settings)
+            Assert.NotEqual("（待接入 Core 能力）", Localization.ToolDescription(item.Id));
+        // 抽查具体文案非空且非 key 本身
+        Assert.NotEmpty(Localization.ToolDescription("mod"));
+        Assert.NotEqual("tab.mods.desc", Localization.ToolDescription("mod"));
+    }
+
+    [Fact]
+    public void AfkViewModel_默认_Token_可被_Core_解析()
+    {
+        var vm = new AfkViewModel();
+        // Bug-7 修复：默认 Token 用分号分隔、重复指令在末尾，Core 引擎可正常解析
+        var r = AfkWorkflowToken.Parse(vm.Token);
+        Assert.True(r.Ok, $"默认 Token 应可解析，错误：{r.Error}");
+        Assert.Equal(3, r.RepeatCount);
+        Assert.True(r.Instructions.Count > 0);
     }
 
     [Fact]

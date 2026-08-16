@@ -81,7 +81,10 @@
                     CornerRadius="{Binding, Converter={StaticResource TabCorner}}"
                     Cursor="Hand">
               <Button.Background>
-                <Binding Path="." Converter="{StaticResource TabBg}"/>
+                <MultiBinding Converter="{StaticResource TabBg}">
+                  <Binding Path="IsSelected"/>
+                  <Binding Path="Kind"/>
+                </MultiBinding>
               </Button.Background>
               <Button.Transitions>
                 <Transitions>

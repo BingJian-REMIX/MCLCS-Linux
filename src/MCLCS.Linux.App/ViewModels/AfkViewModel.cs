@@ -11,7 +11,7 @@ namespace MCLCS.Linux.App.ViewModels;
 /// </summary>
 public class AfkViewModel : ObservableObject
 {
-    private string _token = "*3\nF10\nD4\nC1-500";
+    private string _token = "F10;D4;C1-500;*3";
     public string Token
     {
         get => _token;

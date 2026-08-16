@@ -44,7 +44,7 @@
         </StackPanel>
       </Border>
 
-      <Border Classes="card" IsVisible="{Binding Output, Converter={x:Static ObjectConverters.IsNotNull}}">
+      <Border Classes="card" IsVisible="{Binding Output, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
         <StackPanel Spacing="6">
           <TextBlock Text="分析结果" FontWeight="Bold" FontSize="14"/>
           <TextBlock Text="{Binding Output}" TextWrapping="Wrap" FontFamily="Consolas" FontSize="12"

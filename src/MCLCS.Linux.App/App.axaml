@@ -149,6 +149,13 @@
             <Setter Property="HorizontalAlignment" Value="Left"/>
             <Setter Property="Cursor" Value="Hand"/>
         </Style>
+
+        <!-- 状态栏文本：允许换行并限高，避免长状态消息横向溢出卡片（Bug-8）-->
+        <Style Selector="TextBlock.status">
+            <Setter Property="Foreground" Value="{DynamicResource SecondaryForeground}"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        </Style>
     </Application.Styles>
 
     <!-- 暗色配色板：对齐 MCLCS-WPF 的 DarkTheme.xaml / Palette.xaml -->

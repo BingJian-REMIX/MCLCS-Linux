@@ -23,7 +23,7 @@
         <StackPanel Spacing="8">
           <TextBlock Text="挂机 Token" FontWeight="Bold" FontSize="14"/>
           <TextBox Text="{Binding Token}" AcceptsReturn="True" MinHeight="80" FontFamily="Consolas"
-                   Watermark="*3&#10;F10&#10;D4&#10;C1-500"/>
+                   Watermark="F10;D4;C1-500;*3"/>
           <Button Classes="modal-btn accent" Content="解析" Command="{Binding ParseCommand}"
                   HorizontalAlignment="Left"/>
         </StackPanel>

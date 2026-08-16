@@ -41,7 +41,6 @@ public partial class MainWindow : Window
         ShowPage();
     }
 
-
     /// <summary>按主屏工作区尺寸铺满窗口（避免固定尺寸在大屏上留黑边）。
     /// 优先用 Screens.Primary（真实桌面 WM 下可靠）；无 WM 的 X11（如 Xvfb）下
     /// Primary 为 null，回退用 xdotool getdisplaygeometry 取显示尺寸。</summary>

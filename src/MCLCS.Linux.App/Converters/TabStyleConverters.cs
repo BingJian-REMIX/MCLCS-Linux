@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using Avalonia;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
+using MCLCS.Core.UI;
 using MCLCS.Linux.App.ViewModels;
 
 namespace MCLCS.Linux.App.Converters;
@@ -17,22 +19,24 @@ public class TabWidthConverter : IValueConverter
         => null;
 }
 
-/// <summary>索引贴背景：选中取主题实色，未选中暗化 0.68 以凸显激活页。</summary>
-public class TabBackgroundConverter : IValueConverter
+/// <summary>
+/// 索引贴背景（多值）：values[0]=是否选中，values[1]=该项 Kind。
+/// 选中取主题实色，未选中暗化 0.68 以凸显激活页。
+/// 相较旧版 {Binding .} 绑整个 TabItemViewModel，多值绑定会因 IsSelected 的
+/// PropertyChanged 精确触发重算，修复切换主标签时背景色不刷新的 Bug-1。
+/// </summary>
+public class TabBackgroundConverter : IMultiValueConverter
 {
-    public object? Convert(object? value, Type? targetType, object? parameter, CultureInfo? culture)
+    public object? Convert(IList<object?> values, Type? targetType, object? parameter, CultureInfo? culture)
     {
-        if (value is not TabItemViewModel tvm)
+        if (values.Count < 2 || values[0] is not bool isSelected || values[1] is not MainTabKind kind)
             return new SolidColorBrush(Colors.Gray);
-        var hex = MainViewModel.Instance?.Theme?.ColorOf(tvm.Kind) ?? "#888888";
+        var hex = MainViewModel.Instance?.Theme?.ColorOf(kind) ?? "#888888";
         var c = HexToBrushConverter.ToColor(hex);
-        if (!tvm.IsSelected)
+        if (!isSelected)
             c = Darken(c, 0.68);
         return new SolidColorBrush(c);
     }
-
-    public object? ConvertBack(object? value, Type? targetType, object? parameter, CultureInfo? culture)
-        => null;
 
     private static Color Darken(Color c, double f) =>
         Color.FromRgb(Clamp((int)(c.R * f)), Clamp((int)(c.G * f)), Clamp((int)(c.B * f)));
