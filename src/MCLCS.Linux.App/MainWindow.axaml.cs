@@ -8,6 +8,7 @@ using Avalonia.Threading;
 using MCLCS.Core.Localization;
 using MCLCS.Core.Theme;
 using MCLCS.Core.UI;
+using MCLCS.Linux.App.Converters;
 using MCLCS.Linux.App.ViewModels;
 using MCLCS.Linux.App.Views;
 using MCLCS.Linux.App.Views.Pages;
@@ -212,6 +213,26 @@ public partial class MainWindow : Window
             ShowPage();
             PlayContentEnter();
         }
+    }
+
+    /// <summary>索引贴悬停：未选中标签提亮 1.2（对齐模板 renderTabs 的 mouseenter brighten(solid,1.2)）。</summary>
+    private void Tab_PointerEntered(object? sender, PointerEventArgs e)
+    {
+        if (sender is not Button { Tag: MainTabKind kind } btn) return;
+        if (btn.DataContext is not TabItemViewModel item || item.IsSelected) return;
+        var hex = TabThemeConfig.Brighten(_vm.Theme.ColorOf(kind), 1.2);
+        btn.Background = HexToBrushConverter.ToBrush(hex);
+    }
+
+    /// <summary>索引贴移出：恢复实色（选中态由背景绑定负责提亮 1.12）。</summary>
+    private void Tab_PointerExited(object? sender, PointerEventArgs e)
+    {
+        if (sender is not Button { Tag: MainTabKind kind } btn) return;
+        if (btn.DataContext is not TabItemViewModel item) return;
+        var hex = item.IsSelected
+            ? _vm.Theme.ActiveColorOf(kind)
+            : _vm.Theme.ColorOf(kind);
+        btn.Background = HexToBrushConverter.ToBrush(hex);
     }
 
     private void Sidebar_SelectionChanged(object? sender, SelectionChangedEventArgs e)

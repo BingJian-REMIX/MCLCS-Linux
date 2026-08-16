@@ -20,6 +20,24 @@ public class TabWidthConverter : IValueConverter
 }
 
 /// <summary>
+/// 索引贴下划线取色：按该项 Kind 返回 brighten(solid,1.45) 的提亮色。
+/// 对齐模板 renderTabs 的 <c>const ul = brighten(solid,1.45)</c>。
+/// </summary>
+public class TabUnderlineBrushConverter : IValueConverter
+{
+    public object? Convert(object? value, Type? targetType, object? parameter, CultureInfo? culture)
+    {
+        if (value is not MainTabKind kind) return new SolidColorBrush(Colors.White);
+        var theme = MainViewModel.Instance?.Theme;
+        var hex = theme is not null ? theme.UnderlineColorOf(kind) : "#FFFFFF";
+        return HexToBrushConverter.ToBrush(hex);
+    }
+
+    public object? ConvertBack(object? value, Type? targetType, object? parameter, CultureInfo? culture)
+        => null;
+}
+
+/// <summary>
 /// 索引贴背景（多值）：values[0]=是否选中，values[1]=该项 Kind。
 /// 选中取主题色提亮 1.12（对齐模板 brighten(solid,1.12)），未选中取实色（对齐模板 solid）。
 /// 相较旧版 {Binding .} 绑整个 TabItemViewModel，多值绑定会因 IsSelected 的
