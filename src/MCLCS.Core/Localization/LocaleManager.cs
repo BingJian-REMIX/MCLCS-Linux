@@ -339,7 +339,15 @@ public static class LocaleManager
   ""java.title"": ""Java 环境检测"",
   ""java.detect"": ""检测本机 Java"",
   ""java.scanning"": ""正在扫描 Java（JAVA_HOME / /usr/lib/jvm / /opt/java / PATH）..."",
-  ""java.detected"": ""检测到 {0} 个 Java 安装""
+  ""java.detected"": ""检测到 {0} 个 Java 安装"",
+  ""tool.log.desc"": ""查看 / 搜索 / 过滤 / 导出游戏日志与崩溃报告。"",
+  ""tool.clean.desc"": ""扫描并清理游戏目录中的冗余与残留文件。"",
+  ""tool.backup.desc"": ""管理存档与配置的手动 / 自动备份。"",
+  ""tool.screenshot.desc"": ""浏览、删除与打包游戏截图。"",
+  ""tool.crash.desc"": ""分析崩溃报告，定位异常类型与修复建议。"",
+  ""tool.datapack.desc"": ""扫描数据包冲突与格式问题，给出处理建议。"",
+  ""tool.saves.desc"": ""管理存档：兼容性与损坏检测、降级与备份。"",
+  ""tool.skin.desc"": ""预览与编辑玩家皮肤，校验尺寸与模型。""
 }";
 
     private static string BuiltInEnUS() => @"{
@@ -621,6 +629,14 @@ public static class LocaleManager
   ""java.title"": ""Java Environment"",
   ""java.detect"": ""Detect Local Java"",
   ""java.scanning"": ""Scanning Java (JAVA_HOME / /usr/lib/jvm / /opt/java / PATH)..."",
-  ""java.detected"": ""Detected {0} Java installation(s)""
+  ""java.detected"": ""Detected {0} Java installation(s)"",
+  ""tool.log.desc"": ""View / search / filter / export game logs and crash reports."",
+  ""tool.clean.desc"": ""Scan and clean redundant and leftover files in the game directory."",
+  ""tool.backup.desc"": ""Manage manual / scheduled backups of saves and configs."",
+  ""tool.screenshot.desc"": ""Browse, delete and package game screenshots."",
+  ""tool.crash.desc"": ""Analyze crash reports to locate exception types and fixes."",
+  ""tool.datapack.desc"": ""Scan datapack conflicts and format issues with advice."",
+  ""tool.saves.desc"": ""Manage saves: compatibility / corruption checks, downgrade and backup."",
+  ""tool.skin.desc"": ""Preview and edit player skins; validate size and model.""
 }";
 }

@@ -41,6 +41,7 @@ public partial class MainWindow : Window
         ShowPage();
     }
 
+
     /// <summary>按主屏工作区尺寸铺满窗口（避免固定尺寸在大屏上留黑边）。
     /// 优先用 Screens.Primary（真实桌面 WM 下可靠）；无 WM 的 X11（如 Xvfb）下
     /// Primary 为 null，回退用 xdotool getdisplaygeometry 取显示尺寸。</summary>
@@ -163,6 +164,14 @@ public partial class MainWindow : Window
         {
             (MainTabKind.Game, _) => new GameHomeView(),
             (MainTabKind.Download, "minecraft") => new InstallView(),
+            (MainTabKind.Toolbox, "log") => new LogView(),
+            (MainTabKind.Toolbox, "clean") => new CleanerView(),
+            (MainTabKind.Toolbox, "backup") => new BackupView(),
+            (MainTabKind.Toolbox, "screenshot") => new ScreenshotView(),
+            (MainTabKind.Toolbox, "crash") => new CrashView(),
+            (MainTabKind.Toolbox, "datapack") => new DataPackView(),
+            (MainTabKind.Toolbox, "saves") => new SavesView(),
+            (MainTabKind.Toolbox, "skin") => new SkinView(),
             (MainTabKind.Settings, "appearance") => new AppearanceView(),
             (MainTabKind.Settings, "account") => new AccountsView(),
             _ => MakePlaceholder()

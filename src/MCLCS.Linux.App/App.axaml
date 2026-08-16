@@ -111,6 +111,14 @@
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderBrush" Value="{DynamicResource ControlBorder}"/>
         </Style>
+        <Style Selector="Button.modal-btn.danger">
+            <Setter Property="Background" Value="{DynamicResource DangerBrush}"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource DangerBrush}"/>
+        </Style>
+        <Style Selector="Button.modal-btn.danger:pointerover">
+            <Setter Property="Background" Value="#C0392B"/>
+        </Style>
         <!-- 模态关闭按钮 -->
         <Style Selector="Button.modal-close">
             <Setter Property="Background" Value="Transparent"/>
@@ -147,6 +155,14 @@
     <Application.Resources>
         <conv:KeyToTextConverter x:Key="KeyToText"/>
         <conv:TokenToBitmapConverter x:Key="TokenToBitmap"/>
+        <conv:SeverityToBrushConverter x:Key="SeverityToBrush"/>
+        <conv:CrashCategoryToBrushConverter x:Key="CrashCategoryToBrush"/>
+        <conv:ConflictSeverityToBrushConverter x:Key="ConflictSeverityToBrush"/>
+        <conv:SaveSeverityToBrushConverter x:Key="SaveSeverityToBrush"/>
+        <conv:FileNameConverter x:Key="FileName"/>
+        <conv:ListJoinConverter x:Key="ListJoin"/>
+        <conv:CountToVisibleConverter x:Key="CountToVisible"/>
+        <conv:BoolToVisibleConverter x:Key="BoolToVisible"/>
         <SolidColorBrush x:Key="WindowBackground" Color="#0F1115"/>
         <SolidColorBrush x:Key="ControlBackground" Color="#1A1D24"/>
         <SolidColorBrush x:Key="ControlBorder" Color="#2A2F3A"/>
