@@ -1,0 +1,45 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:MCLCS.Linux.App.ViewModels"
+             x:Class="MCLCS.Linux.App.Views.Pages.ResourcePackView"
+             x:DataType="vm:ResourcePackViewModel">
+  <ScrollViewer Margin="18">
+    <StackPanel Spacing="14" MaxWidth="900">
+      <Border Classes="card">
+        <StackPanel Spacing="6">
+          <TextBlock FontSize="22" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"
+                     Text="{Binding Source='tab.resourcepack', Converter={StaticResource KeyToText}}"/>
+          <TextBlock Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"
+                     Text="{Binding Source='tab.resourcepack.desc', Converter={StaticResource KeyToText}}"/>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card">
+        <StackPanel Spacing="8">
+          <TextBlock Text="安装资源包" FontWeight="Bold" FontSize="14"/>
+          <Grid ColumnDefinitions="*,Auto">
+            <TextBox Grid.Column="0" Text="{Binding ZipPath}" Watermark="本地资源包 zip 路径"/>
+            <Button Grid.Column="1" Classes="modal-btn accent" Content="安装" Command="{Binding InstallCommand}"
+                    Margin="8,0,0,0"/>
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card">
+        <StackPanel Spacing="8">
+          <Grid ColumnDefinitions="*,Auto">
+            <TextBlock Text="诊断 / 修复" FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>
+            <Button Grid.Column="1" Classes="modal-btn" Content="诊断全部" Command="{Binding DiagnoseCommand}"/>
+          </Grid>
+          <TextBlock Text="{Binding Diagnosis}" FontFamily="Consolas" FontSize="12" TextWrapping="Wrap"
+                     Foreground="#B8C0CC" IsVisible="{Binding Diagnosis, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+        </StackPanel>
+      </Border>
+
+      <Button Classes="modal-btn danger" Content="重置资源包到原版" Command="{Binding ResetCommand}"
+              HorizontalAlignment="Left"/>
+
+      <TextBlock Classes="status" Text="{Binding Status}"/>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

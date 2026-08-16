@@ -1,0 +1,81 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:MCLCS.Linux.App.ViewModels"
+             xmlns:conv="clr-namespace:MCLCS.Linux.App.Converters"
+             x:Class="MCLCS.Linux.App.Views.Pages.ModsView"
+             x:DataType="vm:ModsViewModel">
+  <UserControl.Resources>
+    <conv:CountToVisibleConverter x:Key="CountToVisible"/>
+  </UserControl.Resources>
+  <ScrollViewer Margin="18">
+    <StackPanel Spacing="14" MaxWidth="960">
+      <Border Classes="card">
+        <StackPanel Spacing="6">
+          <TextBlock FontSize="22" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"
+                     Text="{Binding Source='tab.mods', Converter={StaticResource KeyToText}}"/>
+          <TextBlock Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"
+                     Text="{Binding Source='tab.mods.desc', Converter={StaticResource KeyToText}}"/>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card">
+        <StackPanel Spacing="8">
+          <TextBlock Text="搜索 Modrinth" FontWeight="Bold" FontSize="14"/>
+          <Grid ColumnDefinitions="*,Auto,Auto">
+            <TextBox Grid.Column="0" Text="{Binding Query}" Watermark="搜索关键词，如 sodium"/>
+            <TextBox Grid.Column="1" Text="{Binding GameVersion}" Watermark="MC 版本（可选）" Width="140"
+                     Margin="8,0,0,0"/>
+            <Button Grid.Column="2" Classes="modal-btn accent" Content="搜索" Command="{Binding SearchCommand}"
+                    IsEnabled="{Binding !Busy}" Margin="8,0,0,0"/>
+          </Grid>
+          <ItemsControl ItemsSource="{Binding Hits}" IsVisible="{Binding Hits.Count, Converter={StaticResource CountToVisible}}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border Margin="0,0,0,6" Padding="10,8" Background="#1B1F2A" CornerRadius="6">
+                  <StackPanel Spacing="4">
+                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding Description}" FontSize="12" Foreground="#7F8C8D" TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding Slug}" FontSize="11" Foreground="#B8C0CC" FontFamily="Consolas"/>
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card">
+        <StackPanel Spacing="8">
+          <Grid ColumnDefinitions="*,Auto">
+            <TextBlock Text="已安装 Mod" FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>
+            <Button Grid.Column="1" Classes="modal-btn" Content="刷新" Command="{Binding RefreshCommand}"/>
+          </Grid>
+          <ItemsControl x:Name="ModList" ItemsSource="{Binding Installed}" IsVisible="{Binding Installed.Count, Converter={StaticResource CountToVisible}}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border Margin="0,0,0,6" Padding="10,8" Background="#1B1F2A" CornerRadius="6">
+                  <Grid ColumnDefinitions="*,Auto,Auto">
+                    <StackPanel Spacing="2">
+                      <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                      <TextBlock Text="{Binding InstalledVersion}" FontSize="11" Foreground="#7F8C8D"/>
+                    </StackPanel>
+                    <TextBlock Grid.Column="1" Text="{Binding Loader}" FontSize="11" Foreground="#B8C0CC"
+                               VerticalAlignment="Center" Margin="8,0,0,0"/>
+                    <Button Grid.Column="2" Classes="modal-btn danger" Content="卸载"
+                            Command="{Binding #ModList.DataContext.UninstallCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                            CommandParameter="{Binding}" Margin="8,0,0,0"/>
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <Grid ColumnDefinitions="*,Auto">
+        <ProgressBar IsIndeterminate="{Binding Busy}" IsVisible="{Binding Busy}"/>
+        <TextBlock Grid.Column="1" Classes="status" Margin="12,0,0,0" Text="{Binding Status}"/>
+      </Grid>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

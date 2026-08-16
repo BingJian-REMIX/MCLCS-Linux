@@ -1,0 +1,32 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:MCLCS.Linux.App.ViewModels"
+             x:Class="MCLCS.Linux.App.Views.Pages.MapView"
+             x:DataType="vm:MapViewModel">
+  <ScrollViewer Margin="18">
+    <StackPanel Spacing="14" MaxWidth="900">
+      <Border Classes="card">
+        <StackPanel Spacing="6">
+          <TextBlock FontSize="22" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"
+                     Text="{Binding Source='tab.map', Converter={StaticResource KeyToText}}"/>
+          <TextBlock Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"
+                     Text="{Binding Source='tab.map.desc', Converter={StaticResource KeyToText}}"/>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card">
+        <StackPanel Spacing="8">
+          <TextBlock Text="安装地图" FontWeight="Bold" FontSize="14"/>
+          <Grid ColumnDefinitions="*,Auto">
+            <TextBox Grid.Column="0" Text="{Binding ZipPath}" Watermark="本地地图 zip 路径"/>
+            <Button Grid.Column="1" Classes="modal-btn accent" Content="安装" Command="{Binding InstallCommand}"
+                    Margin="8,0,0,0"/>
+          </Grid>
+          <TextBlock Text="地图 zip 会自动安装到 saves/，并检测根目录前缀。" FontSize="11" Foreground="#7F8C8D"/>
+        </StackPanel>
+      </Border>
+
+      <TextBlock Classes="status" Text="{Binding Status}"/>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

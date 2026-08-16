@@ -164,6 +164,11 @@ public partial class MainWindow : Window
         {
             (MainTabKind.Game, _) => new GameHomeView(),
             (MainTabKind.Download, "minecraft") => new InstallView(),
+            (MainTabKind.Download, "mod") => new ModsView(),
+            (MainTabKind.Download, "shader") => new ShaderView(),
+            (MainTabKind.Download, "resourcepack") => new ResourcePackView(),
+            (MainTabKind.Download, "modpack") => new ModpackView(),
+            (MainTabKind.Download, "map") => new MapView(),
             (MainTabKind.Toolbox, "log") => new LogView(),
             (MainTabKind.Toolbox, "clean") => new CleanerView(),
             (MainTabKind.Toolbox, "backup") => new BackupView(),
