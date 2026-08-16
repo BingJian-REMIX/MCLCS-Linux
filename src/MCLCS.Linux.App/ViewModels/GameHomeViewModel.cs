@@ -13,6 +13,7 @@ using MCLCS.Core.Models;
 using MCLCS.Core.Mvvm;
 using MCLCS.Core.Profiles;
 using MCLCS.Core.Recommend;
+using MCLCS.Core.Save;
 using MCLCS.Core.Servers;
 using MCLCS.Core.Statistics;
 using MCLCS.Core.Utils;
@@ -315,8 +316,24 @@ public class GameHomeViewModel : ObservableObject
             }
 
             Status = $"正在启动 {id} …";
+
+            // 链接 core：按「设置 → 启动」开关在启动时真正调用 Core 模块
+            var gameRoot = profile.GameRoot;
+            if (profile.LaunchCompatCheckEnabled)
+            {
+                var incompatible = SaveCompatibilityDetector.Scan(gameRoot, id);
+                var bad = incompatible.Count(r => !r.Compatible);
+                if (bad > 0)
+                    Status = $"存档兼容性警告：{bad} 个存档可能与 {id} 不兼容，启动后请留意";
+            }
+            if (profile.Prewarm.Mode != PrewarmMode.Off)
+            {
+                var plan = LaunchPrewarmer.BuildPlan(gameRoot, id, profile.Prewarm);
+                _ = LaunchPrewarmer.RunAsync(plan, profile.Prewarm);
+            }
+
             using var client = new HttpClient { Timeout = System.Threading.Timeout.InfiniteTimeSpan };
-            var result = await GameLauncher.LaunchAsync(_gameRoot, id, java, opts, null);
+            var result = await GameLauncher.LaunchAsync(gameRoot, id, java, opts, null);
             Status = result.Crashed
                 ? $"游戏已退出（崩溃，退出码 {result.ExitCode}）"
                 : $"游戏已退出（退出码 {result.ExitCode}）";
