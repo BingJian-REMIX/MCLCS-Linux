@@ -21,7 +21,7 @@ public class TabWidthConverter : IValueConverter
 
 /// <summary>
 /// 索引贴背景（多值）：values[0]=是否选中，values[1]=该项 Kind。
-/// 选中取主题实色，未选中暗化 0.68 以凸显激活页。
+/// 选中取主题色提亮 1.12（对齐模板 brighten(solid,1.12)），未选中取实色（对齐模板 solid）。
 /// 相较旧版 {Binding .} 绑整个 TabItemViewModel，多值绑定会因 IsSelected 的
 /// PropertyChanged 精确触发重算，修复切换主标签时背景色不刷新的 Bug-1。
 /// </summary>
@@ -31,17 +31,12 @@ public class TabBackgroundConverter : IMultiValueConverter
     {
         if (values.Count < 2 || values[0] is not bool isSelected || values[1] is not MainTabKind kind)
             return new SolidColorBrush(Colors.Gray);
-        var hex = MainViewModel.Instance?.Theme?.ColorOf(kind) ?? "#888888";
-        var c = HexToBrushConverter.ToColor(hex);
-        if (!isSelected)
-            c = Darken(c, 0.68);
-        return new SolidColorBrush(c);
+        var theme = MainViewModel.Instance?.Theme;
+        var hex = theme is not null
+            ? (isSelected ? theme.ActiveColorOf(kind) : theme.ColorOf(kind))
+            : "#888888";
+        return HexToBrushConverter.ToBrush(hex);
     }
-
-    private static Color Darken(Color c, double f) =>
-        Color.FromRgb(Clamp((int)(c.R * f)), Clamp((int)(c.G * f)), Clamp((int)(c.B * f)));
-
-    private static byte Clamp(int v) => v < 0 ? (byte)0 : v > 255 ? (byte)255 : (byte)v;
 }
 
 /// <summary>索引贴外边距：首项无偏移，其余左移形成重叠（对齐 WPF MainTabs.CollapsedOverlap=20）。</summary>

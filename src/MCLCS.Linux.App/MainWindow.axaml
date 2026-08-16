@@ -61,7 +61,7 @@
 
       <!-- 四色索引贴主标签：重叠 + 展开动画（对齐 WPF MainTabs 几何：选中/游戏页展开 132 显文字，其余折叠 56 色条；左压右叠放；200ms 过渡）-->
       <ItemsControl Grid.Column="2" ItemsSource="{Binding TabItems}"
-                    HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,8,0">
+                    HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0">
         <ItemsControl.ItemContainerTheme>
           <ControlTheme TargetType="ContentPresenter">
             <Setter Property="Panel.ZIndex" Value="{Binding ZIndex}"/>
@@ -92,11 +92,11 @@
                   <BrushTransition Property="Background" Duration="0:0:0.15"/>
                 </Transitions>
               </Button.Transitions>
-              <Grid>
-                <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center"
+              <Grid RowDefinitions="*,3">
+                <TextBlock Grid.Row="0" Text="{Binding DisplayName}" VerticalAlignment="Center"
                            HorizontalAlignment="Center" FontWeight="Bold" FontSize="13"
                            Foreground="White" IsVisible="{Binding IsExpanded}"/>
-                <Rectangle Height="3" VerticalAlignment="Bottom" HorizontalAlignment="Stretch"
+                <Rectangle Grid.Row="1" Height="3" VerticalAlignment="Bottom" HorizontalAlignment="Stretch"
                            Fill="White" IsVisible="{Binding IsSelected}"/>
               </Grid>
             </Button>
