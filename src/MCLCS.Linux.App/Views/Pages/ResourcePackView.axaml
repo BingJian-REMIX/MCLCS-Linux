@@ -4,7 +4,7 @@
              x:Class="MCLCS.Linux.App.Views.Pages.ResourcePackView"
              x:DataType="vm:ResourcePackViewModel">
   <ScrollViewer Margin="18">
-    <StackPanel Spacing="14" MaxWidth="900">
+    <StackPanel Spacing="14" MaxWidth="900" HorizontalAlignment="Left">
       <TextBlock FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"
                  Text="{Binding Source='tab.resourcepack', Converter={StaticResource KeyToText}}"/>
 
@@ -26,7 +26,7 @@
             <Button Grid.Column="1" Classes="modal-btn" Content="诊断全部" Command="{Binding DiagnoseCommand}"/>
           </Grid>
           <TextBlock Text="{Binding Diagnosis}" FontFamily="Consolas" FontSize="12" TextWrapping="Wrap"
-                     Foreground="#B8C0CC" IsVisible="{Binding Diagnosis, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                     Foreground="{DynamicResource SecondaryForeground}" IsVisible="{Binding Diagnosis, Converter={x:Static ObjectConverters.IsNotNull}}"/>
         </StackPanel>
       </Border>
 

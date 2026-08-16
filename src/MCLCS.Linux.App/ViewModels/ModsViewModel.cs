@@ -1,4 +1,8 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
 using System.Windows.Input;
 using MCLCS.Core.Download;
 using MCLCS.Core.Localization;
@@ -16,6 +20,7 @@ namespace MCLCS.Linux.App.ViewModels;
 public class ModsViewModel : ObservableObject
 {
     private readonly ModrinthClient _client = new(new HttpClient());
+    private readonly HttpClient _dl = new();
     private readonly ModManager _manager;
     private readonly string _gameRoot = GameConstants.DefaultGameRoot;
 
@@ -70,6 +75,8 @@ public class ModsViewModel : ObservableObject
     public ICommand SearchCommand => new AsyncRelayCommand(_ => SearchAsync());
     public ICommand RefreshCommand => new RelayCommand(_ => RefreshInstalled());
     public ICommand UninstallCommand => new RelayCommand(o => Uninstall(o as ModEntry));
+    public ICommand InstallHitCommand => new AsyncRelayCommand(o => InstallHitAsync(o as ModrinthHit));
+    public ICommand OpenHitCommand => new RelayCommand(o => OpenHit(o as ModrinthHit));
 
     private async Task SearchAsync()
     {
@@ -126,6 +133,55 @@ public class ModsViewModel : ObservableObject
         catch (Exception ex)
         {
             Status = $"卸载异常：{ex.Message}";
+        }
+    }
+
+    /// <summary>下载搜索结果中的某个 Mod 的最新版本到 mods 目录（对齐 WPF 卡片“加入队列/下载”）。</summary>
+    private async Task InstallHitAsync(ModrinthHit? hit)
+    {
+        if (hit is null) return;
+        Busy = true;
+        Status = $"正在下载 {hit.Title}…";
+        try
+        {
+            var versions = await _client.GetVersionsAsync(hit.ProjectId);
+            var ver = versions.FirstOrDefault();
+            if (ver?.Files == null || ver.Files.Count == 0)
+            {
+                Status = "该 Mod 无可用文件";
+                return;
+            }
+            var file = ver.Files.FirstOrDefault(f => f.Primary) ?? ver.Files[0];
+            var modsDir = Path.Combine(_gameRoot, "mods");
+            Directory.CreateDirectory(modsDir);
+            var dest = Path.Combine(modsDir, file.FileName);
+            var bytes = await _dl.GetByteArrayAsync(file.Url);
+            await File.WriteAllBytesAsync(dest, bytes);
+            Status = $"已下载：{file.FileName}";
+            RefreshInstalled();
+        }
+        catch (Exception ex)
+        {
+            Status = $"下载失败：{ex.Message}";
+        }
+        finally
+        {
+            Busy = false;
+        }
+    }
+
+    /// <summary>在浏览器打开 Modrinth 项目页（对齐 WPF 卡片“详情”）。</summary>
+    private void OpenHit(ModrinthHit? hit)
+    {
+        if (hit is null || string.IsNullOrWhiteSpace(hit.Slug)) return;
+        try
+        {
+            var url = $"https://modrinth.com/mod/{hit.Slug}";
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+        }
+        catch
+        {
+            /* 无可用浏览器时静默忽略 */
         }
     }
 }

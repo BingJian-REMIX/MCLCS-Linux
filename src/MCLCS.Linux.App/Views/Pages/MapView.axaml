@@ -4,7 +4,7 @@
              x:Class="MCLCS.Linux.App.Views.Pages.MapView"
              x:DataType="vm:MapViewModel">
   <ScrollViewer Margin="18">
-    <StackPanel Spacing="14" MaxWidth="900">
+    <StackPanel Spacing="14" MaxWidth="900" HorizontalAlignment="Left">
       <TextBlock FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"
                  Text="{Binding Source='tab.map', Converter={StaticResource KeyToText}}"/>
 
@@ -15,7 +15,7 @@
           <Button Grid.Column="1" Classes="modal-btn accent" Content="安装" Command="{Binding InstallCommand}"
                   Margin="8,0,0,0"/>
         </Grid>
-        <TextBlock Text="地图 zip 会自动安装到 saves/，并检测根目录前缀。" FontSize="11" Foreground="#7F8C8D"/>
+        <TextBlock Text="地图 zip 会自动安装到 saves/，并检测根目录前缀。" FontSize="11" Foreground="{DynamicResource SecondaryForeground}"/>
       </StackPanel>
 
       <TextBlock Classes="status" Text="{Binding Status}"/>

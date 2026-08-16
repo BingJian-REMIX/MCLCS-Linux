@@ -3,7 +3,7 @@
              xmlns:vm="clr-namespace:MCLCS.Linux.App.ViewModels"
              x:Class="MCLCS.Linux.App.Views.Pages.BackupView">
   <ScrollViewer Margin="18">
-    <StackPanel Spacing="14" MaxWidth="900">
+    <StackPanel Spacing="14" MaxWidth="900" HorizontalAlignment="Left">
       <TextBlock FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"
                  Text="{Binding Source='tool.backup', Converter={StaticResource KeyToText}}"/>
 

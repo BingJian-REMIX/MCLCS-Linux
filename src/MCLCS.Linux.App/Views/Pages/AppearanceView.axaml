@@ -3,7 +3,7 @@
              xmlns:vm="clr-namespace:MCLCS.Linux.App.ViewModels"
              x:Class="MCLCS.Linux.App.Views.Pages.AppearanceView">
   <ScrollViewer Margin="18">
-    <StackPanel Spacing="14" MaxWidth="880">
+    <StackPanel Spacing="14" MaxWidth="880" HorizontalAlignment="Left">
 
       <Border Classes="card">
         <StackPanel Spacing="12">

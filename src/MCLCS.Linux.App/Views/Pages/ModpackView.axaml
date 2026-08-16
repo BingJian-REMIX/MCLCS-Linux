@@ -4,30 +4,36 @@
              x:Class="MCLCS.Linux.App.Views.Pages.ModpackView"
              x:DataType="vm:ModpackViewModel">
   <ScrollViewer Margin="18">
-    <StackPanel Spacing="14" MaxWidth="900">
+    <StackPanel Spacing="14" MaxWidth="900" HorizontalAlignment="Left">
       <TextBlock FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"
                  Text="{Binding Source='lbl.modpack', Converter={StaticResource KeyToText}}"/>
 
-      <Border Classes="card">
-        <StackPanel Spacing="8">
-          <TextBlock Text="安装整合包" FontWeight="Bold" FontSize="14"/>
-          <Grid ColumnDefinitions="*,Auto">
-            <TextBox Grid.Column="0" Text="{Binding MrpackPath}" Watermark="本地 .mrpack 整合包路径"/>
-            <Button Grid.Column="1" Classes="modal-btn accent" Content="安装" Command="{Binding InstallCommand}"
-                    IsEnabled="{Binding !Busy}" Margin="8,0,0,0"/>
-          </Grid>
-          <CheckBox Content="隔离安装（独立目录）" IsChecked="{Binding Isolated}"/>
-        </StackPanel>
-      </Border>
+      <Grid ColumnDefinitions="*,*">
+        <!-- 导出整合包 (WPF ModpackView 左栏) -->
+        <Border Classes="card" Margin="0,0,8,0">
+          <StackPanel Spacing="8">
+            <TextBlock Text="导出整合包" FontWeight="Bold" FontSize="14"/>
+            <TextBox Text="{Binding VersionId}" Watermark="要导出的 MC 版本号，如 1.21.4"/>
+            <TextBox Text="{Binding DestZip}" Watermark="导出 zip 路径，如 /tmp/mypack.zip" Margin="0,8,0,0"/>
+            <Button Classes="modal-btn" Content="导出" Command="{Binding ExportCommand}" HorizontalAlignment="Left"/>
+          </StackPanel>
+        </Border>
 
-      <Border Classes="card">
-        <StackPanel Spacing="8">
-          <TextBlock Text="导出整合包" FontWeight="Bold" FontSize="14"/>
-          <TextBox Text="{Binding VersionId}" Watermark="要导出的 MC 版本号，如 1.21.4"/>
-          <TextBox Text="{Binding DestZip}" Watermark="导出 zip 路径，如 /tmp/mypack.zip" Margin="0,8,0,0"/>
-          <Button Classes="modal-btn" Content="导出" Command="{Binding ExportCommand}" HorizontalAlignment="Left"/>
-        </StackPanel>
-      </Border>
+        <!-- 导入整合包 (WPF ModpackView 右栏) -->
+        <Border Grid.Column="1" Classes="card" Margin="8,0,0,0">
+          <StackPanel Spacing="8">
+            <TextBlock Text="导入整合包" FontWeight="Bold" FontSize="14"/>
+            <TextBlock Text="支持 Modrinth .mrpack 整合包。" Foreground="{DynamicResource SecondaryForeground}"
+                       TextWrapping="Wrap"/>
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBox Grid.Column="0" Text="{Binding MrpackPath}" Watermark="本地 .mrpack 整合包路径"/>
+              <Button Grid.Column="1" Classes="modal-btn accent" Content="安装" Command="{Binding InstallCommand}"
+                      IsEnabled="{Binding !Busy}" Margin="8,0,0,0"/>
+            </Grid>
+            <CheckBox Content="隔离安装（独立目录）" IsChecked="{Binding Isolated}"/>
+          </StackPanel>
+        </Border>
+      </Grid>
 
       <Grid ColumnDefinitions="*,Auto">
         <ProgressBar IsIndeterminate="{Binding Busy}" IsVisible="{Binding Busy}"/>

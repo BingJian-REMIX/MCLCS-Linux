@@ -8,52 +8,79 @@
     <conv:CountToVisibleConverter x:Key="CountToVisible"/>
   </UserControl.Resources>
   <ScrollViewer Margin="18">
-    <StackPanel Spacing="14" MaxWidth="960">
+    <StackPanel Spacing="14" MaxWidth="1100" HorizontalAlignment="Left">
       <TextBlock FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"
                  Text="{Binding Source='tab.mods', Converter={StaticResource KeyToText}}"/>
 
-      <Border Classes="card">
-        <StackPanel Spacing="8">
-          <TextBlock Text="搜索 Modrinth" FontWeight="Bold" FontSize="14"/>
-          <Grid ColumnDefinitions="*,Auto,Auto">
-            <TextBox Grid.Column="0" Text="{Binding Query}" Watermark="搜索关键词，如 sodium"/>
-            <TextBox Grid.Column="1" Text="{Binding GameVersion}" Watermark="MC 版本（可选）" Width="140"
-                     Margin="8,0,0,0"/>
-            <Button Grid.Column="2" Classes="modal-btn accent" Content="搜索" Command="{Binding SearchCommand}"
-                    IsEnabled="{Binding !Busy}" Margin="8,0,0,0"/>
-          </Grid>
-          <ItemsControl ItemsSource="{Binding Hits}" IsVisible="{Binding Hits.Count, Converter={StaticResource CountToVisible}}">
-            <ItemsControl.ItemTemplate>
-              <DataTemplate>
-                <Border Margin="0,0,0,6" Padding="10,8" Background="#1B1F2A" CornerRadius="6">
-                  <StackPanel Spacing="4">
-                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold"/>
-                    <TextBlock Text="{Binding Description}" FontSize="12" Foreground="#7F8C8D" TextWrapping="Wrap"/>
-                    <TextBlock Text="{Binding Slug}" FontSize="11" Foreground="#B8C0CC" FontFamily="Consolas"/>
-                  </StackPanel>
-                </Border>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
-        </StackPanel>
-      </Border>
+      <!-- 顶部搜索栏 (WPF DownloadPageView Row0) -->
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <TextBox Width="240" Text="{Binding Query}" Watermark="搜索关键词，如 sodium"/>
+        <Button Classes="modal-btn accent" Content="搜索" Command="{Binding SearchCommand}"
+                IsEnabled="{Binding !Busy}"/>
+        <TextBlock Text="{Binding Status}" VerticalAlignment="Center"
+                   Foreground="{DynamicResource SecondaryForeground}"/>
+      </StackPanel>
 
+      <!-- 筛选行 (WPF DownloadPageView Row1)：版本 + 加载器 -->
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <TextBox Width="140" Text="{Binding GameVersion}" Watermark="MC 版本（可选）"/>
+        <TextBlock Text="加载器：Any" VerticalAlignment="Center" FontSize="12"
+                   Foreground="{DynamicResource SecondaryForeground}"/>
+      </StackPanel>
+
+      <!-- 卡片网格 (WPF DownloadPageView Row2) -->
+      <ItemsControl x:Name="ModsGrid" ItemsSource="{Binding Hits}"
+                    IsVisible="{Binding Hits.Count, Converter={StaticResource CountToVisible}}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <WrapPanel Orientation="Horizontal"/>
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Border Margin="6" Width="200" Background="{DynamicResource ControlBackground}"
+                    CornerRadius="10" Padding="10">
+              <StackPanel Spacing="6">
+                <Border Height="90" CornerRadius="8" Background="{DynamicResource ControlBorder}"/>
+                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                <TextBlock Text="{Binding Description}" FontSize="11"
+                           Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"
+                           Height="32" TextTrimming="CharacterEllipsis"/>
+                <TextBlock Text="{Binding Downloads, StringFormat='下载 {0}'}" FontSize="11"
+                           Foreground="{DynamicResource AccentBrush}"/>
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <Button Classes="modal-btn primary" Content="下载"
+                          Command="{Binding #ModsGrid.DataContext.InstallHitCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                          CommandParameter="{Binding}"/>
+                  <Button Classes="modal-btn" Content="详情"
+                          Command="{Binding #ModsGrid.DataContext.OpenHitCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                          CommandParameter="{Binding}"/>
+                </StackPanel>
+              </StackPanel>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <!-- 已安装 Mod -->
       <Border Classes="card">
         <StackPanel Spacing="8">
           <Grid ColumnDefinitions="*,Auto">
             <TextBlock Text="已安装 Mod" FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>
             <Button Grid.Column="1" Classes="modal-btn" Content="刷新" Command="{Binding RefreshCommand}"/>
           </Grid>
-          <ItemsControl x:Name="ModList" ItemsSource="{Binding Installed}" IsVisible="{Binding Installed.Count, Converter={StaticResource CountToVisible}}">
+          <ItemsControl x:Name="ModList" ItemsSource="{Binding Installed}"
+                        IsVisible="{Binding Installed.Count, Converter={StaticResource CountToVisible}}">
             <ItemsControl.ItemTemplate>
               <DataTemplate>
-                <Border Margin="0,0,0,6" Padding="10,8" Background="#1B1F2A" CornerRadius="6">
+                <Border Margin="0,0,0,6" Padding="10,8" Background="{DynamicResource ControlBackground}" CornerRadius="6">
                   <Grid ColumnDefinitions="*,Auto,Auto">
                     <StackPanel Spacing="2">
                       <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
-                      <TextBlock Text="{Binding InstalledVersion}" FontSize="11" Foreground="#7F8C8D"/>
+                      <TextBlock Text="{Binding InstalledVersion}" FontSize="11" Foreground="{DynamicResource SecondaryForeground}"/>
                     </StackPanel>
-                    <TextBlock Grid.Column="1" Text="{Binding Loader}" FontSize="11" Foreground="#B8C0CC"
+                    <TextBlock Grid.Column="1" Text="{Binding Loader}" FontSize="11"
+                               Foreground="{DynamicResource SecondaryForeground}"
                                VerticalAlignment="Center" Margin="8,0,0,0"/>
                     <Button Grid.Column="2" Classes="modal-btn danger" Content="卸载"
                             Command="{Binding #ModList.DataContext.UninstallCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
@@ -65,11 +92,6 @@
           </ItemsControl>
         </StackPanel>
       </Border>
-
-      <Grid ColumnDefinitions="*,Auto">
-        <ProgressBar IsIndeterminate="{Binding Busy}" IsVisible="{Binding Busy}"/>
-        <TextBlock Grid.Column="1" Classes="status" Margin="12,0,0,0" Text="{Binding Status}"/>
-      </Grid>
     </StackPanel>
   </ScrollViewer>
 </UserControl>

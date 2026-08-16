@@ -4,7 +4,7 @@
              x:Class="MCLCS.Linux.App.Views.Pages.SkinView"
              x:DataType="vm:SkinViewModel">
   <ScrollViewer Margin="18">
-    <StackPanel Spacing="14" MaxWidth="900">
+    <StackPanel Spacing="14" MaxWidth="900" HorizontalAlignment="Left">
       <TextBlock FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"
                  Text="{Binding Source='tool.skin', Converter={StaticResource KeyToText}}"/>
 

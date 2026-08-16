@@ -4,7 +4,7 @@
              x:Class="MCLCS.Linux.App.Views.Pages.GeneralSettingsView"
              x:DataType="vm:GeneralSettingsViewModel">
   <ScrollViewer Margin="18">
-    <StackPanel Spacing="14" MaxWidth="760">
+    <StackPanel Spacing="14" MaxWidth="760" HorizontalAlignment="Left">
       <Border Classes="card">
         <StackPanel Spacing="6">
           <TextBlock FontSize="22" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"

@@ -3,7 +3,7 @@
              xmlns:vm="clr-namespace:MCLCS.Linux.App.ViewModels"
              x:Class="MCLCS.Linux.App.Views.Pages.GameHomeView">
   <ScrollViewer Margin="18">
-    <StackPanel Spacing="14" MaxWidth="880">
+    <StackPanel Spacing="14" MaxWidth="880" HorizontalAlignment="Left">
 
       <!-- 快速启动面板 -->
       <Border Classes="card">

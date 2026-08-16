@@ -8,7 +8,7 @@
     <conv:CountToVisibleConverter x:Key="CountToVisible"/>
   </UserControl.Resources>
   <ScrollViewer Margin="18">
-    <StackPanel Spacing="14" MaxWidth="900">
+    <StackPanel Spacing="14" MaxWidth="900" HorizontalAlignment="Left">
       <TextBlock FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"
                  Text="{Binding Source='tab.shader', Converter={StaticResource KeyToText}}"/>
 
@@ -32,7 +32,7 @@
           <ItemsControl ItemsSource="{Binding Installed}" IsVisible="{Binding Installed.Count, Converter={StaticResource CountToVisible}}">
             <ItemsControl.ItemTemplate>
               <DataTemplate>
-                <Border Margin="0,0,0,6" Padding="10,8" Background="#1B1F2A" CornerRadius="6">
+                <Border Margin="0,0,0,6" Padding="10,8" Background="{DynamicResource ControlBackground}" CornerRadius="6">
                   <TextBlock Text="{Binding}" FontFamily="Consolas" FontSize="12"/>
                 </Border>
               </DataTemplate>
