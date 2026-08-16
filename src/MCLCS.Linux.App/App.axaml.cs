@@ -4,6 +4,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Styling;
 using MCLCS.Core.Theme;
+using MCLCS.Core.Utils;
 using MCLCS.Linux.App.Themes;
 
 namespace MCLCS.Linux.App;
@@ -13,6 +14,10 @@ public class App : Application
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
+
+        // 必须最先执行（对齐 WPF App.xaml.cs）：读取用户自定义的游戏目录覆盖，
+        // 之后所有 GameConstants.DefaultGameRoot 才是正确值，各页面构造时缓存的目录才不会错。
+        GameConstants.LoadGameRootOverride();
 
         // 主题接入：优先读取持久化偏好（mclcs_theme.json）；
         // 无偏好文件时默认暗色，保持 Linux 版既定外观。

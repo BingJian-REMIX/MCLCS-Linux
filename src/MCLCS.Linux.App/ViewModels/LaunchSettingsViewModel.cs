@@ -155,6 +155,7 @@ public class LaunchSettingsViewModel : ObservableObject
     {
         try
         {
+            var oldRoot = _profile.GameRoot;   // 当前生效目录（上次保存的值），作为迁移源
             _profile.RepairPolicy = RepairPolicy;
             _profile.PreferredJavaVendor = JavaVendor;
             _profile.AutoInstallMissingMods = AutoInstall;
@@ -163,11 +164,23 @@ public class LaunchSettingsViewModel : ObservableObject
             if (int.TryParse(MinMemoryMb, out var min) && min > 0) _profile.MinMemoryMb = min;
             if (int.TryParse(MaxMemoryMb, out var max) && max > 0) _profile.MaxMemoryMb = max;
             _profile.ExtraJvmArgs = ExtraJvmArgs.Split(' ', StringSplitOptions.RemoveEmptyEntries).ToList();
-            _profile.GameRoot = string.IsNullOrWhiteSpace(GameRoot) ? GameConstants.DefaultGameRoot : GameRoot.Trim();
+
+            // 游戏目录：留空或等同于系统默认表示使用系统默认目录
+            var newRoot = string.IsNullOrWhiteSpace(GameRoot) ? GameConstants.SystemGameRoot : GameRoot.Trim();
+            _profile.GameRoot = newRoot;
             _profile.LaunchCompatCheckEnabled = LaunchCompatCheck;
             _profile.Prewarm.Mode = PrewarmMode;
             _profile.Hud.Enabled = HudEnabled;
             ProfileStore.Save(_profile);
+
+            // 目录真正改变时：迁移存档文件到新目录，并全局生效（对齐 WPF GameConstants.SetGameRoot），
+            // 使 GameConstants.DefaultGameRoot 及其他页面、重启后都能定位到正确目录，不会清空已有设置。
+            if (!string.Equals(oldRoot, newRoot, StringComparison.OrdinalIgnoreCase))
+            {
+                ProfileStore.Migrate(oldRoot, newRoot);
+                GameConstants.SetGameRoot(string.IsNullOrWhiteSpace(GameRoot) ? null : GameRoot.Trim());
+            }
+
             Status = "启动设置已保存";
         }
         catch (Exception ex)
