@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Media.Transformation;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
@@ -12,6 +13,7 @@ using MCLCS.Linux.App.ViewModels;
 using MCLCS.Linux.App.Views;
 using MCLCS.Linux.App.Views.Pages;
 using System.Diagnostics;
+using System.IO;
 
 namespace MCLCS.Linux.App;
 
@@ -32,6 +34,8 @@ public partial class MainWindow : Window
         LocaleManager.LocaleChanged += OnLocaleChanged;
         // 上屏且屏幕信息就绪后再铺满（构造函数里 Screens.Primary 尚未可用）
         Opened += (_, _) => FitToScreen();
+        // 窗口就绪后应用外观偏好（主题色/字体缩放/背景图）——启动时 MainWindow 尚未创建，此处补全
+        Opened += (_, _) => App.ApplyAppearanceFromProfile();
         // 初始页面路由（默认主页为游戏页，无侧栏）
         ShowPage();
     }
@@ -46,6 +50,28 @@ public partial class MainWindow : Window
         Position = area.Value.TopLeft;
         Width = area.Value.Width;
         Height = area.Value.Height;
+    }
+
+    /// <summary>设置主窗口背景图片（设置 → 外观：背景图）。null/空或文件不存在时清除。</summary>
+    public void SetBackgroundImage(string? path)
+    {
+        if (BgImage is null) return;
+        if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+        {
+            BgImage.Source = null;
+            BgImage.IsVisible = false;
+            return;
+        }
+        try
+        {
+            BgImage.Source = new Bitmap(path);
+            BgImage.IsVisible = true;
+        }
+        catch
+        {
+            BgImage.Source = null;
+            BgImage.IsVisible = false;
+        }
     }
 
     private PixelRect? GetScreenArea()

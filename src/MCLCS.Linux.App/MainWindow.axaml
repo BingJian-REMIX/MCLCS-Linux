@@ -27,6 +27,10 @@
   </Window.Resources>
 
   <Grid RowDefinitions="52,* 30">
+    <!-- ===== 背景图片（设置 → 外观：背景图，铺满窗口、置于内容之下）===== -->
+    <Image x:Name="BgImage" Grid.Row="0" Grid.RowSpan="3" Stretch="UniformToFill"
+           IsVisible="False" ZIndex="0"/>
+
     <!-- ===== 标题栏（52px，背景跟随当前主标签色，对齐 WPF TitleBarBrush）===== -->
     <Grid x:Name="TitleBar" Grid.Row="0"
           Background="{Binding SelectedTab.Kind, Converter={StaticResource KindToBrush}}"

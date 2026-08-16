@@ -4,8 +4,10 @@ using System.Threading.Tasks;
 using MCLCS.Core.Launcher;
 using MCLCS.Core.Localization;
 using MCLCS.Core.Mvvm;
+using MCLCS.Core.Profiles;
 using MCLCS.Core.Theme;
 using MCLCS.Core.UI;
+using MCLCS.Core.Utils;
 using MCLCS.Linux.App;
 
 namespace MCLCS.Linux.App.ViewModels;
@@ -29,14 +31,17 @@ public class MainViewModel : ObservableObject
     /// <summary>单例引用，供 KindToBrushConverter 在 XAML 模板加载时取主题色。</summary>
     public static MainViewModel? Instance { get; set; }
 
+    /// <summary>持久化的启动器配置（来自 Core；外观设置真正链接到这里，而非空壳）。</summary>
+    private readonly LauncherProfile _profile = ProfileStore.Load(GameConstants.DefaultGameRoot);
+
     /// <summary>四色主标签（来自 Core.UI.MainTabs.All），保留以兼容既有绑定。</summary>
     public IReadOnlyList<MainTabDefinition> Tabs => MainTabs.All;
 
     /// <summary>四色主标签的可绑定包装集合，驱动索引贴的展开 / 选中动画与重叠 Z 序。</summary>
     public ObservableCollection<TabItemViewModel> TabItems { get; }
 
-    /// <summary>主题配色配置（Core.TabThemeConfig，可被用户自定义并持久化）。</summary>
-    public TabThemeConfig Theme { get; } = new();
+    /// <summary>四色标签配色（Core.TabThemeConfig，直接复用 profile.TabTheme，编辑即持久化）。</summary>
+    public TabThemeConfig Theme => _profile.TabTheme;
 
     // ===== 语言 / 主题（对齐 WPF SettingsView：语言在「通用」，主题在「外观」）=====
 
@@ -70,6 +75,63 @@ public class MainViewModel : ObservableObject
         }
     }
 
+    // ===== 外观（对齐 WPF 设置 → 外观：主题色 / 背景图 / 字体缩放，实时生效并持久化到 profile）=====
+
+    private string _themeColor = "#3a7b4f";
+    /// <summary>全局强调色（hex）。修改即时覆盖 Accent 系列资源并写入 profile。</summary>
+    public string ThemeColor
+    {
+        get => _themeColor;
+        set
+        {
+            var hex = (value ?? "").Trim();
+            if (!TabThemeConfig.IsValidColor(hex)) return;
+            if (SetField(ref _themeColor, hex))
+            {
+                App.ApplyAccentColor(hex);
+                _profile.ThemeColor = hex;
+                PersistProfile();
+            }
+        }
+    }
+
+    private string _backgroundImagePath = "";
+    /// <summary>主窗口背景图片路径。修改即时预览并持久化。</summary>
+    public string BackgroundImagePath
+    {
+        get => _backgroundImagePath;
+        set
+        {
+            var path = (value ?? "").Trim();
+            if (SetField(ref _backgroundImagePath, path))
+            {
+                App.ApplyBackgroundImage(string.IsNullOrWhiteSpace(path) ? null : path);
+                _profile.BackgroundImagePath = string.IsNullOrWhiteSpace(path) ? null : path;
+                PersistProfile();
+            }
+        }
+    }
+
+    private double _fontScale = 1.0;
+    /// <summary>字体缩放系数（0.8–1.5）。修改即时缩放主窗口字号并持久化。</summary>
+    public double FontScale
+    {
+        get => _fontScale;
+        set
+        {
+            var s = value <= 0 ? 1.0 : value;
+            if (SetField(ref _fontScale, s))
+            {
+                App.ApplyFontScale(s);
+                _profile.FontScale = s;
+                PersistProfile();
+            }
+        }
+    }
+
+    /// <summary>保存外观设置到 profile（四色标签色一并写入，因 Theme 复用 profile.TabTheme）。</summary>
+    public void PersistProfile() => ProfileStore.Save(_profile);
+
     private MainTabDefinition _selectedTab = MainTabs.Get(MainTabKind.Game);
 
     public MainViewModel()
@@ -82,6 +144,10 @@ public class MainViewModel : ObservableObject
         _selectedTab = MainTabs.Get(MainTabKind.Game);
         _selectedSidebarId = Sidebar.For(_selectedTab.Kind).FirstOrDefault()?.Id ?? "";
         SyncTabSelection();
+        // 外观：从 profile 载入主题色 / 背景图 / 字体缩放（链接 core，消除空壳）
+        _themeColor = _profile.ThemeColor;
+        _backgroundImagePath = _profile.BackgroundImagePath ?? "";
+        _fontScale = _profile.FontScale > 0 ? _profile.FontScale : 1.0;
         // 语言切换时刷新所有数据驱动文本与索引贴显示名
         LocaleManager.LocaleChanged += OnLocaleChanged;
     }

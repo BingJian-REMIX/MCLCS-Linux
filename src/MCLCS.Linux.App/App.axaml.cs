@@ -1,6 +1,7 @@
 using System.IO;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Media;
 using Avalonia.Markup.Xaml;
 using Avalonia.Styling;
 using MCLCS.Core.Download;
@@ -31,6 +32,9 @@ public class App : Application
             ThemeManager.Current = ThemeType.Dark;
         ApplyTheme(ThemeManager.Current);
         ThemeManager.OnThemeChanged += ApplyTheme;
+
+        // 外观：把 profile 中持久化的主题色 / 字体缩放 / 背景图真正应用到运行时（对齐 WPF，修复空壳）
+        ApplyAppearanceFromProfile();
     }
 
     /// <summary>把选定主题的调色板写入 Application.Resources，并切换 Fluent 主题变体。</summary>
@@ -42,6 +46,57 @@ public class App : Application
             if (key is string s) app.Resources[s] = dict[key];
         app.RequestedThemeVariant = type == ThemeType.Light ? ThemeVariant.Light : ThemeVariant.Dark;
     }
+
+    /// <summary>启动时把 profile 持久化的外观设置真正应用到运行时（对齐 WPF App.ApplyAccentColor/FontScale/BackgroundImage）。</summary>
+    public static void ApplyAppearanceFromProfile()
+    {
+        var profile = ProfileStore.Load(GameConstants.DefaultGameRoot);
+        ApplyAccentColor(profile.ThemeColor);
+        ApplyFontScale(profile.FontScale);
+        ApplyBackgroundImage(profile.BackgroundImagePath);
+    }
+
+    /// <summary>主题色：覆盖全局 Accent 系列资源（对齐 WPF bug #11：侧栏/按键/开关主题色失效）。</summary>
+    public static void ApplyAccentColor(string? hex)
+    {
+        if (string.IsNullOrWhiteSpace(hex)) return;
+        var s = hex!.Trim();
+        if (!s.StartsWith("#", StringComparison.Ordinal)) s = "#" + s;
+        if (!Color.TryParse(s, out var color)) return;
+        var res = Application.Current!.Resources;
+        res["AccentBrush"] = new SolidColorBrush(color);
+        res["InputFocusBorder"] = new SolidColorBrush(color);
+        res["CardBorderHover"] = new SolidColorBrush(color);
+    }
+
+    /// <summary>字体缩放：设置主窗口字号。Avalonia 下字号沿视觉树继承，未显式设置 FontSize 的控件随之缩放。</summary>
+    public static void ApplyFontScale(double scale)
+    {
+        if (scale <= 0) scale = 1.0;
+        var fontSize = 13.0 * scale;
+        if (CurrentMainWindow is { } mw)
+            mw.FontSize = fontSize;
+        Application.Current!.Resources["BaseFontSize"] = fontSize;
+    }
+
+    /// <summary>背景图片：应用到主窗口（对齐 WPF bug #20：此前仅持久化路径、从未真正渲染）。</summary>
+    public static void ApplyBackgroundImage(string? path)
+    {
+        try
+        {
+            CurrentMainWindow?.SetBackgroundImage(string.IsNullOrWhiteSpace(path) ? null : path);
+        }
+        catch
+        {
+            // 窗口尚未就绪等异常静默忽略
+        }
+    }
+
+    /// <summary>当前主窗口（启动期尚未创建时为 null）。</summary>
+    private static MainWindow? CurrentMainWindow =>
+        Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime dt
+            ? dt.MainWindow as MainWindow
+            : null;
 
     public override void OnFrameworkInitializationCompleted()
     {
