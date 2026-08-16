@@ -1,0 +1,41 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:MCLCS.Linux.App.ViewModels"
+             x:Class="MCLCS.Linux.App.Views.Pages.CommandView">
+  <ScrollViewer Margin="18">
+    <StackPanel Spacing="14" MaxWidth="900" HorizontalAlignment="Left">
+      <TextBlock FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"
+                 Text="{Binding Source='tool.command', Converter={StaticResource KeyToText}}"/>
+      <TextBlock Text="{Binding Source='tool.command.desc', Converter={StaticResource KeyToText}}"
+                 Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"/>
+
+      <TextBlock Text="常用语法表" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"/>
+      <ListBox ItemsSource="{Binding Reference}" Background="{DynamicResource InputBackground}" MaxHeight="280">
+        <ListBox.ItemTemplate>
+          <DataTemplate>
+            <Grid ColumnDefinitions="Auto,*,Auto">
+              <TextBlock Grid.Column="0" Text="{Binding Name}" FontWeight="Bold" VerticalAlignment="Center"/>
+              <TextBlock Grid.Column="1" Text="{Binding Syntax}" Margin="12,0" FontFamily="Consolas,Monospace"
+                         FontSize="12" Foreground="{DynamicResource SecondaryForeground}" VerticalAlignment="Center"/>
+              <Button Grid.Column="2" Content="插入" Classes="modal-btn"
+                      Command="{Binding $parent[ListBox].DataContext.InsertCommand}"
+                      CommandParameter="{Binding Syntax}"/>
+            </Grid>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+
+      <StackPanel Spacing="4">
+        <TextBlock Text="命令拼接 / 编辑" Foreground="{DynamicResource SecondaryForeground}"/>
+        <TextBox Text="{Binding Composed}" AcceptsReturn="True" Height="90"
+                 FontFamily="Consolas,Monospace" Watermark="点击上方语法插入模板，替换参数后复制"/>
+      </StackPanel>
+
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <Button Name="CopyBtn" Content="复制到剪贴板" Classes="modal-btn primary"/>
+        <TextBlock Text="{Binding Status}" VerticalAlignment="Center"
+                   Foreground="{DynamicResource SecondaryForeground}"/>
+      </StackPanel>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

@@ -1,0 +1,39 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:MCLCS.Linux.App.ViewModels"
+             x:Class="MCLCS.Linux.App.Views.Pages.PerfView">
+  <ScrollViewer Margin="18">
+    <StackPanel Spacing="14" MaxWidth="900" HorizontalAlignment="Left">
+      <TextBlock FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"
+                 Text="{Binding Source='tool.perf', Converter={StaticResource KeyToText}}"/>
+      <TextBlock Text="{Binding Source='tool.perf.desc', Converter={StaticResource KeyToText}}"
+                 Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"/>
+
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <Button Content="{Binding ToggleLabel}"
+                Command="{Binding ToggleCommand}" Classes="modal-btn primary"/>
+        <TextBlock Text="{Binding Status}" VerticalAlignment="Center"
+                   Foreground="{DynamicResource SecondaryForeground}"/>
+      </StackPanel>
+
+      <StackPanel Spacing="8">
+        <StackPanel Orientation="Horizontal" Spacing="12">
+          <TextBlock Text="CPU 占用" Foreground="{DynamicResource SecondaryForeground}" Width="100"/>
+          <TextBlock Text="{Binding Cpu, StringFormat={}{0:F0}%}" FontWeight="Bold"/>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Spacing="12">
+          <TextBlock Text="内存占用" Foreground="{DynamicResource SecondaryForeground}" Width="100"/>
+          <TextBlock Text="{Binding MemUsed, StringFormat={}{0:F0} MB}" FontWeight="Bold"/>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Spacing="12">
+          <TextBlock Text="FPS" Foreground="{DynamicResource SecondaryForeground}" Width="100"/>
+          <TextBlock Text="{Binding Fps, StringFormat={}{0:F0}}" FontWeight="Bold"/>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Spacing="12">
+          <TextBlock Text="延迟" Foreground="{DynamicResource SecondaryForeground}" Width="100"/>
+          <TextBlock Text="{Binding Ping, StringFormat=已连接 {0} ms}" FontWeight="Bold"/>
+        </StackPanel>
+      </StackPanel>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
