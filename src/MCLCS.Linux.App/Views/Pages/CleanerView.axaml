@@ -4,8 +4,6 @@
              x:Class="MCLCS.Linux.App.Views.Pages.CleanerView">
   <ScrollViewer Margin="18">
     <StackPanel Spacing="14" MaxWidth="900" HorizontalAlignment="Left">
-      <TextBlock FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"
-                 Text="{Binding Source='tool.clean', Converter={StaticResource KeyToText}}"/>
 
       <StackPanel Spacing="10">
         <StackPanel Orientation="Horizontal" Spacing="8">

@@ -4,59 +4,47 @@
              x:Class="MCLCS.Linux.App.Views.Pages.SkinView"
              x:DataType="vm:SkinViewModel">
   <ScrollViewer Margin="18">
-    <StackPanel Spacing="14" MaxWidth="900" HorizontalAlignment="Left">
-      <TextBlock FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"
-                 Text="{Binding Source='tool.skin', Converter={StaticResource KeyToText}}"/>
+    <StackPanel Spacing="16" MaxWidth="900" HorizontalAlignment="Left">
 
-      <Border Classes="card">
-        <StackPanel Spacing="12">
-          <DockPanel>
-            <Button Classes="modal-btn accent" DockPanel.Dock="Right" Content="获取皮肤"
-                    Command="{Binding FetchCommand}" IsEnabled="{Binding !Busy}"/>
-            <TextBox Watermark="输入玩家用户名（正版）" Text="{Binding Username}"
-                     VerticalAlignment="Center"/>
-          </DockPanel>
+      <DockPanel>
+        <Button Classes="modal-btn accent" DockPanel.Dock="Right" Content="获取皮肤"
+                Command="{Binding FetchCommand}" IsEnabled="{Binding !Busy}"/>
+        <TextBox Watermark="输入玩家用户名（正版）" Text="{Binding Username}"
+                 VerticalAlignment="Center"/>
+      </DockPanel>
 
-          <Grid ColumnDefinitions="*,*">
-            <!-- 预览 -->
-            <Border Grid.Column="0" Classes="card" Margin="0,0,8,0" Background="#1B1F2A">
-              <StackPanel Spacing="8">
-                <TextBlock Text="皮肤预览" FontWeight="Bold"/>
-                <Border Width="160" Height="160" Background="#0E1117" CornerRadius="8"
-                        HorizontalAlignment="Center" BorderBrush="#2A2F3A" BorderThickness="1">
-                  <Image Source="{Binding SkinImage}" Width="128" Height="128"
-                         Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                </Border>
-                <TextBlock Text="（无预览说明尚未获取或获取失败）" FontSize="11" Foreground="#7F8C8D"
-                           IsVisible="{Binding SkinImage, Converter={x:Static ObjectConverters.IsNull}}"/>
-              </StackPanel>
-            </Border>
-
-            <!-- 校验信息 -->
-            <Border Grid.Column="1" Classes="card" Margin="8,0,0,0" Background="#1B1F2A">
-              <StackPanel Spacing="8">
-                <TextBlock Text="校验信息" FontWeight="Bold"/>
-                <TextBlock Text="{Binding SkinInfo.Model, StringFormat='模型：{0}'}"
-                           IsVisible="{Binding SkinInfo, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-                <TextBlock IsVisible="{Binding Validation, Converter={x:Static ObjectConverters.IsNotNull}}"
-                           Foreground="#B8C0CC">
-                  <Run Text="尺寸："/>
-                  <Run Text="{Binding Validation.Width}"/>
-                  <Run Text=" × "/>
-                  <Run Text="{Binding Validation.Height}"/>
-                </TextBlock>
-                <TextBlock Text="旧版 64×32 皮肤（需转换）" Foreground="#E67E22"
-                           IsVisible="{Binding Validation.IsLegacy}"/>
-                <TextBlock Text="{Binding Validation.Error}" Foreground="#E74C3C"
-                           IsVisible="{Binding Validation.Error, Converter={x:Static ObjectConverters.IsNotNull}}"
-                           TextWrapping="Wrap"/>
-                <TextBlock Text="✓ 校验通过" Foreground="#27AE60"
-                           IsVisible="{Binding Validation.Ok, Converter={StaticResource BoolToVisible}}"/>
-              </StackPanel>
-            </Border>
-          </Grid>
+      <Grid ColumnDefinitions="*,*">
+        <StackPanel Grid.Column="0" Spacing="8" Margin="0,0,8,0">
+          <TextBlock Text="皮肤预览" FontWeight="Bold"/>
+          <Border Width="160" Height="160" Background="#0E1117" CornerRadius="8"
+                  HorizontalAlignment="Center" BorderBrush="#2A2F3A" BorderThickness="1">
+            <Image Source="{Binding SkinImage}" Width="128" Height="128"
+                   Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Border>
+          <TextBlock Text="（无预览说明尚未获取或获取失败）" FontSize="11" Foreground="#7F8C8D"
+                     IsVisible="{Binding SkinImage, Converter={x:Static ObjectConverters.IsNull}}"/>
         </StackPanel>
-      </Border>
+
+        <StackPanel Grid.Column="1" Spacing="8" Margin="8,0,0,0">
+          <TextBlock Text="校验信息" FontWeight="Bold"/>
+          <TextBlock Text="{Binding SkinInfo.Model, StringFormat='模型：{0}'}"
+                     IsVisible="{Binding SkinInfo, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+          <TextBlock IsVisible="{Binding Validation, Converter={x:Static ObjectConverters.IsNotNull}}"
+                     Foreground="#B8C0CC">
+            <Run Text="尺寸："/>
+            <Run Text="{Binding Validation.Width}"/>
+            <Run Text=" × "/>
+            <Run Text="{Binding Validation.Height}"/>
+          </TextBlock>
+          <TextBlock Text="旧版 64×32 皮肤（需转换）" Foreground="#E67E22"
+                     IsVisible="{Binding Validation.IsLegacy}"/>
+          <TextBlock Text="{Binding Validation.Error}" Foreground="#E74C3C"
+                     IsVisible="{Binding Validation.Error, Converter={x:Static ObjectConverters.IsNotNull}}"
+                     TextWrapping="Wrap"/>
+          <TextBlock Text="✓ 校验通过" Foreground="#27AE60"
+                     IsVisible="{Binding Validation.Ok, Converter={StaticResource BoolToVisible}}"/>
+        </StackPanel>
+      </Grid>
 
       <Grid ColumnDefinitions="*,Auto">
         <ProgressBar IsIndeterminate="{Binding Busy}" IsVisible="{Binding Busy}"/>

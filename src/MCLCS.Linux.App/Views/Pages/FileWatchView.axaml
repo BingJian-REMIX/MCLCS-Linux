@@ -10,38 +10,34 @@
     <conv:CountToVisibleConverter x:Key="CountToVisible"/>
   </UserControl.Resources>
   <ScrollViewer Margin="18">
-    <StackPanel Spacing="14" MaxWidth="900" HorizontalAlignment="Left">
-      <TextBlock FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"
-                 Text="{Binding Source='tool.filewatch', Converter={StaticResource KeyToText}}"/>
+    <StackPanel Spacing="16" MaxWidth="900" HorizontalAlignment="Left">
 
       <Button Classes="modal-btn accent" Content="扫描变更" Command="{Binding ScanCommand}"
               HorizontalAlignment="Left"/>
 
-      <Border Classes="card">
-        <StackPanel Spacing="8">
-          <TextBlock Text="变更列表（mods / resourcepacks / shaderpacks）" FontWeight="Bold" FontSize="14"/>
-          <TextBlock Text="（首次扫描会建立基准快照，之后对比显示差异）" FontSize="11" Foreground="#7F8C8D"/>
-          <ItemsControl ItemsSource="{Binding Changes}" IsVisible="{Binding Changes.Count, Converter={StaticResource CountToVisible}}">
-            <ItemsControl.ItemTemplate>
-              <DataTemplate>
-                <Border Margin="0,0,0,6" Padding="10,8" Background="#1B1F2A" CornerRadius="6">
-                  <Grid ColumnDefinitions="56,*,Auto">
-                    <Border Grid.Column="0" Padding="6,2" CornerRadius="6" VerticalAlignment="Center"
-                            Background="{Binding Kind, Converter={StaticResource FileChangeKindToBrush}}" Width="48">
-                      <TextBlock Text="{Binding Kind, Converter={StaticResource FileChangeKindToText}}"
-                                 Foreground="White" FontSize="11" HorizontalAlignment="Center"/>
-                    </Border>
-                    <TextBlock Grid.Column="1" Margin="10,0,0,0" Text="{Binding Path}" VerticalAlignment="Center"
-                               FontFamily="Consolas" FontSize="12" TextWrapping="Wrap"/>
-                    <TextBlock Grid.Column="2" Margin="10,0,0,0" Text="{Binding Detail}" VerticalAlignment="Center"
-                               FontSize="11" Foreground="#7F8C8D" MaxWidth="260" TextWrapping="Wrap"/>
-                  </Grid>
-                </Border>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
-        </StackPanel>
-      </Border>
+      <StackPanel Spacing="8">
+        <TextBlock Text="变更列表（mods / resourcepacks / shaderpacks）" FontWeight="Bold" FontSize="14"/>
+        <TextBlock Text="（首次扫描会建立基准快照，之后对比显示差异）" FontSize="11" Foreground="#7F8C8D"/>
+        <ItemsControl ItemsSource="{Binding Changes}" IsVisible="{Binding Changes.Count, Converter={StaticResource CountToVisible}}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Border Margin="0,0,0,6" Padding="10,8" Background="#1B1F2A" CornerRadius="6">
+                <Grid ColumnDefinitions="56,*,Auto">
+                  <Border Grid.Column="0" Padding="6,2" CornerRadius="6" VerticalAlignment="Center"
+                          Background="{Binding Kind, Converter={StaticResource FileChangeKindToBrush}}" Width="48">
+                    <TextBlock Text="{Binding Kind, Converter={StaticResource FileChangeKindToText}}"
+                               Foreground="White" FontSize="11" HorizontalAlignment="Center"/>
+                  </Border>
+                  <TextBlock Grid.Column="1" Margin="10,0,0,0" Text="{Binding Path}" VerticalAlignment="Center"
+                             FontFamily="Consolas" FontSize="12" TextWrapping="Wrap"/>
+                  <TextBlock Grid.Column="2" Margin="10,0,0,0" Text="{Binding Detail}" VerticalAlignment="Center"
+                             FontSize="11" Foreground="#7F8C8D" MaxWidth="260" TextWrapping="Wrap"/>
+                </Grid>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
 
       <TextBlock Classes="status" Text="{Binding Status}"/>
     </StackPanel>

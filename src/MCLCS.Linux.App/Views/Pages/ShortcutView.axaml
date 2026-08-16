@@ -5,8 +5,6 @@
              x:DataType="vm:ShortcutViewModel">
   <ScrollViewer Margin="18">
     <StackPanel Spacing="14" MaxWidth="900" HorizontalAlignment="Left">
-      <TextBlock FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"
-                 Text="{Binding Source='tool.shortcut', Converter={StaticResource KeyToText}}"/>
 
       <StackPanel Spacing="8">
         <TextBlock Text="版本号" FontWeight="Bold" FontSize="14"/>
