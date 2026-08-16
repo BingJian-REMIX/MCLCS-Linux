@@ -101,6 +101,15 @@ public partial class MainWindow : Window
         return null;
     }
 
+    /// <summary>供截屏工程等外部在不经点击的情况下直接路由到指定页面（设置主标签 + 侧栏项）。</summary>
+    public void NavigateTo(MainTabKind kind, string sidebarId)
+    {
+        _vm.SelectedTab = MainTabs.Get(kind);
+        _vm.SelectedSidebarId = sidebarId;
+        SyncSidebarSelection();
+        ShowPage();
+    }
+
     /// <summary>切页展开动画：内容宿主淡入 + 上移（对齐设计稿 @keyframes pageIn：opacity 0→1 + translateY(18px)→0，200ms ease）。
     /// 先把内容落到隐藏态，再于下一渲染帧恢复，触发 0→1 / 18px→0 过渡。</summary>
     private void PlayContentEnter()
