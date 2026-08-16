@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using MCLCS.Core.Launcher;
 using MCLCS.Core.Localization;
 using MCLCS.Core.Mvvm;
+using MCLCS.Core.Theme;
 using MCLCS.Core.UI;
 using MCLCS.Linux.App;
 
@@ -36,6 +37,38 @@ public class MainViewModel : ObservableObject
 
     /// <summary>主题配色配置（Core.TabThemeConfig，可被用户自定义并持久化）。</summary>
     public TabThemeConfig Theme { get; } = new();
+
+    // ===== 语言 / 主题（对齐 WPF SettingsView：语言在「通用」，主题在「外观」）=====
+
+    /// <summary>当前语言（zh_CN / en_US）。切换时即时写入 LocaleManager 并持久化到 profile。</summary>
+    public string SelectedLanguage
+    {
+        get => LocaleManager.CurrentLocale;
+        set
+        {
+            var norm = LocaleManager.NormalizeLocaleCode(value);
+            if (!string.Equals(LocaleManager.CurrentLocale, norm, StringComparison.OrdinalIgnoreCase))
+            {
+                LocaleManager.CurrentLocale = norm;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    /// <summary>当前主题（Dark / Light）。切换时即时写入 ThemeManager 并持久化。</summary>
+    public string SelectedTheme
+    {
+        get => ThemeManager.Current.ToString();
+        set
+        {
+            if (Enum.TryParse<ThemeType>(value, true, out var t) && ThemeManager.Current != t)
+            {
+                ThemeManager.Current = t;
+                ThemeManager.SavePreference(AppConfig.DataRoot);
+                OnPropertyChanged();
+            }
+        }
+    }
 
     private MainTabDefinition _selectedTab = MainTabs.Get(MainTabKind.Game);
 

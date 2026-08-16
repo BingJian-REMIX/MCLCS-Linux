@@ -107,22 +107,8 @@
         </ItemsControl.ItemTemplate>
       </ItemsControl>
 
-      <!-- 窗口控制（语言 / 主题 / 最小 / 最大化 / 关闭）-->
+      <!-- 窗口控制（最小 / 最大化 / 关闭；语言与主题已移至设置页，对齐 WPF）-->
       <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0" Spacing="6">
-        <!-- 语言切换：简体中文 / English -->
-        <ComboBox x:Name="LangCombo" Width="100" Height="26" Background="#30FFFFFF"
-                  BorderThickness="0" Foreground="White" SelectedIndex="0"
-                  SelectionChanged="LangCombo_SelectionChanged">
-          <ComboBoxItem Content="{Binding LangChinese}"/>
-          <ComboBoxItem Content="{Binding LangEnglish}"/>
-        </ComboBox>
-        <!-- 主题切换：暗色 / 亮色 -->
-        <ComboBox x:Name="ThemeCombo" Width="84" Height="26" Background="#30FFFFFF"
-                  BorderThickness="0" Foreground="White" SelectedIndex="0"
-                  SelectionChanged="ThemeCombo_SelectionChanged">
-          <ComboBoxItem Content="{Binding ThemeDarkLabel}"/>
-          <ComboBoxItem Content="{Binding ThemeLightLabel}"/>
-        </ComboBox>
         <Button x:Name="BtnMin" Width="36" Height="30" Background="Transparent"
                 BorderThickness="0" Foreground="White" Click="BtnMin_Click">
           <Image Width="12" Height="12">

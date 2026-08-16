@@ -57,6 +57,26 @@ public class GeneralSettingsViewModel : ObservableObject
         set => SetField(ref _status, value);
     }
 
+    /// <summary>当前语言（zh_CN / en_US）。切换时即时写入 LocaleManager。</summary>
+    public string SelectedLanguage
+    {
+        get => LocaleManager.CurrentLocale;
+        set
+        {
+            var norm = LocaleManager.NormalizeLocaleCode(value);
+            if (!string.Equals(LocaleManager.CurrentLocale, norm, StringComparison.OrdinalIgnoreCase))
+            {
+                LocaleManager.CurrentLocale = norm;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    /// <summary>语言下拉项：简体中文。</summary>
+    public string LangChinese => LocaleManager.T("lbl.chinese");
+    /// <summary>语言下拉项：English。</summary>
+    public string LangEnglish => LocaleManager.T("lbl.english");
+
     public GeneralSettingsViewModel()
     {
         _profile = ProfileStore.Load(_gameRoot);

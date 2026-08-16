@@ -39,7 +39,8 @@ public class TabUnderlineBrushConverter : IValueConverter
 
 /// <summary>
 /// 索引贴背景（多值）：values[0]=是否选中，values[1]=该项 Kind。
-/// 选中取主题色提亮 1.12（对齐模板 brighten(solid,1.12)），未选中取实色（对齐模板 solid）。
+/// 选中取主题色提亮 1.12（ActiveColorOf，对齐 launcher19 的 brightness(1.12)），
+/// 未选中取暗化 0.7（DimColorOf，对齐 launcher19 的 brightness(.7)）。
 /// 相较旧版 {Binding .} 绑整个 TabItemViewModel，多值绑定会因 IsSelected 的
 /// PropertyChanged 精确触发重算，修复切换主标签时背景色不刷新的 Bug-1。
 /// </summary>
@@ -51,7 +52,7 @@ public class TabBackgroundConverter : IMultiValueConverter
             return new SolidColorBrush(Colors.Gray);
         var theme = MainViewModel.Instance?.Theme;
         var hex = theme is not null
-            ? (isSelected ? theme.ActiveColorOf(kind) : theme.ColorOf(kind))
+            ? (isSelected ? theme.ActiveColorOf(kind) : theme.DimColorOf(kind))
             : "#888888";
         return HexToBrushConverter.ToBrush(hex);
     }

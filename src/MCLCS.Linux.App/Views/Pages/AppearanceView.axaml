@@ -7,7 +7,15 @@
 
       <Border Classes="card">
         <StackPanel Spacing="12">
-          <TextBlock Text="{Binding ThemeEditorTitle}" FontWeight="Bold"
+          <TextBlock Text="主题" FontWeight="Bold"
+                     Foreground="{DynamicResource PrimaryForeground}"/>
+          <ComboBox SelectedValue="{Binding SelectedTheme}" SelectedValueBinding="{Binding Tag}" Width="180"
+                    HorizontalAlignment="Left">
+            <ComboBoxItem Content="{Binding ThemeDarkLabel}" Tag="Dark"/>
+            <ComboBoxItem Content="{Binding ThemeLightLabel}" Tag="Light"/>
+          </ComboBox>
+
+          <TextBlock Text="{Binding ThemeEditorTitle}" FontWeight="Bold" Margin="0,8,0,0"
                      Foreground="{DynamicResource PrimaryForeground}"/>
           <StackPanel Orientation="Horizontal" Spacing="10">
             <TextBlock Text="{Binding LabelGame}" VerticalAlignment="Center" Width="48"
