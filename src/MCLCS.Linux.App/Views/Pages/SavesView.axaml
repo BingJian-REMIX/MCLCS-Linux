@@ -13,10 +13,8 @@
 
   <ScrollViewer>
     <StackPanel Margin="28,22" Spacing="16">
-      <TextBlock FontSize="22" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"
+      <TextBlock FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"
                  Text="{Binding Source='tool.saves', Converter={StaticResource KeyToText}}"/>
-      <TextBlock Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"
-                 Text="{Binding Source='tool.saves.desc', Converter={StaticResource KeyToText}}"/>
 
       <DockPanel>
         <Button Classes="modal-btn" DockPanel.Dock="Right" Content="刷新" Command="{Binding RefreshCommand}"/>

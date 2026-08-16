@@ -10,14 +10,8 @@
   </UserControl.Resources>
   <ScrollViewer Margin="18">
     <StackPanel Spacing="14" MaxWidth="900">
-      <Border Classes="card">
-        <StackPanel Spacing="6">
-          <TextBlock FontSize="22" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"
-                     Text="{Binding Source='tool.network', Converter={StaticResource KeyToText}}"/>
-          <TextBlock Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"
-                     Text="{Binding Source='tool.network.desc', Converter={StaticResource KeyToText}}"/>
-        </StackPanel>
-      </Border>
+      <TextBlock FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"
+                 Text="{Binding Source='tool.network', Converter={StaticResource KeyToText}}"/>
 
       <Button Classes="modal-btn accent" Content="开始诊断" Command="{Binding DiagnoseCommand}"
               IsEnabled="{Binding !Busy}" HorizontalAlignment="Left"/>

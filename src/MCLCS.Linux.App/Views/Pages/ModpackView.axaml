@@ -5,14 +5,8 @@
              x:DataType="vm:ModpackViewModel">
   <ScrollViewer Margin="18">
     <StackPanel Spacing="14" MaxWidth="900">
-      <Border Classes="card">
-        <StackPanel Spacing="6">
-          <TextBlock FontSize="22" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"
-                     Text="{Binding Source='lbl.modpack', Converter={StaticResource KeyToText}}"/>
-          <TextBlock Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"
-                     Text="{Binding Source='lbl.modpack.desc', Converter={StaticResource KeyToText}}"/>
-        </StackPanel>
-      </Border>
+      <TextBlock FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"
+                 Text="{Binding Source='lbl.modpack', Converter={StaticResource KeyToText}}"/>
 
       <Border Classes="card">
         <StackPanel Spacing="8">

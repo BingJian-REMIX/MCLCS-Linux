@@ -5,16 +5,6 @@
   <ScrollViewer Margin="18">
     <StackPanel Spacing="14" MaxWidth="880">
 
-      <!-- 主页 Hero -->
-      <Border Classes="card">
-        <StackPanel Spacing="6">
-          <TextBlock Text="{Binding Source='tab.game', Converter={StaticResource KeyToText}}"
-                     FontSize="22" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"/>
-          <TextBlock Text="{Binding Source='home.game.desc', Converter={StaticResource KeyToText}}"
-                     Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"/>
-        </StackPanel>
-      </Border>
-
       <!-- 快速启动面板 -->
       <Border Classes="card">
         <StackPanel Spacing="12">
