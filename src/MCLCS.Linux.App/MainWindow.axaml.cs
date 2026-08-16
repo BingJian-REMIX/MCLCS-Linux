@@ -172,6 +172,12 @@ public partial class MainWindow : Window
             (MainTabKind.Toolbox, "datapack") => new DataPackView(),
             (MainTabKind.Toolbox, "saves") => new SavesView(),
             (MainTabKind.Toolbox, "skin") => new SkinView(),
+            (MainTabKind.Toolbox, "network") => new NetworkView(),
+            (MainTabKind.Toolbox, "filewatch") => new FileWatchView(),
+            (MainTabKind.Toolbox, "nbt") => new NbtView(),
+            (MainTabKind.Toolbox, "shortcut") => new ShortcutView(),
+            (MainTabKind.Toolbox, "afk") => new AfkView(),
+            (MainTabKind.Toolbox, "aichat") => new AiChatView(),
             (MainTabKind.Settings, "appearance") => new AppearanceView(),
             (MainTabKind.Settings, "account") => new AccountsView(),
             _ => MakePlaceholder()

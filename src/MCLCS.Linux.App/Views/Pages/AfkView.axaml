@@ -1,0 +1,53 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:MCLCS.Linux.App.ViewModels"
+             xmlns:conv="clr-namespace:MCLCS.Linux.App.Converters"
+             x:Class="MCLCS.Linux.App.Views.Pages.AfkView"
+             x:DataType="vm:AfkViewModel">
+  <UserControl.Resources>
+    <conv:AfkInstructionToTextConverter x:Key="AfkInstructionToText"/>
+    <conv:CountToVisibleConverter x:Key="CountToVisible"/>
+  </UserControl.Resources>
+  <ScrollViewer Margin="18">
+    <StackPanel Spacing="14" MaxWidth="900">
+      <Border Classes="card">
+        <StackPanel Spacing="6">
+          <TextBlock FontSize="22" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"
+                     Text="{Binding Source='tool.afk', Converter={StaticResource KeyToText}}"/>
+          <TextBlock Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"
+                     Text="{Binding Source='tool.afk.desc', Converter={StaticResource KeyToText}}"/>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card">
+        <StackPanel Spacing="8">
+          <TextBlock Text="挂机 Token" FontWeight="Bold" FontSize="14"/>
+          <TextBox Text="{Binding Token}" AcceptsReturn="True" MinHeight="80" FontFamily="Consolas"
+                   Watermark="*3&#10;F10&#10;D4&#10;C1-500"/>
+          <Button Classes="modal-btn accent" Content="解析" Command="{Binding ParseCommand}"
+                  HorizontalAlignment="Left"/>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card">
+        <StackPanel Spacing="8">
+          <TextBlock Text="指令序列" FontWeight="Bold" FontSize="14"/>
+          <ItemsControl ItemsSource="{Binding Instructions}" IsVisible="{Binding Instructions.Count, Converter={StaticResource CountToVisible}}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border Margin="0,0,0,6" Padding="10,8" Background="#1B1F2A" CornerRadius="6">
+                  <TextBlock Text="{Binding Converter={StaticResource AfkInstructionToText}}"
+                             FontFamily="Consolas" FontSize="12"/>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <TextBlock Text="{Binding RepeatCount, StringFormat='整体重复：{0} 次'}" FontSize="12"
+                     Foreground="#7F8C8D"/>
+        </StackPanel>
+      </Border>
+
+      <TextBlock Classes="status" Text="{Binding Status}"/>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

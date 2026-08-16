@@ -163,6 +163,13 @@
         <conv:ListJoinConverter x:Key="ListJoin"/>
         <conv:CountToVisibleConverter x:Key="CountToVisible"/>
         <conv:BoolToVisibleConverter x:Key="BoolToVisible"/>
+        <conv:BoolToBrushConverter x:Key="BoolToBrush"/>
+        <conv:FileChangeKindToTextConverter x:Key="FileChangeKindToText"/>
+        <conv:FileChangeKindToBrushConverter x:Key="FileChangeKindToBrush"/>
+        <conv:AfkOpKindToTextConverter x:Key="AfkOpKindToText"/>
+        <conv:AfkInstructionToTextConverter x:Key="AfkInstructionToText"/>
+        <conv:NbtTagTypeToTextConverter x:Key="NbtTagTypeToText"/>
+        <conv:OllamaStatusToTextConverter x:Key="OllamaStatusToText"/>
         <SolidColorBrush x:Key="WindowBackground" Color="#0F1115"/>
         <SolidColorBrush x:Key="ControlBackground" Color="#1A1D24"/>
         <SolidColorBrush x:Key="ControlBorder" Color="#2A2F3A"/>

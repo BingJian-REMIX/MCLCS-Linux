@@ -1,0 +1,76 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:MCLCS.Linux.App.ViewModels"
+             xmlns:conv="clr-namespace:MCLCS.Linux.App.Converters"
+             x:Class="MCLCS.Linux.App.Views.Pages.NbtView"
+             x:DataType="vm:NbtViewModel">
+  <UserControl.Resources>
+    <conv:NbtTagTypeToTextConverter x:Key="NbtTagTypeToText"/>
+  </UserControl.Resources>
+  <ScrollViewer Margin="18">
+    <StackPanel Spacing="14" MaxWidth="900">
+      <Border Classes="card">
+        <StackPanel Spacing="6">
+          <TextBlock FontSize="22" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"
+                     Text="{Binding Source='tool.nbt', Converter={StaticResource KeyToText}}"/>
+          <TextBlock Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"
+                     Text="{Binding Source='tool.nbt.desc', Converter={StaticResource KeyToText}}"/>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card">
+        <StackPanel Spacing="8">
+          <TextBlock Text="文件" FontWeight="Bold" FontSize="14"/>
+          <Grid ColumnDefinitions="*,Auto">
+            <TextBox Grid.Column="0" Text="{Binding FilePath}" Watermark="level.dat 或 .dat 文件路径"/>
+            <Button Grid.Column="1" Classes="modal-btn accent" Content="加载" Command="{Binding LoadCommand}"
+                    Margin="8,0,0,0"/>
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card">
+        <StackPanel Spacing="8">
+          <TextBlock Text="顶层标签" FontWeight="Bold" FontSize="14"/>
+          <ItemsControl ItemsSource="{Binding TopLevel}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border Margin="0,0,0,6" Padding="10,8" Background="#1B1F2A" CornerRadius="6">
+                  <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                    <Border Grid.Column="1" Padding="8,2" CornerRadius="6" Background="#34495E" Margin="8,0,0,0">
+                      <TextBlock Text="{Binding Type, Converter={StaticResource NbtTagTypeToText}}"
+                                 Foreground="White" FontSize="11"/>
+                    </Border>
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card">
+        <StackPanel Spacing="8">
+          <TextBlock Text="取值 / 改值" FontWeight="Bold" FontSize="14"/>
+          <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
+            <TextBox Grid.Column="0" Grid.Row="0" Text="{Binding ResolvePath}" Watermark="路径，如 DataVersion"/>
+            <Button Grid.Column="1" Grid.Row="0" Classes="modal-btn" Content="取值" Command="{Binding ResolveCommand}"
+                    Margin="8,0,0,0"/>
+            <TextBox Grid.Column="0" Grid.Row="1" Text="{Binding SetValuePath}" Watermark="写入路径"
+                     Margin="0,8,0,0"/>
+            <TextBox Grid.Column="0" Grid.Row="2" Text="{Binding SetValue}" Watermark="写入值" Margin="0,8,0,0"/>
+            <Button Grid.Column="1" Grid.Row="1" Grid.RowSpan="2" Classes="modal-btn" Content="写入"
+                    Command="{Binding SetCommand}" Margin="8,8,0,0" VerticalAlignment="Top"/>
+          </Grid>
+          <TextBlock Text="{Binding ResolveResult}" FontFamily="Consolas" FontSize="12" TextWrapping="Wrap"
+                     Foreground="#B8C0CC"/>
+          <Button Classes="modal-btn" Content="保存到文件（自动备份）" Command="{Binding SaveCommand}"
+                  HorizontalAlignment="Left"/>
+        </StackPanel>
+      </Border>
+
+      <TextBlock Classes="status" Text="{Binding Status}"/>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
