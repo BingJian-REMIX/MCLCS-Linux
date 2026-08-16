@@ -9,6 +9,8 @@ using MCLCS.Core.Localization;
 using MCLCS.Core.Theme;
 using MCLCS.Core.UI;
 using MCLCS.Linux.App.ViewModels;
+using MCLCS.Linux.App.Views;
+using MCLCS.Linux.App.Views.Pages;
 using System.Diagnostics;
 
 namespace MCLCS.Linux.App;
@@ -35,7 +37,8 @@ public partial class MainWindow : Window
         LocaleManager.LocaleChanged += OnLocaleChanged;
         // 上屏且屏幕信息就绪后再铺满（构造函数里 Screens.Primary 尚未可用）
         Opened += (_, _) => FitToScreen();
-        Opened += (_, _) => AutoDemo();
+        // 初始页面路由（默认主页为游戏页，无侧栏）
+        ShowPage();
     }
 
     /// <summary>按主屏工作区尺寸铺满窗口（避免固定尺寸在大屏上留黑边）。
@@ -92,28 +95,8 @@ public partial class MainWindow : Window
         }, DispatcherPriority.Render);
     }
 
-    // ===== 弹窗 / Toast 演示（开发用，验证设计稿三种对话框变体）=====
-    private async void Demo_Center(object? sender, RoutedEventArgs e)
-    {
-        var r = await DialogService.Instance.ShowAsync(new DialogOptions
-        {
-            Title = "确认操作",
-            Content = "这是居中的通用询问对话框（askuserquestion 变体 A）。",
-            Buttons = new[]
-            {
-                new DialogButton("取消", DialogResults.Cancel, isCancel: true),
-                new DialogButton("确定", DialogResults.Ok, DialogButtonKind.Primary, isDefault: true),
-            }
-        });
-        if (r is not null)
-            ToastService.Instance.Show(new ToastOptions { Title = "对话框结果", Message = $"选择：{r}" });
-    }
-
     // 标题栏下载按钮：打开下载队列（锚定到该按钮中心弹出）
     private void DownloadBtn_Click(object? sender, RoutedEventArgs e) => QueueShow(sender as Control);
-
-    // 演示按钮「右上队列」：同样以下载按钮为锚点弹出
-    private void Demo_Queue(object? sender, RoutedEventArgs e) => QueueShow(sender as Control);
 
     // 下载队列：以标题栏下载按钮为锚点向下弹出（水平中线对齐按钮中心 + 弹出动画）
     private async void QueueShow(Control? anchor = null)
@@ -126,39 +109,6 @@ public partial class MainWindow : Window
             Content = BuildQueueContent(),
             Buttons = new[] { new DialogButton("开始下载", "start", DialogButtonKind.Primary, isDefault: true) }
         });
-    }
-
-    private async void Demo_Music(object? sender, RoutedEventArgs e)
-    {
-        await DialogService.Instance.ShowAsync(new DialogOptions
-        {
-            Title = "播放列表",
-            Alignment = DialogAlignment.BottomRight,
-            Width = 320,
-            Content = BuildMusicContent(),
-            Buttons = new[] { new DialogButton("关闭", DialogResults.Cancel, isCancel: true) }
-        });
-    }
-
-    private void Demo_Toast(object? sender, RoutedEventArgs e) =>
-        ToastService.Instance.Show(new ToastOptions
-        {
-            Title = "已加入下载队列",
-            Message = "天空之城 · 地图",
-            ActionText = "查看",
-            Action = () => ToastService.Instance.Show(new ToastOptions { Title = "提示", Message = "（演示）跳转到下载页" })
-        });
-
-    // 临时：无头渲染验证用——按环境变量自动打开对应对话框 / Toast 变体（验证后移除）
-    private void AutoDemo()
-    {
-        switch (System.Environment.GetEnvironmentVariable("MCLCS_DEMO"))
-        {
-            case "center": Demo_Center(null, null!); break;
-            case "queue": Demo_Queue(null, null!); break;
-            case "music": Demo_Music(null, null!); break;
-            case "toast": Demo_Toast(null, null!); break;
-        }
     }
 
     private Control BuildQueueContent()
@@ -205,18 +155,26 @@ public partial class MainWindow : Window
         return wrap;
     }
 
-    private Control BuildMusicContent()
+    /// <summary>按当前主标签 / 副标签路由到对应功能页；未移植项展示开发中占位页。</summary>
+    private void ShowPage()
     {
-        var sp = new StackPanel { Spacing = 4 };
-        foreach (var name in new[] { "C418 - Sweden", "C418 - Wet Hands", "Lena Raine - Pigstep", "C418 - Subwoofer Lullaby" })
-            sp.Children.Add(new TextBlock
-            {
-                Text = name,
-                FontSize = 13,
-                Padding = new Thickness(0, 4),
-                Foreground = (IBrush?)Application.Current.FindResource("PrimaryForeground")
-            });
-        return sp;
+        if (PageRegion is null) return;
+        UserControl page = (_vm.SelectedTab.Kind, _vm.SelectedSidebarId) switch
+        {
+            (MainTabKind.Game, _) => new GameHomeView(),
+            (MainTabKind.Download, "minecraft") => new InstallView(),
+            (MainTabKind.Settings, "appearance") => new AppearanceView(),
+            (MainTabKind.Settings, "account") => new AccountsView(),
+            _ => MakePlaceholder()
+        };
+        PageRegion.Content = page;
+    }
+
+    private PlaceholderPage MakePlaceholder()
+    {
+        var page = new PlaceholderPage();
+        page.Configure(_vm.SelectedSidebarId, _vm.SelectedTab.Kind);
+        return page;
     }
 
     /// <summary>切换主标签：联动侧边栏集合、标题栏色、右面板，并同步 ListBox 选中项。</summary>
@@ -226,6 +184,7 @@ public partial class MainWindow : Window
         {
             vm.SelectedTab = MainTabs.Get(kind);
             SyncSidebarSelection();
+            ShowPage();
             PlayContentEnter();
         }
     }
@@ -234,6 +193,7 @@ public partial class MainWindow : Window
     {
         if (sender is ListBox { SelectedItem: SidebarItem item } && DataContext is MainViewModel vm)
             vm.SelectedSidebarId = item.Id;
+        ShowPage();
         PlayContentEnter();
     }
 
@@ -337,26 +297,5 @@ public partial class MainWindow : Window
                 SidebarList.ItemsSource = _vm.SidebarItems;
             }
         });
-    }
-
-    // ===== Java 检测 / 主题编辑（保留既有逻辑）=====
-    private async void DetectJava_Click(object? sender, RoutedEventArgs e)
-    {
-        if (DataContext is MainViewModel vm)
-            await vm.DetectJavaAsync();
-    }
-
-    private void ThemeColor_Changed(object? sender, TextChangedEventArgs e)
-    {
-        if (sender is not TextBox tb || tb.Tag is not string tag || DataContext is not MainViewModel vm)
-            return;
-        switch (tag)
-        {
-            case "game": vm.Theme.Game = tb.Text; break;
-            case "download": vm.Theme.Download = tb.Text; break;
-            case "toolbox": vm.Theme.Toolbox = tb.Text; break;
-            case "settings": vm.Theme.Settings = tb.Text; break;
-        }
-        vm.RefreshTabs();
     }
 }

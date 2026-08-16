@@ -1,0 +1,18 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="MCLCS.Linux.App.Views.PlaceholderPage">
+  <Border Classes="card" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="520">
+    <StackPanel Spacing="14" HorizontalAlignment="Center">
+      <Image x:Name="Icon" Width="56" Height="56" HorizontalAlignment="Center"/>
+      <TextBlock x:Name="TitleText" FontSize="20" FontWeight="Bold"
+                 Foreground="{DynamicResource PrimaryForeground}" HorizontalAlignment="Center"/>
+      <TextBlock x:Name="DescText" Foreground="{DynamicResource SecondaryForeground}"
+                 TextWrapping="Wrap" TextAlignment="Center" MaxWidth="440"
+                 HorizontalAlignment="Center"/>
+      <Border Background="{DynamicResource ControlBackground}" CornerRadius="8" Padding="10,8">
+        <TextBlock Text="该页面正在开发中（MCLCS-Linux 移植阶段）"
+                   FontSize="13" Foreground="{DynamicResource SecondaryForeground}"/>
+      </Border>
+    </StackPanel>
+  </Border>
+</UserControl>

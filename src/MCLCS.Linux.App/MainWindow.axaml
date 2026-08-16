@@ -213,8 +213,7 @@
         </ScrollViewer>
       </Border>
 
-      <!-- 内容宿主：顶部同色渐隐带，使选中索引贴与页面「粘连一体」（对齐 WPF ApplyPageTint）-->
-      <!-- 内容宿主：切页时整体淡入 + 上移（对标 WPF PageTransform 切换动画）-->
+      <!-- 内容宿主：顶部同色渐隐带，切页时整体淡入 + 上移（对齐设计稿 pageIn）-->
       <Border x:Name="ContentHost" Grid.Column="1"
               Background="{Binding SelectedTab.Kind, Converter={StaticResource TabTint}}">
         <Border.Transitions>
@@ -223,79 +222,22 @@
             <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2"/>
           </Transitions>
         </Border.Transitions>
-        <ScrollViewer Margin="18">
-          <StackPanel Spacing="12">
-            <!-- 选中项标题 + 分组 + 描述 -->
-            <StackPanel Spacing="4" IsVisible="{Binding HasSidebar}">
-              <TextBlock Text="{Binding PanelTitle}" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"/>
-              <StackPanel Orientation="Horizontal" Spacing="8"
-                          IsVisible="{Binding PanelGroup, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                <TextBlock Text="分组：" Foreground="{DynamicResource SecondaryForeground}"/>
-                <TextBlock Text="{Binding PanelGroup}" Foreground="#9cdcfe"/>
-              </StackPanel>
-              <TextBlock Text="{Binding PanelDescription}" Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"/>
+        <Grid RowDefinitions="Auto,*">
+          <!-- 页头：有侧栏时显示标题 / 分组 / 描述 -->
+          <StackPanel Grid.Row="0" Spacing="4" Margin="18,18,18,0"
+                      IsVisible="{Binding HasSidebar}">
+            <TextBlock Text="{Binding PanelTitle}" FontSize="22" FontWeight="Bold"
+                       Foreground="{DynamicResource PrimaryForeground}"/>
+            <StackPanel Orientation="Horizontal" Spacing="8"
+                        IsVisible="{Binding PanelGroup, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+              <TextBlock Text="分组：" Foreground="{DynamicResource SecondaryForeground}"/>
+              <TextBlock Text="{Binding PanelGroup}" Foreground="#9cdcfe"/>
             </StackPanel>
-
-            <!-- 游戏页（无侧边栏）占位 -->
-            <StackPanel Spacing="6" IsVisible="{Binding HasSidebar, Converter={x:Static BoolConverters.Not}}">
-              <TextBlock Text="{Binding GameHomeTitle}" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"/>
-              <TextBlock Text="{Binding GameHomeDesc}"
-                         Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"/>
-            </StackPanel>
-
-            <!-- 主题编辑器（设置 → 外观）：真实读写 Core.TabThemeConfig -->
-            <Border IsVisible="{Binding ShowThemeEditor}" Classes="card"
-                    Background="{DynamicResource CardBackground}"
-                    CornerRadius="12" Padding="14">
-              <StackPanel Spacing="10">
-                <TextBlock Text="{Binding ThemeEditorTitle}" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"/>
-                <StackPanel Orientation="Horizontal" Spacing="10">
-                  <TextBlock Text="{Binding LabelGame}" VerticalAlignment="Center" Width="48" Foreground="{DynamicResource PrimaryForeground}"/>
-                  <TextBox Text="{Binding Theme.Game}" Width="110" Tag="game" TextChanged="ThemeColor_Changed"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Spacing="10">
-                  <TextBlock Text="{Binding LabelDownload}" VerticalAlignment="Center" Width="48" Foreground="{DynamicResource PrimaryForeground}"/>
-                  <TextBox Text="{Binding Theme.Download}" Width="110" Tag="download" TextChanged="ThemeColor_Changed"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Spacing="10">
-                  <TextBlock Text="{Binding LabelToolbox}" VerticalAlignment="Center" Width="48" Foreground="{DynamicResource PrimaryForeground}"/>
-                  <TextBox Text="{Binding Theme.Toolbox}" Width="110" Tag="toolbox" TextChanged="ThemeColor_Changed"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Spacing="10">
-                  <TextBlock Text="{Binding LabelSettings}" VerticalAlignment="Center" Width="48" Foreground="{DynamicResource PrimaryForeground}"/>
-                  <TextBox Text="{Binding Theme.Settings}" Width="110" Tag="settings" TextChanged="ThemeColor_Changed"/>
-                </StackPanel>
-                <TextBlock Text="{Binding ThemeEditorHint}"
-                           Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap" FontSize="11"/>
-              </StackPanel>
-            </Border>
-
-            <!-- Java 环境检测（调用 Core.JavaDetector，真实扫描本机）-->
-            <Border Classes="card" Background="{DynamicResource CardBackground}" CornerRadius="12"
-                    Padding="14">
-              <StackPanel Spacing="10">
-                <TextBlock Text="{Binding JavaSectionTitle}" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"/>
-                <TextBlock Text="{Binding Status}" Foreground="{DynamicResource SecondaryForeground}"/>
-                <Button Content="{Binding JavaDetectButton}" Click="DetectJava_Click" HorizontalAlignment="Left"/>
-                <ListBox ItemsSource="{Binding JavaList}" Background="{DynamicResource InputBackground}"
-                         Foreground="{DynamicResource PrimaryForeground}" MaxHeight="180"/>
-              </StackPanel>
-            </Border>
-
-            <!-- 弹窗与通知演示（开发用：验证设计稿三种对话框变体 + Toast）-->
-            <Border Classes="card">
-              <StackPanel Spacing="10">
-                <TextBlock Text="弹窗与通知演示" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"/>
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                  <Button Content="居中询问" Click="Demo_Center"/>
-                  <Button Content="右上队列" Click="Demo_Queue"/>
-                  <Button Content="右下播放列表" Click="Demo_Music"/>
-                  <Button Content="显示 Toast" Click="Demo_Toast"/>
-                </StackPanel>
-              </StackPanel>
-            </Border>
+            <TextBlock Text="{Binding PanelDescription}" Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"/>
           </StackPanel>
-        </ScrollViewer>
+          <!-- 页面宿主：按 SelectedTab / SelectedSidebarId 路由到具体功能页 -->
+          <ContentControl x:Name="PageRegion" Grid.Row="1" Margin="0,12,0,0"/>
+        </Grid>
       </Border>
     </Grid>
 

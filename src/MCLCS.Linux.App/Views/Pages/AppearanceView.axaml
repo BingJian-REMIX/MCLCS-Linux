@@ -1,0 +1,39 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:MCLCS.Linux.App.ViewModels"
+             x:Class="MCLCS.Linux.App.Views.Pages.AppearanceView">
+  <ScrollViewer Margin="18">
+    <StackPanel Spacing="14" MaxWidth="880">
+
+      <Border Classes="card">
+        <StackPanel Spacing="12">
+          <TextBlock Text="{Binding ThemeEditorTitle}" FontWeight="Bold"
+                     Foreground="{DynamicResource PrimaryForeground}"/>
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <TextBlock Text="{Binding LabelGame}" VerticalAlignment="Center" Width="48"
+                       Foreground="{DynamicResource PrimaryForeground}"/>
+            <TextBox Text="{Binding Theme.Game}" Width="120" Tag="game" TextChanged="ThemeColor_Changed"/>
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <TextBlock Text="{Binding LabelDownload}" VerticalAlignment="Center" Width="48"
+                       Foreground="{DynamicResource PrimaryForeground}"/>
+            <TextBox Text="{Binding Theme.Download}" Width="120" Tag="download" TextChanged="ThemeColor_Changed"/>
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <TextBlock Text="{Binding LabelToolbox}" VerticalAlignment="Center" Width="48"
+                       Foreground="{DynamicResource PrimaryForeground}"/>
+            <TextBox Text="{Binding Theme.Toolbox}" Width="120" Tag="toolbox" TextChanged="ThemeColor_Changed"/>
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <TextBlock Text="{Binding LabelSettings}" VerticalAlignment="Center" Width="48"
+                       Foreground="{DynamicResource PrimaryForeground}"/>
+            <TextBox Text="{Binding Theme.Settings}" Width="120" Tag="settings" TextChanged="ThemeColor_Changed"/>
+          </StackPanel>
+          <TextBlock Text="{Binding ThemeEditorHint}"
+                     Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap" FontSize="11"/>
+        </StackPanel>
+      </Border>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

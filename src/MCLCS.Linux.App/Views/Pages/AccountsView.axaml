@@ -1,0 +1,42 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:MCLCS.Linux.App.ViewModels"
+             x:Class="MCLCS.Linux.App.Views.Pages.AccountsView">
+  <ScrollViewer Margin="18">
+    <StackPanel Spacing="14" MaxWidth="880">
+
+      <Border Classes="card">
+        <StackPanel Spacing="12">
+          <TextBlock Text="账户管理" FontWeight="Bold" FontSize="18"
+                     Foreground="{DynamicResource PrimaryForeground}"/>
+
+          <ListBox ItemsSource="{Binding Accounts}" SelectedItem="{Binding SelectedAccount}"
+                   MaxHeight="260" Background="{DynamicResource InputBackground}">
+            <ListBox.ItemTemplate>
+              <DataTemplate>
+                <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+                  <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding DisplayName}" Foreground="{DynamicResource PrimaryForeground}"/>
+                    <TextBlock Text="{Binding AuthType}" Foreground="{DynamicResource SecondaryForeground}" FontSize="11"/>
+                  </StackPanel>
+                  <Button Grid.Column="1" Content="删除"
+                          Command="{Binding Path=DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                          CommandParameter="{Binding}"/>
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBox Text="{Binding NewUsername}" Watermark="离线账号昵称"
+                     MinWidth="220" VerticalAlignment="Center"/>
+            <Button Content="添加离线账号" Command="{Binding AddOfflineCommand}" Classes="modal-btn primary"/>
+          </StackPanel>
+
+          <TextBlock Text="{Binding Status}" Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"/>
+        </StackPanel>
+      </Border>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

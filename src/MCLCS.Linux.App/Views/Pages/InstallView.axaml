@@ -1,0 +1,45 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:MCLCS.Linux.App.ViewModels"
+             x:Class="MCLCS.Linux.App.Views.Pages.InstallView">
+  <ScrollViewer Margin="18">
+    <StackPanel Spacing="14" MaxWidth="880">
+
+      <Border Classes="card">
+        <StackPanel Spacing="12">
+          <TextBlock Text="安装新版本" FontWeight="Bold" FontSize="18"
+                     Foreground="{DynamicResource PrimaryForeground}"/>
+
+          <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto">
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="安装类型" VerticalAlignment="Center" Margin="0,0,12,0"
+                       Foreground="{DynamicResource SecondaryForeground}"/>
+            <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding InstallTypes}"
+                      SelectedItem="{Binding SelectedType}" HorizontalAlignment="Stretch"/>
+
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="版本号" VerticalAlignment="Center" Margin="0,10,12,0"
+                       Foreground="{DynamicResource SecondaryForeground}"/>
+            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding VersionId}" Margin="0,10,0,0"
+                     Watermark="例如 1.20.1（加载器填对应 MC 版本）" HorizontalAlignment="Stretch"/>
+          </Grid>
+
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Content="开始安装" Command="{Binding InstallCommand}"
+                    IsEnabled="{Binding CanInstall}" Classes="modal-btn primary"/>
+          </StackPanel>
+
+          <ProgressBar Value="{Binding Progress}" Minimum="0" Maximum="100" Height="8"
+                       Foreground="{DynamicResource AccentBrush}"
+                       Background="{DynamicResource ProgressBackground}"
+                       IsVisible="{Binding IsBusy}"/>
+
+          <TextBox Text="{Binding Log, Mode=OneWay}" IsReadOnly="True" AcceptsReturn="True"
+                   TextWrapping="Wrap" ScrollViewer.VerticalScrollBarVisibility="Auto" Height="240"
+                   FontFamily="Consolas,Monospace" FontSize="12"
+                   Background="{DynamicResource InputBackground}"
+                   Foreground="{DynamicResource SecondaryForeground}"/>
+        </StackPanel>
+      </Border>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
