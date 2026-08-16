@@ -8,72 +8,68 @@
   </UserControl.Resources>
   <ScrollViewer Margin="18">
     <StackPanel Spacing="14" MaxWidth="880" HorizontalAlignment="Left">
+      <StackPanel Spacing="12">
+        <TextBlock Text="主题" FontWeight="Bold"
+                   Foreground="{DynamicResource PrimaryForeground}"/>
+        <ComboBox SelectedValue="{Binding SelectedTheme}" SelectedValueBinding="{Binding Tag}" Width="180"
+                  HorizontalAlignment="Left">
+          <ComboBoxItem Content="{Binding ThemeDarkLabel}" Tag="Dark"/>
+          <ComboBoxItem Content="{Binding ThemeLightLabel}" Tag="Light"/>
+        </ComboBox>
 
-      <Border Classes="card">
-        <StackPanel Spacing="12">
-          <TextBlock Text="主题" FontWeight="Bold"
+        <Separator Margin="0,4"/>
+
+        <TextBlock Text="主题色" FontWeight="Bold" Margin="0,8,0,0"
+                   Foreground="{DynamicResource PrimaryForeground}"/>
+        <StackPanel Orientation="Horizontal" Spacing="10">
+          <TextBlock Text="十六进制" VerticalAlignment="Center" Width="64"
                      Foreground="{DynamicResource PrimaryForeground}"/>
-          <ComboBox SelectedValue="{Binding SelectedTheme}" SelectedValueBinding="{Binding Tag}" Width="180"
-                    HorizontalAlignment="Left">
-            <ComboBoxItem Content="{Binding ThemeDarkLabel}" Tag="Dark"/>
-            <ComboBoxItem Content="{Binding ThemeLightLabel}" Tag="Light"/>
-          </ComboBox>
-
-          <Separator Margin="0,4"/>
-
-          <TextBlock Text="主题色" FontWeight="Bold" Margin="0,8,0,0"
-                     Foreground="{DynamicResource PrimaryForeground}"/>
-          <StackPanel Orientation="Horizontal" Spacing="10">
-            <TextBlock Text="十六进制" VerticalAlignment="Center" Width="64"
-                       Foreground="{DynamicResource PrimaryForeground}"/>
-            <TextBox Text="{Binding ThemeColor}" Width="120"/>
-            <Rectangle Width="24" Height="24" RadiusX="4" RadiusY="4"
-                       Fill="{Binding ThemeColor, Converter={StaticResource HexToBrush}}"/>
-          </StackPanel>
-
-          <TextBlock Text="背景图片" FontWeight="Bold" Margin="0,8,0,0"
-                     Foreground="{DynamicResource PrimaryForeground}"/>
-          <StackPanel Orientation="Horizontal" Spacing="10">
-            <TextBox Text="{Binding BackgroundImagePath}" Width="240" VerticalAlignment="Center"/>
-            <Button Content="浏览" Width="70" Click="BrowseBackground_Click" VerticalAlignment="Center"/>
-          </StackPanel>
-
-          <TextBlock Text="字体缩放" FontWeight="Bold" Margin="0,8,0,0"
-                     Foreground="{DynamicResource PrimaryForeground}"/>
-          <StackPanel Orientation="Horizontal" Spacing="10">
-            <Slider Minimum="0.8" Maximum="1.5" TickFrequency="0.1" Width="200"
-                    Value="{Binding FontScale}"/>
-            <TextBlock Text="{Binding FontScale, StringFormat={}{0:F1}x}" VerticalAlignment="Center"
-                       Foreground="{DynamicResource SecondaryForeground}"/>
-          </StackPanel>
-
-          <TextBlock Text="{Binding ThemeEditorTitle}" FontWeight="Bold" Margin="0,8,0,0"
-                     Foreground="{DynamicResource PrimaryForeground}"/>
-          <StackPanel Orientation="Horizontal" Spacing="10">
-            <TextBlock Text="{Binding LabelGame}" VerticalAlignment="Center" Width="48"
-                       Foreground="{DynamicResource PrimaryForeground}"/>
-            <TextBox Text="{Binding Theme.Game}" Width="120" Tag="game" TextChanged="ThemeColor_Changed"/>
-          </StackPanel>
-          <StackPanel Orientation="Horizontal" Spacing="10">
-            <TextBlock Text="{Binding LabelDownload}" VerticalAlignment="Center" Width="48"
-                       Foreground="{DynamicResource PrimaryForeground}"/>
-            <TextBox Text="{Binding Theme.Download}" Width="120" Tag="download" TextChanged="ThemeColor_Changed"/>
-          </StackPanel>
-          <StackPanel Orientation="Horizontal" Spacing="10">
-            <TextBlock Text="{Binding LabelToolbox}" VerticalAlignment="Center" Width="48"
-                       Foreground="{DynamicResource PrimaryForeground}"/>
-            <TextBox Text="{Binding Theme.Toolbox}" Width="120" Tag="toolbox" TextChanged="ThemeColor_Changed"/>
-          </StackPanel>
-          <StackPanel Orientation="Horizontal" Spacing="10">
-            <TextBlock Text="{Binding LabelSettings}" VerticalAlignment="Center" Width="48"
-                       Foreground="{DynamicResource PrimaryForeground}"/>
-            <TextBox Text="{Binding Theme.Settings}" Width="120" Tag="settings" TextChanged="ThemeColor_Changed"/>
-          </StackPanel>
-          <TextBlock Text="{Binding ThemeEditorHint}"
-                     Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap" FontSize="11"/>
+          <TextBox Text="{Binding ThemeColor}" Width="120"/>
+          <Rectangle Width="24" Height="24" RadiusX="4" RadiusY="4"
+                     Fill="{Binding ThemeColor, Converter={StaticResource HexToBrush}}"/>
         </StackPanel>
-      </Border>
 
+        <TextBlock Text="背景图片" FontWeight="Bold" Margin="0,8,0,0"
+                   Foreground="{DynamicResource PrimaryForeground}"/>
+        <StackPanel Orientation="Horizontal" Spacing="10">
+          <TextBox Text="{Binding BackgroundImagePath}" Width="240" VerticalAlignment="Center"/>
+          <Button Content="浏览" Width="70" Click="BrowseBackground_Click" VerticalAlignment="Center"/>
+        </StackPanel>
+
+        <TextBlock Text="字体缩放" FontWeight="Bold" Margin="0,8,0,0"
+                   Foreground="{DynamicResource PrimaryForeground}"/>
+        <StackPanel Orientation="Horizontal" Spacing="10">
+          <Slider Minimum="0.8" Maximum="1.5" TickFrequency="0.1" Width="200"
+                  Value="{Binding FontScale}"/>
+          <TextBlock Text="{Binding FontScale, StringFormat={}{0:F1}x}" VerticalAlignment="Center"
+                     Foreground="{DynamicResource SecondaryForeground}"/>
+        </StackPanel>
+
+        <TextBlock Text="{Binding ThemeEditorTitle}" FontWeight="Bold" Margin="0,8,0,0"
+                   Foreground="{DynamicResource PrimaryForeground}"/>
+        <StackPanel Orientation="Horizontal" Spacing="10">
+          <TextBlock Text="{Binding LabelGame}" VerticalAlignment="Center" Width="48"
+                     Foreground="{DynamicResource PrimaryForeground}"/>
+          <TextBox Text="{Binding Theme.Game}" Width="120" Tag="game" TextChanged="ThemeColor_Changed"/>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Spacing="10">
+          <TextBlock Text="{Binding LabelDownload}" VerticalAlignment="Center" Width="48"
+                     Foreground="{DynamicResource PrimaryForeground}"/>
+          <TextBox Text="{Binding Theme.Download}" Width="120" Tag="download" TextChanged="ThemeColor_Changed"/>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Spacing="10">
+          <TextBlock Text="{Binding LabelToolbox}" VerticalAlignment="Center" Width="48"
+                     Foreground="{DynamicResource PrimaryForeground}"/>
+          <TextBox Text="{Binding Theme.Toolbox}" Width="120" Tag="toolbox" TextChanged="ThemeColor_Changed"/>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Spacing="10">
+          <TextBlock Text="{Binding LabelSettings}" VerticalAlignment="Center" Width="48"
+                     Foreground="{DynamicResource PrimaryForeground}"/>
+          <TextBox Text="{Binding Theme.Settings}" Width="120" Tag="settings" TextChanged="ThemeColor_Changed"/>
+        </StackPanel>
+        <TextBlock Text="{Binding ThemeEditorHint}"
+                   Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap" FontSize="11"/>
+      </StackPanel>
     </StackPanel>
   </ScrollViewer>
 </UserControl>

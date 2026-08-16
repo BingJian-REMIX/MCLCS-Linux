@@ -4,29 +4,19 @@
              x:Class="MCLCS.Linux.App.Views.Pages.GeneralSettingsView"
              x:DataType="vm:GeneralSettingsViewModel">
   <ScrollViewer Margin="18">
-    <StackPanel Spacing="14" MaxWidth="760" HorizontalAlignment="Left">
-      <Border Classes="card">
-        <StackPanel Spacing="6">
-          <TextBlock FontSize="22" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"
-                     Text="{Binding Source='settings.general', Converter={StaticResource KeyToText}}"/>
-          <TextBlock Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"
-                     Text="{Binding Source='settings.general.desc', Converter={StaticResource KeyToText}}"/>
-        </StackPanel>
-      </Border>
+    <StackPanel Spacing="16" MaxWidth="760" HorizontalAlignment="Left">
 
-      <Border Classes="card">
-        <StackPanel Spacing="8">
-          <TextBlock Text="{Binding Source='settings.lang', Converter={StaticResource KeyToText}}"
-                     FontWeight="Bold" FontSize="14"/>
-          <ComboBox SelectedValue="{Binding SelectedLanguage}" SelectedValueBinding="{Binding Tag}" Width="180"
-                    HorizontalAlignment="Left">
-            <ComboBoxItem Content="{Binding LangChinese}" Tag="zh_CN"/>
-            <ComboBoxItem Content="{Binding LangEnglish}" Tag="en_US"/>
-          </ComboBox>
-          <TextBlock Foreground="{DynamicResource SecondaryForeground}" FontSize="12" TextWrapping="Wrap"
-                     Text="切换后即时生效，无需保存。"/>
-        </StackPanel>
-      </Border>
+      <StackPanel Spacing="8">
+        <TextBlock Text="{Binding Source='settings.lang', Converter={StaticResource KeyToText}}"
+                   FontWeight="Bold" FontSize="14"/>
+        <ComboBox SelectedValue="{Binding SelectedLanguage}" SelectedValueBinding="{Binding Tag}" Width="180"
+                  HorizontalAlignment="Left">
+          <ComboBoxItem Content="{Binding LangChinese}" Tag="zh_CN"/>
+          <ComboBoxItem Content="{Binding LangEnglish}" Tag="en_US"/>
+        </ComboBox>
+        <TextBlock Foreground="{DynamicResource SecondaryForeground}" FontSize="12" TextWrapping="Wrap"
+                   Text="切换后即时生效，无需保存。"/>
+      </StackPanel>
     </StackPanel>
   </ScrollViewer>
 </UserControl>

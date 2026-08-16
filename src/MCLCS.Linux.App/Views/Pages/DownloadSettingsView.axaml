@@ -8,55 +8,43 @@
     <conv:CountToVisibleConverter x:Key="CountToVisible"/>
   </UserControl.Resources>
   <ScrollViewer Margin="18">
-    <StackPanel Spacing="14" MaxWidth="760" HorizontalAlignment="Left">
-      <Border Classes="card">
-        <StackPanel Spacing="6">
-          <TextBlock FontSize="22" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"
-                     Text="{Binding Source='settings.download', Converter={StaticResource KeyToText}}"/>
-          <TextBlock Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"
-                     Text="{Binding Source='settings.download.desc', Converter={StaticResource KeyToText}}"/>
-        </StackPanel>
-      </Border>
+    <StackPanel Spacing="16" MaxWidth="760" HorizontalAlignment="Left">
 
-      <Border Classes="card">
-        <StackPanel Spacing="10">
-          <TextBlock Text="下载选项" FontWeight="Bold" FontSize="14"/>
-          <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
-            <TextBlock Grid.Row="0" Grid.Column="0" Text="下载源优先级" VerticalAlignment="Center"/>
-            <ComboBox Grid.Row="0" Grid.Column="1" MinWidth="180"
-                      ItemsSource="{Binding SourceOptions}"
-                      SelectedItem="{Binding DownloadSource}"/>
+      <StackPanel Spacing="10">
+        <TextBlock Text="下载选项" FontWeight="Bold" FontSize="14"/>
+        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
+          <TextBlock Grid.Row="0" Grid.Column="0" Text="下载源优先级" VerticalAlignment="Center"/>
+          <ComboBox Grid.Row="0" Grid.Column="1" MinWidth="180"
+                    ItemsSource="{Binding SourceOptions}"
+                    SelectedItem="{Binding DownloadSource}"/>
 
-            <TextBlock Grid.Row="1" Grid.Column="0" Text="最大并发下载数（1–64）" VerticalAlignment="Center" Margin="0,8,0,0"/>
-            <NumericUpDown Grid.Row="1" Grid.Column="1" MinWidth="120" Minimum="1" Maximum="64"
-                           Value="{Binding MaxConcurrentDownloads}" Margin="0,8,0,0"/>
+          <TextBlock Grid.Row="1" Grid.Column="0" Text="最大并发下载数（1–64）" VerticalAlignment="Center" Margin="0,8,0,0"/>
+          <NumericUpDown Grid.Row="1" Grid.Column="1" MinWidth="120" Minimum="1" Maximum="64"
+                         Value="{Binding MaxConcurrentDownloads}" Margin="0,8,0,0"/>
 
-            <TextBlock Grid.Row="2" Grid.Column="0" Text="服务器资源包缓存" VerticalAlignment="Center" Margin="0,8,0,0"/>
-            <ToggleSwitch Grid.Row="2" Grid.Column="1" IsChecked="{Binding ServerPackCacheEnabled}" Margin="0,8,0,0"/>
-          </Grid>
-          <Button Classes="modal-btn accent" Content="保存下载设置" Command="{Binding SaveCommand}" HorizontalAlignment="Left"/>
-        </StackPanel>
-      </Border>
+          <TextBlock Grid.Row="2" Grid.Column="0" Text="服务器资源包缓存" VerticalAlignment="Center" Margin="0,8,0,0"/>
+          <ToggleSwitch Grid.Row="2" Grid.Column="1" IsChecked="{Binding ServerPackCacheEnabled}" Margin="0,8,0,0"/>
+        </Grid>
+        <Button Classes="modal-btn accent" Content="保存下载设置" Command="{Binding SaveCommand}" HorizontalAlignment="Left"/>
+      </StackPanel>
 
-      <Border Classes="card">
-        <StackPanel Spacing="8">
-          <Grid ColumnDefinitions="*,Auto,Auto">
-            <TextBlock Text="镜像端点" FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>
-            <Button Grid.Column="1" Classes="modal-btn" Content="刷新" Command="{Binding RefreshCommand}"/>
-            <Button Grid.Column="2" Classes="modal-btn accent" Content="测试连通性" Command="{Binding TestCommand}"
-                    IsEnabled="{Binding !Busy}" Margin="8,0,0,0"/>
-          </Grid>
-          <ItemsControl ItemsSource="{Binding MirrorUrls}" IsVisible="{Binding MirrorUrls.Count, Converter={StaticResource CountToVisible}}">
-            <ItemsControl.ItemTemplate>
-              <DataTemplate>
-                <Border Margin="0,0,0,6" Padding="10,8" Background="#1B1F2A" CornerRadius="6">
-                  <TextBlock Text="{Binding}" FontFamily="Consolas" FontSize="12" TextWrapping="Wrap"/>
-                </Border>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
-        </StackPanel>
-      </Border>
+      <StackPanel Spacing="8">
+        <Grid ColumnDefinitions="*,Auto,Auto">
+          <TextBlock Text="镜像端点" FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>
+          <Button Grid.Column="1" Classes="modal-btn" Content="刷新" Command="{Binding RefreshCommand}"/>
+          <Button Grid.Column="2" Classes="modal-btn accent" Content="测试连通性" Command="{Binding TestCommand}"
+                  IsEnabled="{Binding !Busy}" Margin="8,0,0,0"/>
+        </Grid>
+        <ItemsControl ItemsSource="{Binding MirrorUrls}" IsVisible="{Binding MirrorUrls.Count, Converter={StaticResource CountToVisible}}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Border Margin="0,0,0,6" Padding="10,8" Background="#1B1F2A" CornerRadius="6">
+                <TextBlock Text="{Binding}" FontFamily="Consolas" FontSize="12" TextWrapping="Wrap"/>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
 
       <Grid ColumnDefinitions="*,Auto">
         <ProgressBar IsIndeterminate="{Binding Busy}" IsVisible="{Binding Busy}"/>
