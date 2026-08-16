@@ -9,8 +9,8 @@ using MCLCS.Core.Utils;
 namespace MCLCS.Linux.App.ViewModels;
 
 /// <summary>
-/// 设置 → 启动（对齐 WPF Settings→Launch）：Java 路径 + 自动检测、崩溃自动修复策略、
-/// Java 发行商、缺失 Mod 依赖自动安装策略。
+/// 设置 → 启动（对齐 WPF Settings→Launch）：Java 路径 + 自动检测、内存分配、默认用户名、
+/// 额外 JVM 参数、崩溃自动修复策略、Java 发行商、缺失 Mod 依赖自动安装策略。
 /// </summary>
 public class LaunchSettingsViewModel : ObservableObject
 {
@@ -56,6 +56,34 @@ public class LaunchSettingsViewModel : ObservableObject
         set => SetField(ref _javaPath, value);
     }
 
+    private string _defaultUsername = "";
+    public string DefaultUsername
+    {
+        get => _defaultUsername;
+        set => SetField(ref _defaultUsername, value);
+    }
+
+    private string _minMemoryMb = "512";
+    public string MinMemoryMb
+    {
+        get => _minMemoryMb;
+        set => SetField(ref _minMemoryMb, value);
+    }
+
+    private string _maxMemoryMb = "2048";
+    public string MaxMemoryMb
+    {
+        get => _maxMemoryMb;
+        set => SetField(ref _maxMemoryMb, value);
+    }
+
+    private string _extraJvmArgs = "";
+    public string ExtraJvmArgs
+    {
+        get => _extraJvmArgs;
+        set => SetField(ref _extraJvmArgs, value);
+    }
+
     private string _status = LocaleManager.T("status.ready");
     public string Status
     {
@@ -70,6 +98,10 @@ public class LaunchSettingsViewModel : ObservableObject
         _javaVendor = _profile.PreferredJavaVendor;
         _autoInstall = _profile.AutoInstallMissingMods;
         _javaPath = _profile.JavaPath ?? "";
+        _defaultUsername = _profile.DefaultUsername;
+        _minMemoryMb = _profile.MinMemoryMb.ToString();
+        _maxMemoryMb = _profile.MaxMemoryMb.ToString();
+        _extraJvmArgs = string.Join(" ", _profile.ExtraJvmArgs);
         AutoDetectJavaCommand = new AsyncRelayCommand(_ => AutoDetectJavaAsync());
     }
 
@@ -85,6 +117,10 @@ public class LaunchSettingsViewModel : ObservableObject
             _profile.PreferredJavaVendor = JavaVendor;
             _profile.AutoInstallMissingMods = AutoInstall;
             _profile.JavaPath = string.IsNullOrWhiteSpace(JavaPath) ? null : JavaPath;
+            _profile.DefaultUsername = string.IsNullOrWhiteSpace(DefaultUsername) ? "Player" : DefaultUsername.Trim();
+            if (int.TryParse(MinMemoryMb, out var min) && min > 0) _profile.MinMemoryMb = min;
+            if (int.TryParse(MaxMemoryMb, out var max) && max > 0) _profile.MaxMemoryMb = max;
+            _profile.ExtraJvmArgs = ExtraJvmArgs.Split(' ', StringSplitOptions.RemoveEmptyEntries).ToList();
             ProfileStore.Save(_profile);
             Status = "启动设置已保存";
         }
