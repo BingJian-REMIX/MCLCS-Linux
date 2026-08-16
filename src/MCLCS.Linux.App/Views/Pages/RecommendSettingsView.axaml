@@ -28,6 +28,27 @@
 
       <Border Classes="card">
         <StackPanel Spacing="8">
+          <TextBlock Text="玩法分区偏好" FontWeight="Bold" FontSize="14"/>
+          <TextBlock Foreground="{DynamicResource SecondaryForeground}" FontSize="12" TextWrapping="Wrap"
+                     Text="勾选你感兴趣的分区，推荐结果将优先展示对应类别（引擎按此过滤）。"/>
+          <ItemsControl ItemsSource="{Binding CategoryPreferences}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <WrapPanel Orientation="Horizontal"/>
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <CheckBox IsChecked="{Binding IsChecked}" Content="{Binding Label}"
+                          Margin="0,4,16,4" VerticalContentAlignment="Center"/>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card">
+        <StackPanel Spacing="8">
           <TextBlock Text="计算推荐" FontWeight="Bold" FontSize="14"/>
           <Button Classes="modal-btn" Content="生成推荐" Command="{Binding BuildCommand}" IsEnabled="{Binding !Busy}"
                   HorizontalAlignment="Left"/>
