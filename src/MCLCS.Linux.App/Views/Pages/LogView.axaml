@@ -1,0 +1,67 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:MCLCS.Linux.App.ViewModels"
+             xmlns:conv="clr-namespace:MCLCS.Linux.App.Converters"
+             x:Class="MCLCS.Linux.App.Views.Pages.LogView">
+  <ScrollViewer Margin="18">
+    <StackPanel Spacing="14" MaxWidth="900">
+      <Border Classes="card">
+        <StackPanel Spacing="6">
+          <TextBlock Text="{Binding Source='tool.log', Converter={StaticResource KeyToText}}"
+                     FontSize="22" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"/>
+          <TextBlock Text="{Binding Source='tool.log.desc', Converter={StaticResource KeyToText}}"
+                     Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"/>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card">
+        <StackPanel Spacing="10">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Content="刷新" Command="{Binding RefreshCommand}"/>
+            <Button Content="导出选中" Command="{Binding ExportCommand}" Classes="modal-btn"/>
+          </StackPanel>
+          <TextBlock Text="{Binding Status}" Foreground="{DynamicResource SecondaryForeground}"/>
+          <ListBox ItemsSource="{Binding Logs}" SelectedItem="{Binding SelectedLog}"
+                   Background="{DynamicResource InputBackground}" MaxHeight="220">
+            <ListBox.ItemTemplate>
+              <DataTemplate>
+                <Grid ColumnDefinitions="*,Auto,Auto">
+                  <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                  <Border Grid.Column="1" Margin="8,0" Padding="6,1" CornerRadius="6"
+                          Background="{DynamicResource AccentBrush}" IsVisible="{Binding Kind, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=crash}">
+                    <TextBlock Text="崩溃" FontSize="10" Foreground="#FFFFFF"/>
+                  </Border>
+                  <TextBlock Grid.Column="2" Text="{Binding SizeBytes}" FontSize="11"
+                             Foreground="{DynamicResource SecondaryForeground}" VerticalAlignment="Center"/>
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card" IsVisible="{Binding SelectedLog, Converter={x:Static ObjectConverters.IsNotNull}}">
+        <StackPanel Spacing="10">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBox Text="{Binding FilterText}" Watermark="过滤关键字（不区分大小写）"
+                     MinWidth="260" HorizontalAlignment="Left"/>
+            <CheckBox Content="仅错误" IsChecked="{Binding OnlyErrors}"/>
+          </StackPanel>
+          <Border Background="{DynamicResource InputBackground}" CornerRadius="8" Padding="8" MaxHeight="320">
+            <ScrollViewer>
+              <ItemsControl ItemsSource="{Binding Lines}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <TextBlock Text="{Binding Text}" FontFamily="Consolas,Monospace" FontSize="12"
+                               Foreground="{Binding Severity, Converter={StaticResource SeverityToBrush}}"
+                               TextWrapping="Wrap"/>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </ScrollViewer>
+          </Border>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

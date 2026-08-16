@@ -1,0 +1,47 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:MCLCS.Linux.App.ViewModels"
+             x:Class="MCLCS.Linux.App.Views.Pages.CleanerView">
+  <ScrollViewer Margin="18">
+    <StackPanel Spacing="14" MaxWidth="900">
+      <Border Classes="card">
+        <StackPanel Spacing="6">
+          <TextBlock Text="{Binding Source='tool.clean', Converter={StaticResource KeyToText}}"
+                     FontSize="22" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"/>
+          <TextBlock Text="{Binding Source='tool.clean.desc', Converter={StaticResource KeyToText}}"
+                     Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"/>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card">
+        <StackPanel Spacing="10">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Content="扫描" Command="{Binding ScanCommand}"/>
+            <Button Content="清理选中" Command="{Binding CleanCommand}" Classes="modal-btn primary"/>
+            <CheckBox Content="直接删除（不进回收站）" IsChecked="{Binding DeleteDirectly}"/>
+          </StackPanel>
+          <TextBlock Text="{Binding Status}" Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"/>
+          <TextBlock Foreground="{DynamicResource SecondaryForeground}">
+            <Run Text="待清理："/>
+            <Run Text="{Binding TotalCount}"/>
+            <Run Text=" 个，共 "/>
+            <Run Text="{Binding TotalSizeText}"/>
+          </TextBlock>
+          <ListBox ItemsSource="{Binding Files}" Background="{DynamicResource InputBackground}" MaxHeight="320">
+            <ListBox.ItemTemplate>
+              <DataTemplate>
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                  <CheckBox Grid.Column="0" IsChecked="{Binding Selected}" VerticalAlignment="Center"/>
+                  <TextBlock Grid.Column="1" Text="{Binding RelativePath}" VerticalAlignment="Center"
+                             FontFamily="Consolas,Monospace" FontSize="12" Margin="8,0"/>
+                  <TextBlock Grid.Column="2" Text="{Binding SizeText}" FontSize="11"
+                             Foreground="{DynamicResource SecondaryForeground}" VerticalAlignment="Center"/>
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
