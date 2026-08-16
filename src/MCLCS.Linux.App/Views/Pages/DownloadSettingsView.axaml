@@ -19,6 +19,26 @@
       </Border>
 
       <Border Classes="card">
+        <StackPanel Spacing="10">
+          <TextBlock Text="下载选项" FontWeight="Bold" FontSize="14"/>
+          <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="下载源优先级" VerticalAlignment="Center"/>
+            <ComboBox Grid.Row="0" Grid.Column="1" MinWidth="180"
+                      ItemsSource="{Binding SourceOptions}"
+                      SelectedItem="{Binding DownloadSource}"/>
+
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="最大并发下载数（1–64）" VerticalAlignment="Center" Margin="0,8,0,0"/>
+            <NumericUpDown Grid.Row="1" Grid.Column="1" MinWidth="120" Minimum="1" Maximum="64"
+                           Value="{Binding MaxConcurrentDownloads}" Margin="0,8,0,0"/>
+
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="服务器资源包缓存" VerticalAlignment="Center" Margin="0,8,0,0"/>
+            <ToggleSwitch Grid.Row="2" Grid.Column="1" IsChecked="{Binding ServerPackCacheEnabled}" Margin="0,8,0,0"/>
+          </Grid>
+          <Button Classes="modal-btn accent" Content="保存下载设置" Command="{Binding SaveCommand}" HorizontalAlignment="Left"/>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card">
         <StackPanel Spacing="8">
           <Grid ColumnDefinitions="*,Auto,Auto">
             <TextBlock Text="镜像端点" FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>

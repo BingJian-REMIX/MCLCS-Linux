@@ -2,6 +2,7 @@ using System.Windows.Input;
 using MCLCS.Core.Installers;
 using MCLCS.Core.Localization;
 using MCLCS.Core.Mvvm;
+using MCLCS.Core.Profiles;
 using MCLCS.Core.Toolbox;
 using MCLCS.Core.Utils;
 
@@ -58,7 +59,8 @@ public class ModpackViewModel : ObservableObject
     }
 
     private ModpackInstaller CreateInstaller()
-        => new(_gameRoot, new HttpClient(), new MCLCS.Core.Download.HttpDownloader(new HttpClient()));
+        => new(_gameRoot, new HttpClient(),
+            new MCLCS.Core.Download.HttpDownloader(new HttpClient(), maxConcurrency: ProfileStore.Load(_gameRoot).MaxConcurrentDownloads));
 
     public ICommand InstallCommand => new AsyncRelayCommand(_ => InstallAsync());
     public ICommand ExportCommand => new RelayCommand(_ => Export());

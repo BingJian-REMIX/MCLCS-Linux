@@ -9,6 +9,7 @@ using MCLCS.Core.Localization;
 using MCLCS.Core.Models;
 using MCLCS.Core.Mods;
 using MCLCS.Core.Mvvm;
+using MCLCS.Core.Profiles;
 using MCLCS.Core.Utils;
 
 namespace MCLCS.Linux.App.ViewModels;
@@ -68,7 +69,8 @@ public class ModsViewModel : ObservableObject
 
     public ModsViewModel()
     {
-        _manager = new ModManager(_gameRoot, new HttpClient(), new HttpDownloader(new HttpClient()));
+        _manager = new ModManager(_gameRoot, new HttpClient(),
+            new HttpDownloader(new HttpClient(), maxConcurrency: ProfileStore.Load(_gameRoot).MaxConcurrentDownloads));
         RefreshInstalled();
     }
 

@@ -3,6 +3,8 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Styling;
+using MCLCS.Core.Download;
+using MCLCS.Core.Profiles;
 using MCLCS.Core.Theme;
 using MCLCS.Core.Utils;
 using MCLCS.Linux.App.Themes;
@@ -18,6 +20,9 @@ public class App : Application
         // 必须最先执行（对齐 WPF App.xaml.cs）：读取用户自定义的游戏目录覆盖，
         // 之后所有 GameConstants.DefaultGameRoot 才是正确值，各页面构造时缓存的目录才不会错。
         GameConstants.LoadGameRootOverride();
+
+        // 同步下载源偏好到 MirrorPolicy（设置 → 下载），使各镜像 URL 按用户优先级重排。
+        MirrorPolicy.Preference = ProfileStore.Load(GameConstants.DefaultGameRoot).DownloadSource;
 
         // 主题接入：优先读取持久化偏好（mclcs_theme.json）；
         // 无偏好文件时默认暗色，保持 Linux 版既定外观。

@@ -7,6 +7,7 @@ using System.Windows.Input;
 using MCLCS.Core.Download;
 using MCLCS.Core.Installers;
 using MCLCS.Core.Localization;
+using MCLCS.Core.Profiles;
 using MCLCS.Core.Mvvm;
 using MCLCS.Core.Utils;
 
@@ -86,7 +87,7 @@ public class InstallViewModel : ObservableObject
         {
             var logger = new LogAdapter(msg => Log += msg + "\n");
             using var client = new HttpClient { Timeout = Timeout.InfiniteTimeSpan };
-            var downloader = new HttpDownloader(client, maxConcurrency: 8, logger);
+            var downloader = new HttpDownloader(client, maxConcurrency: ProfileStore.Load(_gameRoot).MaxConcurrentDownloads, logger);
             var progress = new Progress<(int Done, int Total)>(p =>
             {
                 Progress = p.Total > 0 ? p.Done * 100.0 / p.Total : 0;
