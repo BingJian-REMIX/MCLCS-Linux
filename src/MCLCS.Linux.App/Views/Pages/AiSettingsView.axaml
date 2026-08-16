@@ -21,32 +21,34 @@
         <TextBlock Text="AI 助手配置" FontWeight="Bold" FontSize="14"/>
         <ToggleSwitch IsChecked="{Binding Enabled}" Content="启用 AI 助手" HorizontalAlignment="Left"/>
 
-        <StackPanel Orientation="Horizontal" Spacing="10">
-          <TextBlock Text="部署方式" VerticalAlignment="Center" Foreground="{DynamicResource SecondaryForeground}"/>
-          <ComboBox SelectedValue="{Binding Mode}" SelectedValueBinding="{Binding Tag}" Width="200" HorizontalAlignment="Left">
-            <ComboBoxItem Content="外部 API（OpenAI 兼容）" Tag="{x:Static ai:AiMode.External}"/>
-            <ComboBoxItem Content="本地 Ollama" Tag="{x:Static ai:AiMode.Local}"/>
-          </ComboBox>
-        </StackPanel>
+        <StackPanel Spacing="10" IsVisible="{Binding Enabled}">
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <TextBlock Text="部署方式" VerticalAlignment="Center" Foreground="{DynamicResource SecondaryForeground}"/>
+            <ComboBox SelectedValue="{Binding Mode}" SelectedValueBinding="{Binding Tag}" Width="200" HorizontalAlignment="Left">
+              <ComboBoxItem Content="外部 API（OpenAI 兼容）" Tag="{x:Static ai:AiMode.External}"/>
+              <ComboBoxItem Content="本地 Ollama" Tag="{x:Static ai:AiMode.Local}"/>
+            </ComboBox>
+          </StackPanel>
 
-        <StackPanel Spacing="6" IsVisible="{Binding IsExternalMode}">
-          <TextBlock Text="API 端点" Foreground="{DynamicResource SecondaryForeground}"/>
-          <TextBox Text="{Binding Endpoint}" Watermark="https://api.openai.com/v1/chat/completions"/>
-          <TextBlock Text="模型名" Foreground="{DynamicResource SecondaryForeground}"/>
-          <TextBox Text="{Binding Model}" Watermark="gpt-4o-mini"/>
-          <TextBlock Text="API Key" Foreground="{DynamicResource SecondaryForeground}"/>
-          <TextBox Text="{Binding ApiKey}" PasswordChar="•" Watermark="sk-..."/>
-        </StackPanel>
+          <StackPanel Spacing="6" IsVisible="{Binding IsExternalMode}">
+            <TextBlock Text="API 端点" Foreground="{DynamicResource SecondaryForeground}"/>
+            <TextBox Text="{Binding Endpoint}" Watermark="https://api.openai.com/v1/chat/completions"/>
+            <TextBlock Text="模型名" Foreground="{DynamicResource SecondaryForeground}"/>
+            <TextBox Text="{Binding Model}" Watermark="gpt-4o-mini"/>
+            <TextBlock Text="API Key" Foreground="{DynamicResource SecondaryForeground}"/>
+            <TextBox Text="{Binding ApiKey}" PasswordChar="•" Watermark="sk-..."/>
+          </StackPanel>
 
-        <StackPanel Spacing="6" IsVisible="{Binding IsLocalMode}">
-          <TextBlock Text="本地模型（Ollama tag）" Foreground="{DynamicResource SecondaryForeground}"/>
-          <TextBox Text="{Binding SelectedLocalModel}" Watermark="Qwen2.5-Coder-1.5B"/>
-        </StackPanel>
+          <StackPanel Spacing="6" IsVisible="{Binding IsLocalMode}">
+            <TextBlock Text="本地模型（Ollama tag）" Foreground="{DynamicResource SecondaryForeground}"/>
+            <TextBox Text="{Binding SelectedLocalModel}" Watermark="Qwen2.5-Coder-1.5B"/>
+          </StackPanel>
 
-        <TextBlock Text="能力开关" FontWeight="Bold" FontSize="13" Margin="0,6,0,0"/>
-        <ToggleSwitch IsChecked="{Binding CrashInterpret}" Content="崩溃日志智能解读" HorizontalAlignment="Left"/>
-        <ToggleSwitch IsChecked="{Binding RecommendReason}" Content="生成推荐理由" HorizontalAlignment="Left"/>
-        <ToggleSwitch IsChecked="{Binding ModTranslate}" Content="Mod 描述翻译" HorizontalAlignment="Left"/>
+          <TextBlock Text="能力开关" FontWeight="Bold" FontSize="13" Margin="0,6,0,0"/>
+          <ToggleSwitch IsChecked="{Binding CrashInterpret}" Content="崩溃日志智能解读" HorizontalAlignment="Left"/>
+          <ToggleSwitch IsChecked="{Binding RecommendReason}" Content="生成推荐理由" HorizontalAlignment="Left"/>
+          <ToggleSwitch IsChecked="{Binding ModTranslate}" Content="Mod 描述翻译" HorizontalAlignment="Left"/>
+        </StackPanel>
       </StackPanel>
 
       <Grid ColumnDefinitions="*,Auto">
