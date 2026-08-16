@@ -1,0 +1,35 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:MCLCS.Linux.App.ViewModels"
+             x:Class="MCLCS.Linux.App.Views.Pages.AiSettingsView"
+             x:DataType="vm:AiSettingsViewModel">
+  <ScrollViewer Margin="18">
+    <StackPanel Spacing="14" MaxWidth="760">
+      <Border Classes="card">
+        <StackPanel Spacing="6">
+          <TextBlock FontSize="22" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"
+                     Text="{Binding Source='settings.ai', Converter={StaticResource KeyToText}}"/>
+          <TextBlock Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"
+                     Text="{Binding Source='settings.ai.desc', Converter={StaticResource KeyToText}}"/>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card">
+        <StackPanel Spacing="8">
+          <TextBlock Text="本地 Ollama 服务" FontWeight="Bold" FontSize="14"/>
+          <Grid ColumnDefinitions="*,Auto">
+            <TextBlock Grid.Column="0" Text="{Binding ServiceStatus, StringFormat='状态：{0}'}"
+                       VerticalAlignment="Center"/>
+            <Button Grid.Column="1" Classes="modal-btn accent" Content="检查" Command="{Binding CheckCommand}"
+                    IsEnabled="{Binding !Busy}"/>
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <Grid ColumnDefinitions="*,Auto">
+        <ProgressBar IsIndeterminate="{Binding Busy}" IsVisible="{Binding Busy}"/>
+        <TextBlock Grid.Column="1" Classes="status" Margin="12,0,0,0" Text="{Binding Status}"/>
+      </Grid>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

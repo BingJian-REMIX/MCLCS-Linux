@@ -1,0 +1,34 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:MCLCS.Linux.App.ViewModels"
+             x:Class="MCLCS.Linux.App.Views.Pages.AboutView"
+             x:DataType="vm:AboutViewModel">
+  <ScrollViewer Margin="18">
+    <StackPanel Spacing="14" MaxWidth="760">
+      <Border Classes="card">
+        <StackPanel Spacing="6">
+          <TextBlock FontSize="22" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"
+                     Text="{Binding Source='settings.about', Converter={StaticResource KeyToText}}"/>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card">
+        <StackPanel Spacing="10">
+          <TextBlock FontSize="28" FontWeight="Bold" Text="{Binding AppName}"/>
+          <TextBlock Text="{Binding Version}" FontSize="14" Foreground="{DynamicResource AccentBrush}"/>
+          <TextBlock Text="{Binding Tagline}" FontSize="14" FontWeight="SemiBold"/>
+          <TextBlock Text="{Binding Description}" TextWrapping="Wrap" Foreground="{DynamicResource SecondaryForeground}"/>
+          <TextBlock Text="{Binding Framework}" FontSize="12" Foreground="#7F8C8D"/>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card">
+        <StackPanel Spacing="8">
+          <TextBlock Text="仓库" FontWeight="Bold" FontSize="14"/>
+          <TextBlock Text="{Binding RepositoryCnb}" FontFamily="Consolas" FontSize="12" Foreground="{DynamicResource AccentBrush}"/>
+          <TextBlock Text="{Binding RepositoryGithub}" FontFamily="Consolas" FontSize="12" Foreground="{DynamicResource AccentBrush}"/>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

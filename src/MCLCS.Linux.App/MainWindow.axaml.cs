@@ -185,6 +185,12 @@ public partial class MainWindow : Window
             (MainTabKind.Toolbox, "aichat") => new AiChatView(),
             (MainTabKind.Settings, "appearance") => new AppearanceView(),
             (MainTabKind.Settings, "account") => new AccountsView(),
+            (MainTabKind.Settings, "general") => new GeneralSettingsView(),
+            (MainTabKind.Settings, "launch") => new LaunchSettingsView(),
+            (MainTabKind.Settings, "download") => new DownloadSettingsView(),
+            (MainTabKind.Settings, "recommend") => new RecommendSettingsView(),
+            (MainTabKind.Settings, "ai") => new AiSettingsView(),
+            (MainTabKind.Settings, "about") => new AboutView(),
             _ => MakePlaceholder()
         };
         PageRegion.Content = page;

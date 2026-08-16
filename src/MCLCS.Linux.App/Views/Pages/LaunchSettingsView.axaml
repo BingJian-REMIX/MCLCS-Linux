@@ -1,0 +1,35 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:MCLCS.Linux.App.ViewModels"
+             x:Class="MCLCS.Linux.App.Views.Pages.LaunchSettingsView"
+             x:DataType="vm:LaunchSettingsViewModel">
+  <ScrollViewer Margin="18">
+    <StackPanel Spacing="14" MaxWidth="760">
+      <Border Classes="card">
+        <StackPanel Spacing="6">
+          <TextBlock FontSize="22" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"
+                     Text="{Binding Source='settings.launch', Converter={StaticResource KeyToText}}"/>
+          <TextBlock Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"
+                     Text="{Binding Source='settings.launch.desc', Converter={StaticResource KeyToText}}"/>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card">
+        <StackPanel Spacing="8">
+          <TextBlock Text="崩溃自动修复策略" FontWeight="Bold" FontSize="14"/>
+          <ComboBox ItemsSource="{Binding RepairPolicies}" SelectedItem="{Binding RepairPolicy}"/>
+
+          <TextBlock Text="自动安装 Java 的发行商" FontWeight="Bold" FontSize="14" Margin="0,8,0,0"/>
+          <ComboBox ItemsSource="{Binding JavaVendors}" SelectedItem="{Binding JavaVendor}"/>
+
+          <TextBlock Text="缺失 Mod 依赖自动安装" FontWeight="Bold" FontSize="14" Margin="0,8,0,0"/>
+          <ComboBox ItemsSource="{Binding AutoInstallPolicies}" SelectedItem="{Binding AutoInstall}"/>
+
+          <Button Classes="modal-btn accent" Content="保存" Command="{Binding SaveCommand}" HorizontalAlignment="Left"/>
+        </StackPanel>
+      </Border>
+
+      <TextBlock Classes="status" Text="{Binding Status}"/>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

@@ -1,0 +1,41 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:MCLCS.Linux.App.ViewModels"
+             x:Class="MCLCS.Linux.App.Views.Pages.GeneralSettingsView"
+             x:DataType="vm:GeneralSettingsViewModel">
+  <ScrollViewer Margin="18">
+    <StackPanel Spacing="14" MaxWidth="760">
+      <Border Classes="card">
+        <StackPanel Spacing="6">
+          <TextBlock FontSize="22" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"
+                     Text="{Binding Source='settings.general', Converter={StaticResource KeyToText}}"/>
+          <TextBlock Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"
+                     Text="{Binding Source='settings.general.desc', Converter={StaticResource KeyToText}}"/>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card">
+        <StackPanel Spacing="8">
+          <TextBlock Text="默认用户名" FontWeight="Bold" FontSize="14"/>
+          <TextBox Text="{Binding Username}"/>
+
+          <TextBlock Text="内存分配（MB）" FontWeight="Bold" FontSize="14" Margin="0,8,0,0"/>
+          <Grid ColumnDefinitions="*,*">
+            <TextBox Grid.Column="0" Text="{Binding MinMemoryMb}" Watermark="最小值，如 512"/>
+            <TextBox Grid.Column="1" Text="{Binding MaxMemoryMb}" Watermark="最大值，如 2048" Margin="8,0,0,0"/>
+          </Grid>
+
+          <TextBlock Text="Java 路径（留空自动检测）" FontWeight="Bold" FontSize="14" Margin="0,8,0,0"/>
+          <TextBox Text="{Binding JavaPath}" Watermark="/usr/lib/jvm/java-17-openjdk/bin/java"/>
+
+          <TextBlock Text="额外 JVM 参数（空格分隔）" FontWeight="Bold" FontSize="14" Margin="0,8,0,0"/>
+          <TextBox Text="{Binding ExtraJvmArgs}" Watermark="-XX:+UseZGC"/>
+
+          <Button Classes="modal-btn accent" Content="保存" Command="{Binding SaveCommand}" HorizontalAlignment="Left"/>
+        </StackPanel>
+      </Border>
+
+      <TextBlock Classes="status" Text="{Binding Status}"/>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
