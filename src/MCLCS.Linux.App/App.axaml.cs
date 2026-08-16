@@ -5,7 +5,6 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Styling;
 using MCLCS.Core.Theme;
 using MCLCS.Linux.App.Themes;
-using MCLCS.Linux.App.ViewModels;
 
 namespace MCLCS.Linux.App;
 
@@ -38,10 +37,10 @@ public class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            desktop.MainWindow = new MainWindow
-            {
-                DataContext = new MainViewModel()
-            };
+            // MainWindow 构造函数已自建并绑定 MainViewModel（含 Instance 单例），
+            // 此处不再重复 new，否则对象初始化器会用一个新实例覆盖 DataContext，
+            // 导致 Tab_Click/ShowPage 操作的是不同 VM 实例（内容页永远无法切换）。
+            desktop.MainWindow = new MainWindow();
         }
 
         base.OnFrameworkInitializationCompleted();
