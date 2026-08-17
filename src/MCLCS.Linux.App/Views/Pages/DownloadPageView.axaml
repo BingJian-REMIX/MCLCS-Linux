@@ -41,7 +41,7 @@
 
           <TextBlock Grid.Row="1" Text="{Binding Title}" FontWeight="Bold"
                      Margin="10,8,10,2" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Title}"/>
-          <TextBlock Grid.Row="2" Text="{Binding Author}" FontSize="11" Opacity="0.7" Margin="10,0,10,2"/>
+          <TextBlock Grid.Row="2" Text="{Binding Author}" FontSize="11" Opacity="0.85" Margin="10,0,10,2"/>
 
           <TextBlock Grid.Row="3" Text="{Binding ViewsText}" FontSize="11" Margin="10,0,10,2"
                      Foreground="{DynamicResource AccentBrush}"
@@ -51,7 +51,7 @@
                      Foreground="{DynamicResource AccentBrush}" Opacity="0.9"
                      IsVisible="{Binding MetaText, Converter={StaticResource NonEmptyToVis}}"/>
 
-          <TextBlock Grid.Row="4" Text="{Binding Summary}" FontSize="11" Opacity="0.7"
+          <TextBlock Grid.Row="4" Text="{Binding Summary}" FontSize="11" Opacity="0.85"
                      Margin="10,0,10,2" TextWrapping="Wrap" Height="32" TextTrimming="CharacterEllipsis"/>
           <StackPanel Grid.Row="5" Orientation="Horizontal" Margin="10,6,10,8">
             <Button Classes="modal-btn primary"
@@ -85,7 +85,7 @@
       <TextBox Width="240" Text="{Binding Query, Mode=TwoWay}" Watermark="搜索关键词"/>
       <Button Content="搜索" Command="{Binding SearchCommand}" Margin="8,0,0,0" Padding="12,2"
               Classes="modal-btn primary"/>
-      <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Margin="12,0,0,0" Opacity="0.8"/>
+      <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Margin="12,0,0,0"/>
     </StackPanel>
 
     <!-- 筛选行：Modrinth 风格（版本 + 加载器，不含整合包） -->

@@ -13,6 +13,7 @@ using MCLCS.Linux.App.Controls;
 using MCLCS.Linux.App.Services;
 using MCLCS.Linux.App.ViewModels;
 using MCLCS.Core.Skin;
+using MCLCS.Core.Theme;
 using MCLCS.Core.UI;
 using SkiaSharp;
 
@@ -72,7 +73,7 @@ internal static class Program
     };
 
     [STAThread]
-    private static async Task<int> Main(string[] args)
+    private static int Main(string[] args)
     {
         var outDir = Path.GetFullPath(args.Length > 0 ? args[0] : "/workspace/shots");
         Directory.CreateDirectory(outDir);
@@ -85,40 +86,57 @@ internal static class Program
         MainViewModel.Instance = new MainViewModel();
         var failures = 0;
 
-        // ---- 真实 MainWindow：完整壳层（侧栏 + 主标签 + 状态栏）----
+        // ---- 真实 MainWindow：完整壳层（侧栏 + 主标签 + 状态栏），暗 / 亮双轮全量 ----
         var mw = new MainWindow { Width = W, Height = H };
         mw.Show();
         Dispatcher.UIThread.RunJobs();
 
-        foreach (var (kind, sid, name) in Nav)
+        foreach (var theme in new[] { ThemeType.Dark, ThemeType.Light })
         {
-            try
-            {
-                mw.NavigateTo(kind, sid);
-                Dispatcher.UIThread.RunJobs();
+            // 切换主题（触发 App.ApplyTheme 写入亮/暗调色板 + Fluent 变体）
+            ThemeManager.Current = theme;
+            Dispatcher.UIThread.RunJobs();
+            var suffix = theme == ThemeType.Light ? "-light" : "";
 
-                // 皮肤页：注入测试皮肤以渲染 3D（并关闭自动旋转，headless 下 DispatcherTimer 会卡 RunJobs）
-                if (sid == "skin")
+            foreach (var (kind, sid, name) in Nav)
+            {
+                try
                 {
-                    foreach (var c in mw.GetVisualDescendants().OfType<SkinPreview3D>())
-                        c.AutoRotate = false;
-                    if (FindSkinVm(mw) is { } svm)
-                    {
-                        svm.SkinImage = CreateTestSkin();
-                        svm.HasSkin = true;
-                        svm.SkinInfo = new SkinInfo { SkinUrl = "test://skin", Model = "classic" };
-                    }
+                    mw.NavigateTo(kind, sid);
                     Dispatcher.UIThread.RunJobs();
-                }
 
-                var path = Path.Combine(outDir, $"{name}.png");
-                Capture(mw, path);
-                Console.WriteLine($"[ok]   {name,-16} -> {path}");
-            }
-            catch (Exception ex)
-            {
-                failures++;
-                Console.Error.WriteLine($"[fail] {name}: {ex.GetType().Name}: {ex.Message}");
+                    // 下载子页：等真实网络搜索 / 版本清单加载完成（cards 有内容再截）。
+                    // 网络实测：version_manifest ≈ 6s、Modrinth < 1s。
+                    // 注意：不能 await Task.Delay（[STAThread] 主线程 async Main 无消息泵会死锁），
+                    // 用 Thread.Sleep + RunJobs 交替推进 UI 队列，让网络回调 continuation 落地。
+                    if (kind == MainTabKind.Download)
+                        WaitForNetwork(sid == "minecraft" ? 9000 : 6000);
+                    Dispatcher.UIThread.RunJobs();
+
+                    // 皮肤页：注入测试皮肤以渲染 3D（并关闭自动旋转，headless 下 DispatcherTimer 会卡 RunJobs）
+                    if (sid == "skin")
+                    {
+                        foreach (var c in mw.GetVisualDescendants().OfType<SkinPreview3D>())
+                            c.AutoRotate = false;
+                        if (FindSkinVm(mw) is { } svm)
+                        {
+                            svm.SkinImage = CreateTestSkin();
+                            svm.HasSkin = true;
+                            svm.SkinInfo = new SkinInfo { SkinUrl = "test://skin", Model = "classic" };
+                        }
+                        Dispatcher.UIThread.RunJobs();
+                    }
+
+                    var path = Path.Combine(outDir, $"{name}{suffix}.png");
+                    Capture(mw, path);
+                    Console.WriteLine($"[ok]   {theme,-5} {name,-16} -> {path}  " +
+                        (kind == MainTabKind.Download ? $"cards={DownloadPageViewModel.Instance.Cards.Count}" : ""));
+                }
+                catch (Exception ex)
+                {
+                    failures++;
+                    Console.Error.WriteLine($"[fail] {theme} {name}: {ex.GetType().Name}: {ex.Message}");
+                }
             }
         }
         mw.Close();
@@ -179,6 +197,19 @@ internal static class Program
             if (c is Control { DataContext: SkinViewModel svm }) return svm;
         }
         return null;
+    }
+
+    /// <summary>阻塞等待网络结果落地：Thread.Sleep 让异步 I/O 在 ThreadPool 完成，
+    /// 周期性 RunJobs 执行其 continuation（回填集合 / 更新 IsBusy）。</summary>
+    private static void WaitForNetwork(int ms)
+    {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        while (sw.ElapsedMilliseconds < ms)
+        {
+            Thread.Sleep(300);
+            Dispatcher.UIThread.RunJobs();
+        }
+        Dispatcher.UIThread.RunJobs();
     }
 
     private static void Capture(Window window, string path)
