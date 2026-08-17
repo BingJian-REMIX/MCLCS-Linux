@@ -1,85 +1,379 @@
-using System.Collections.Generic;
-using System.IO;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Windows.Input;
-using MCLCS.Core.Localization;
 using MCLCS.Core.Mvvm;
+using MCLCS.Core.Profiles;
 using MCLCS.Core.Toolbox;
-using MCLCS.Core.Utils;
 
 namespace MCLCS.Linux.App.ViewModels;
 
+/// <summary>可备份的来源（存档 / 配置 / Mod 目录）。</summary>
+public class BackupSourceItem
+{
+    public string Display { get; init; } = "";
+    public string Path { get; init; } = "";
+    public BackupKind Kind { get; init; }
+
+    public override string ToString() => Display;
+}
+
 /// <summary>
-/// 工具箱 → 备份（对齐 WPF BackupManager）：列出 / 删除 / 清理过期 / 触发计划备份。
-/// 备份记录持久化于 gameRoot/backups/index.json。
+/// 备份管理器（对齐 WPF BackupViewModel）：仅备份存档打包 zip、自定义存储路径、
+/// 定时备份（每天/每周/每月）、数量限制自动删旧、手动备份 / 恢复（恢复前自动备份当前状态）。
+/// Linux 降级：无目录选择对话框 / 确认框 / Toast，浏览改手动输入路径，删除与恢复直接执行（状态栏提示）。
 /// </summary>
 public class BackupViewModel : ObservableObject
 {
-    private readonly string _gameRoot = GameConstants.DefaultGameRoot;
+    private static readonly string[] ScheduleOptions = { "关闭", "每天", "每周", "每月" };
 
     private ObservableCollection<BackupRecord> _records = new();
+    private ObservableCollection<BackupSourceItem> _sources = new();
+    private BackupSourceItem? _selectedSource;
+    private BackupRecord? _selectedRecord;
+
+    private string _folder = "backups";
+    private int _keepPerSource = 5;
+    private int _maxAgeDays = 30;
+    private string _selectedSchedule = "关闭";
+    private bool _backupBeforeRestore = true;
+    private bool _autoBeforeLaunch;
+    private string _note = "";
+
+    private string _statusMessage = "";
+    private string _totalText = "";
+    private bool _isBusy;
+
     public ObservableCollection<BackupRecord> Records
     {
         get => _records;
         set => SetField(ref _records, value);
     }
 
-    private string _status = LocaleManager.T("status.ready");
-    public string Status
+    public ObservableCollection<BackupSourceItem> Sources
     {
-        get => _status;
-        set => SetField(ref _status, value);
+        get => _sources;
+        set => SetField(ref _sources, value);
+    }
+
+    public BackupSourceItem? SelectedSource
+    {
+        get => _selectedSource;
+        set => SetField(ref _selectedSource, value);
+    }
+
+    public BackupRecord? SelectedRecord
+    {
+        get => _selectedRecord;
+        set => SetField(ref _selectedRecord, value);
+    }
+
+    /// <summary>备份存储路径（相对 gameRoot 或绝对路径，如移动硬盘）。</summary>
+    public string Folder
+    {
+        get => _folder;
+        set => SetField(ref _folder, value);
+    }
+
+    /// <summary>每个来源最多保留几份（超出自动删旧）。</summary>
+    public int KeepPerSource
+    {
+        get => _keepPerSource;
+        set => SetField(ref _keepPerSource, value);
+    }
+
+    public int MaxAgeDays
+    {
+        get => _maxAgeDays;
+        set => SetField(ref _maxAgeDays, value);
+    }
+
+    public string[] Schedules => ScheduleOptions;
+
+    public string SelectedSchedule
+    {
+        get => _selectedSchedule;
+        set => SetField(ref _selectedSchedule, value);
+    }
+
+    public bool BackupBeforeRestore
+    {
+        get => _backupBeforeRestore;
+        set => SetField(ref _backupBeforeRestore, value);
+    }
+
+    public bool AutoBeforeLaunch
+    {
+        get => _autoBeforeLaunch;
+        set => SetField(ref _autoBeforeLaunch, value);
+    }
+
+    public string Note
+    {
+        get => _note;
+        set => SetField(ref _note, value);
+    }
+
+    public string StatusMessage
+    {
+        get => _statusMessage;
+        set => SetField(ref _statusMessage, value);
+    }
+
+    public string TotalText
+    {
+        get => _totalText;
+        set => SetField(ref _totalText, value);
+    }
+
+    public bool IsBusy
+    {
+        get => _isBusy;
+        set => SetField(ref _isBusy, value);
     }
 
     public ICommand RefreshCommand { get; }
+    public ICommand CreateCommand { get; }
+    public ICommand RestoreCommand { get; }
     public ICommand DeleteCommand { get; }
     public ICommand PruneCommand { get; }
-    public ICommand RunScheduledCommand { get; }
+    public ICommand SavePolicyCommand { get; }
+    public ICommand OpenFolderCommand { get; }
 
     public BackupViewModel()
     {
-        RefreshCommand = new RelayCommand(_ => Refresh());
-        DeleteCommand = new RelayCommand(p => Delete(p as BackupRecord));
-        PruneCommand = new RelayCommand(_ => Prune());
-        RunScheduledCommand = new RelayCommand(_ => RunScheduled());
-        Refresh();
+        RefreshCommand = new AsyncRelayCommand(_ => RefreshAsync(), _ => !IsBusy);
+        CreateCommand = new AsyncRelayCommand(_ => CreateAsync(), _ => !IsBusy);
+        RestoreCommand = new AsyncRelayCommand(_ => RestoreAsync(), _ => !IsBusy);
+        DeleteCommand = new AsyncRelayCommand(_ => DeleteAsync(), _ => !IsBusy);
+        PruneCommand = new AsyncRelayCommand(_ => PruneAsync(), _ => !IsBusy);
+        SavePolicyCommand = new RelayCommand(_ => SavePolicy());
+        OpenFolderCommand = new RelayCommand(_ => OpenFolder());
+
+        LoadPolicy();
+        _ = RefreshAsync();
     }
 
-    public void Refresh()
-    {
-        Records = new ObservableCollection<BackupRecord>(BackupManager.List(_gameRoot));
-        Status = $"共 {Records.Count} 份备份";
-    }
+    private static string GameRoot => Services.LauncherService.Instance.GameRoot;
 
-    public void Delete(BackupRecord? rec)
+    /// <summary>把界面上的策略字段汇成一个 <see cref="BackupPolicy"/>。</summary>
+    private BackupPolicy CurrentPolicy() => new()
     {
-        if (rec is null) return;
-        if (BackupManager.Delete(_gameRoot, rec.Id))
+        Folder = string.IsNullOrWhiteSpace(Folder) ? "backups" : Folder.Trim(),
+        KeepPerSource = Math.Max(0, KeepPerSource),
+        MaxAgeDays = Math.Max(0, MaxAgeDays),
+        Schedule = Array.IndexOf(ScheduleOptions, SelectedSchedule) switch
         {
-            Status = $"已删除备份：{rec.SourceName}";
-            Refresh();
+            1 => BackupSchedule.Daily,
+            2 => BackupSchedule.Weekly,
+            3 => BackupSchedule.Monthly,
+            _ => BackupSchedule.Off
+        },
+        BackupBeforeRestore = BackupBeforeRestore,
+        AutoBeforeLaunch = AutoBeforeLaunch,
+        LastScheduledRun = ProfileStore.Load(GameRoot).Backup.LastScheduledRun
+    };
+
+    private void LoadPolicy()
+    {
+        var p = ProfileStore.Load(GameRoot).Backup;
+        Folder = p.Folder;
+        KeepPerSource = p.KeepPerSource;
+        MaxAgeDays = p.MaxAgeDays;
+        BackupBeforeRestore = p.BackupBeforeRestore;
+        AutoBeforeLaunch = p.AutoBeforeLaunch;
+        SelectedSchedule = BackupManager.ScheduleText(p.Schedule);
+    }
+
+    private void SavePolicy()
+    {
+        try
+        {
+            var profile = ProfileStore.Load(GameRoot);
+            profile.Backup = CurrentPolicy();
+            ProfileStore.Save(profile);
+            StatusMessage = "备份策略已保存";
+            _ = RefreshAsync();
         }
-        else
-            Status = "删除失败";
+        catch (Exception ex)
+        {
+            StatusMessage = $"保存失败：{ex.Message}";
+        }
     }
 
-    public void Prune()
+    private void OpenFolder()
     {
-        var n = BackupManager.Prune(_gameRoot, new BackupPolicy());
-        Status = n > 0 ? $"已清理 {n} 份过期备份" : "没有需要清理的过期备份";
-        Refresh();
+        try
+        {
+            var root = BackupManager.BackupRoot(GameRoot, CurrentPolicy());
+            Directory.CreateDirectory(root);
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "xdg-open",
+                Arguments = $"\"{root}\"",
+                UseShellExecute = false
+            });
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"打开目录失败：{ex.Message}";
+        }
     }
 
-    public void RunScheduled()
+    /// <summary>扫描可备份的来源：saves 下每个存档 + config + mods。</summary>
+    private void LoadSources()
     {
-        var savesDir = Path.Combine(_gameRoot, "saves");
-        var sources = Directory.Exists(savesDir)
-            ? Directory.GetDirectories(savesDir).Select(d => Path.GetFileName(d)!).ToList()
-            : new List<string>();
-        if (sources.Count == 0) { Status = "没有可备份的存档（saves/ 为空）"; return; }
-        var policy = new BackupPolicy { Schedule = BackupSchedule.Daily };
-        var n = BackupManager.RunScheduledIfDue(_gameRoot, sources, policy, BackupKind.Save);
-        Status = n > 0 ? $"已按计划创建 {n} 份存档备份" : "当前未到计划备份时间（或策略关闭）";
-        Refresh();
+        var list = new List<BackupSourceItem>();
+        var root = GameRoot;
+
+        var savesDir = Path.Combine(root, "saves");
+        if (Directory.Exists(savesDir))
+        {
+            foreach (var dir in Directory.GetDirectories(savesDir).OrderBy(Path.GetFileName))
+                list.Add(new BackupSourceItem
+                {
+                    Display = $"存档 · {Path.GetFileName(dir)}",
+                    Path = dir,
+                    Kind = BackupKind.Save
+                });
+        }
+
+        foreach (var (name, kind) in new[] { ("config", BackupKind.Config), ("mods", BackupKind.Mods) })
+        {
+            var dir = Path.Combine(root, name);
+            if (Directory.Exists(dir))
+                list.Add(new BackupSourceItem { Display = $"目录 · {name}", Path = dir, Kind = kind });
+        }
+
+        var keep = SelectedSource?.Path;
+        Sources = new ObservableCollection<BackupSourceItem>(list);
+        SelectedSource = list.FirstOrDefault(s => s.Path == keep) ?? list.FirstOrDefault();
     }
+
+    private Task RefreshAsync()
+    {
+        IsBusy = true;
+        try
+        {
+            LoadSources();
+
+            var policy = CurrentPolicy();
+            var list = BackupManager.List(GameRoot, policy: policy);
+            Records = new ObservableCollection<BackupRecord>(list);
+
+            var total = list.Sum(r => r.SizeBytes);
+            TotalText = $"共 {list.Count} 份备份，占用 {FormatSize(total)}｜目录：{BackupManager.BackupRoot(GameRoot, policy)}";
+            StatusMessage = list.Count == 0 ? "还没有备份，选一个来源点「立即备份」" : "";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"读取备份索引失败：{ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+        return Task.CompletedTask;
+    }
+
+    private async Task CreateAsync()
+    {
+        if (SelectedSource is null) { StatusMessage = "请先选择备份来源"; return; }
+
+        IsBusy = true;
+        StatusMessage = $"正在打包 {SelectedSource.Display} …";
+        try
+        {
+            var source = SelectedSource;
+            var policy = CurrentPolicy();
+            var note = string.IsNullOrWhiteSpace(Note) ? null : Note.Trim();
+
+            var result = await Task.Run(() =>
+                BackupManager.Create(GameRoot, source.Path, source.Kind, note, auto: false, policy: policy));
+
+            if (result.Ok && result.Record is not null)
+            {
+                StatusMessage = $"备份完成：{Path.GetFileName(result.Record.ArchivePath)}（{result.Record.SizeText}）";
+                Note = "";
+
+                // 数量限制：自动删旧
+                var pruned = await Task.Run(() => BackupManager.Prune(GameRoot, policy));
+                if (pruned > 0) StatusMessage += $"；按策略清理了 {pruned} 份旧备份";
+            }
+            else
+            {
+                StatusMessage = $"备份失败：{result.Error}";
+            }
+        }
+        finally
+        {
+            IsBusy = false;
+            await RefreshAsync();
+        }
+    }
+
+    private async Task RestoreAsync()
+    {
+        var rec = SelectedRecord;
+        if (rec is null) { StatusMessage = "请先在列表中选择要恢复的备份"; return; }
+        if (!rec.Exists) { StatusMessage = "该备份的 zip 文件已丢失，无法恢复"; return; }
+
+        var target = ResolveRestoreTarget(rec);
+        var policy = CurrentPolicy();
+
+        IsBusy = true;
+        StatusMessage = "正在恢复 …";
+        try
+        {
+            var (restore, safety) = await Task.Run(() =>
+                BackupManager.RestoreSafely(GameRoot, rec, target, rec.Kind, policy));
+
+            if (restore.Ok)
+            {
+                StatusMessage = safety is null
+                    ? $"已恢复到 {target}"
+                    : $"已恢复到 {target}（恢复前状态已另存为 {Path.GetFileName(safety.ArchivePath)}）";
+            }
+            else
+            {
+                StatusMessage = $"恢复失败：{restore.Error}";
+            }
+        }
+        finally
+        {
+            IsBusy = false;
+            await RefreshAsync();
+        }
+    }
+
+    /// <summary>推断恢复目标目录：存档回 saves/&lt;名&gt;，其余回 gameRoot/&lt;名&gt;。</summary>
+    private static string ResolveRestoreTarget(BackupRecord rec) => rec.Kind == BackupKind.Save
+        ? Path.Combine(GameRoot, "saves", rec.SourceName)
+        : Path.Combine(GameRoot, rec.SourceName);
+
+    private async Task DeleteAsync()
+    {
+        var rec = SelectedRecord;
+        if (rec is null) { StatusMessage = "请先选择要删除的备份"; return; }
+
+        var policy = CurrentPolicy();
+        var ok = await Task.Run(() => BackupManager.Delete(GameRoot, rec.Id, policy));
+        StatusMessage = ok ? "已删除" : "删除失败（索引中找不到该备份）";
+        await RefreshAsync();
+    }
+
+    private async Task PruneAsync()
+    {
+        var policy = CurrentPolicy();
+        var n = await Task.Run(() => BackupManager.Prune(GameRoot, policy));
+        StatusMessage = n > 0 ? $"按策略清理了 {n} 份旧备份" : "没有需要清理的备份";
+        await RefreshAsync();
+    }
+
+    private static string FormatSize(long bytes) => bytes switch
+    {
+        < 1024 => $"{bytes} B",
+        < 1024 * 1024 => $"{bytes / 1024.0:F1} KB",
+        < 1024L * 1024 * 1024 => $"{bytes / 1024.0 / 1024:F1} MB",
+        _ => $"{bytes / 1024.0 / 1024 / 1024:F2} GB"
+    };
 }

@@ -1,41 +1,127 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:MCLCS.Linux.App.ViewModels"
-             xmlns:conv="clr-namespace:MCLCS.Linux.App.Converters"
              x:Class="MCLCS.Linux.App.Views.Pages.AfkView"
              x:DataType="vm:AfkViewModel">
-  <UserControl.Resources>
-    <conv:AfkInstructionToTextConverter x:Key="AfkInstructionToText"/>
-    <conv:CountToVisibleConverter x:Key="CountToVisible"/>
-  </UserControl.Resources>
-  <ScrollViewer Margin="18">
-    <StackPanel Spacing="16" MaxWidth="900" HorizontalAlignment="Left">
 
-      <StackPanel Spacing="8">
-        <TextBlock Text="挂机 Token" FontWeight="Bold" FontSize="14"/>
-        <TextBox Text="{Binding Token}" AcceptsReturn="True" MinHeight="80" FontFamily="Consolas"
-                 Watermark="F10;D4;C1-500;*3"/>
-        <Button Classes="modal-btn accent" Content="解析" Command="{Binding ParseCommand}"
-                HorizontalAlignment="Left"/>
+  <Grid Margin="18" ColumnDefinitions="*,16,240">
+
+    <!-- 左侧：动作列表 + 编辑 -->
+    <Grid Grid.Column="0" RowDefinitions="Auto,*,Auto,Auto">
+
+      <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="6" Margin="0,0,0,6">
+        <Button Classes="modal-btn" Content="+ 添加动作" Command="{Binding AddActionCommand}" Width="90" Padding="0,4"/>
+        <Button Classes="modal-btn" Content="删除" Command="{Binding RemoveActionCommand}" Width="60" Padding="0,4"/>
+        <Button Classes="modal-btn" Content="↑" Command="{Binding MoveUpCommand}" Width="36" Padding="0,2"
+                FontWeight="Bold"/>
+        <Button Classes="modal-btn" Content="↓" Command="{Binding MoveDownCommand}" Width="36" Padding="0,2"
+                FontWeight="Bold"/>
       </StackPanel>
 
-      <StackPanel Spacing="8">
-        <TextBlock Text="指令序列" FontWeight="Bold" FontSize="14"/>
-        <ItemsControl ItemsSource="{Binding Instructions}" IsVisible="{Binding Instructions.Count, Converter={StaticResource CountToVisible}}">
-          <ItemsControl.ItemTemplate>
-            <DataTemplate>
-              <Border Margin="0,0,0,6" Padding="10,8" Background="#1B1F2A" CornerRadius="6">
-                <TextBlock Text="{Binding Converter={StaticResource AfkInstructionToText}}"
-                           FontFamily="Consolas" FontSize="12"/>
+      <ListBox Grid.Row="1" ItemsSource="{Binding Actions}" SelectedItem="{Binding SelectedAction}"
+               Background="{DynamicResource InputBackground}" BorderBrush="{DynamicResource InputBorder}">
+        <ListBox.ItemTemplate>
+          <DataTemplate>
+            <Grid Margin="0,2" ColumnDefinitions="Auto,*">
+              <Border Grid.Column="0" CornerRadius="3" Padding="5,1" VerticalAlignment="Center"
+                      Background="{DynamicResource AccentBrush}" Margin="0,0,8,0">
+                <TextBlock Text="{Binding ActionType}" FontSize="10" Foreground="White"
+                           FontWeight="Bold" Width="14" TextAlignment="Center"/>
               </Border>
-            </DataTemplate>
-          </ItemsControl.ItemTemplate>
-        </ItemsControl>
-        <TextBlock Text="{Binding RepeatCount, StringFormat='整体重复：{0} 次'}" FontSize="12"
-                   Foreground="#7F8C8D"/>
+              <TextBlock Grid.Column="1" Text="{Binding Display}" FontSize="12"
+                         VerticalAlignment="Center" Foreground="{DynamicResource PrimaryForeground}"/>
+            </Grid>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+
+      <!-- 编辑选中动作 -->
+      <Border Grid.Row="2" Background="{DynamicResource ControlBackground}" CornerRadius="6"
+              Padding="10,8" Margin="0,6,0,0"
+              IsVisible="{Binding SelectedAction, Converter={x:Static ObjectConverters.IsNotNull}}">
+        <StackPanel Spacing="6">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Text="动作类型：" VerticalAlignment="Center" Width="70"
+                       Foreground="{DynamicResource SecondaryForeground}"/>
+            <ComboBox SelectedValue="{Binding SelectedAction.ActionType}" SelectedValueBinding="{Binding Tag}"
+                      Width="150" HorizontalAlignment="Left">
+              <ComboBoxItem Content="帧率限制 (F)" Tag="F"/>
+              <ComboBoxItem Content="渲染距离 (D)" Tag="D"/>
+              <ComboBoxItem Content="音量 (V)" Tag="V"/>
+              <ComboBoxItem Content="视角朝向 (L)" Tag="L"/>
+              <ComboBoxItem Content="模拟按键 (K)" Tag="K"/>
+              <ComboBoxItem Content="鼠标连点 (C)" Tag="C"/>
+              <ComboBoxItem Content="循环 (*)" Tag="*"/>
+            </ComboBox>
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Text="参数：" VerticalAlignment="Center" Width="70"
+                       Foreground="{DynamicResource SecondaryForeground}"/>
+            <TextBox Text="{Binding SelectedAction.Param}" Width="160" Padding="4,2"
+                     Background="{DynamicResource InputBackground}"
+                     BorderBrush="{DynamicResource InputBorder}"/>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- Token 预览 -->
+      <Border Grid.Row="3" Background="{DynamicResource ControlBackground}" CornerRadius="6"
+              Padding="10,8" Margin="0,6,0,0">
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <TextBlock Text="Token：" FontWeight="Bold" VerticalAlignment="Center"
+                     Foreground="{DynamicResource PrimaryForeground}"/>
+          <TextBlock Text="{Binding TokenText}" FontSize="12" VerticalAlignment="Center"
+                     Foreground="{DynamicResource AccentBrush}" TextTrimming="CharacterEllipsis" MaxWidth="420"/>
+          <Button Classes="modal-btn" Content="复制" Command="{Binding CopyTokenCommand}"
+                  Width="56" Padding="0,2" VerticalAlignment="Center"/>
+        </StackPanel>
+      </Border>
+    </Grid>
+
+    <!-- 右侧：保存/载入/导入 -->
+    <Grid Grid.Column="2" RowDefinitions="Auto,Auto,*">
+
+      <StackPanel Grid.Row="0" Spacing="6">
+        <TextBlock Text="保存工作流" FontWeight="Bold"
+                   Foreground="{DynamicResource PrimaryForeground}"/>
+        <TextBox Text="{Binding WorkflowName}" Padding="6,3" Watermark="工作流名称"
+                 Background="{DynamicResource InputBackground}"
+                 BorderBrush="{DynamicResource InputBorder}"/>
+        <Button Classes="modal-btn primary" Content="保存" Command="{Binding SaveCommand}"
+                Width="80" Padding="0,4" HorizontalAlignment="Left"/>
       </StackPanel>
 
-      <TextBlock Classes="status" Text="{Binding Status}"/>
-    </StackPanel>
-  </ScrollViewer>
+      <StackPanel Grid.Row="1" Spacing="6" Margin="0,16,0,0">
+        <TextBlock Text="导入 Token" FontWeight="Bold"
+                   Foreground="{DynamicResource PrimaryForeground}"/>
+        <TextBox Text="{Binding ImportToken}" Padding="6,3" Height="52" TextWrapping="Wrap" AcceptsReturn="True"
+                 Background="{DynamicResource InputBackground}"
+                 BorderBrush="{DynamicResource InputBorder}"/>
+        <Button Classes="modal-btn primary" Content="从 Token 导入" Command="{Binding ImportCommand}"
+                Width="100" Padding="0,4" HorizontalAlignment="Left"/>
+      </StackPanel>
+
+      <StackPanel Grid.Row="2" Spacing="6" Margin="0,16,0,0">
+        <TextBlock Text="已保存的工作流" FontWeight="Bold"
+                   Foreground="{DynamicResource PrimaryForeground}"/>
+        <ListBox ItemsSource="{Binding SavedNames}" Background="{DynamicResource ControlBackground}"
+                 BorderBrush="{DynamicResource ControlBorder}" MaxHeight="200">
+          <ListBox.ItemTemplate>
+            <DataTemplate>
+              <Grid ColumnDefinitions="*,Auto,Auto">
+                <TextBlock Grid.Column="0" Text="{Binding}" VerticalAlignment="Center"
+                           Foreground="{DynamicResource PrimaryForeground}"/>
+                <Button Grid.Column="1" Classes="modal-btn" Content="载入" Width="48" Padding="0,2"
+                        Command="{Binding DataContext.LoadCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                        CommandParameter="{Binding}" Margin="0,0,4,0"/>
+                <Button Grid.Column="2" Classes="modal-btn" Content="✕" Width="30" Padding="0,2"
+                        Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                        CommandParameter="{Binding}" Foreground="#E74C3C"/>
+              </Grid>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </StackPanel>
+    </Grid>
+  </Grid>
 </UserControl>

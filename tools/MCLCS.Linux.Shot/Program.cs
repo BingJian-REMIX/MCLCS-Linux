@@ -27,6 +27,7 @@ internal static class Program
 {
     private static readonly string[] SubTabs = { "minecraft", "mod", "shader", "resourcepack", "modpack", "map" };
     private static readonly string[] AiPages = { "ai-assist", "ai-settings" };
+    private static readonly string[] P4Pages = { "backup", "nbt", "afk" };
     private const int W = 1280, H = 820;
 
     [STAThread]
@@ -138,6 +139,42 @@ internal static class Program
         {
             failures++;
             Console.Error.WriteLine($"[fail] skin3d: {ex.GetType().Name}: {ex.Message}");
+        }
+
+        // ---- P4：备份 / NBT / AFK ----
+        foreach (var id in P4Pages)
+        {
+            try
+            {
+                Control view = id switch
+                {
+                    "backup" => new BackupView(),
+                    "nbt" => new NbtView(),
+                    _ => new AfkView(),
+                };
+                // AFK 注入两个示例动作并选中第一个，验证动作列表/编辑区/Token 预览
+                if (id == "afk" && view.DataContext is AfkViewModel avm)
+                {
+                    avm.AddActionCommand.Execute(null);
+                    avm.AddActionCommand.Execute(null);
+                    if (avm.Actions.Count >= 2)
+                    {
+                        avm.Actions[0].ActionType = "F";
+                        avm.Actions[0].Param = "60";
+                        avm.Actions[1].ActionType = "C";
+                        avm.Actions[1].Param = "1-500";
+                        avm.SelectedAction = avm.Actions[0];
+                    }
+                }
+                var path = Path.Combine(outDir, $"{id}.png");
+                Render(view, path);
+                Console.WriteLine($"[ok]   {id,-12} -> {path}");
+            }
+            catch (Exception ex)
+            {
+                failures++;
+                Console.Error.WriteLine($"[fail] {id}: {ex.GetType().Name}: {ex.Message}");
+            }
         }
 
         Console.WriteLine(failures == 0 ? "ALL OK" : $"{failures} FAILED");

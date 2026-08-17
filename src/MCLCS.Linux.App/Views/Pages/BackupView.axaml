@@ -1,42 +1,146 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:MCLCS.Linux.App.ViewModels"
-             x:Class="MCLCS.Linux.App.Views.Pages.BackupView">
-  <ScrollViewer Margin="18">
-    <StackPanel Spacing="14" MaxWidth="900" HorizontalAlignment="Left">
+             xmlns:conv="clr-namespace:MCLCS.Linux.App.Converters"
+             x:Class="MCLCS.Linux.App.Views.Pages.BackupView"
+             x:DataType="vm:BackupViewModel">
+  <UserControl.Resources>
+    <conv:BoolToVisibleConverter x:Key="BoolToVis"/>
+  </UserControl.Resources>
 
-      <StackPanel Spacing="10">
+  <Grid Margin="18" RowDefinitions="Auto,Auto,*,Auto">
+
+    <!-- ===== 备份策略卡 ===== -->
+    <Border Grid.Row="0" Background="{DynamicResource ControlBackground}"
+            BorderBrush="{DynamicResource ControlBorder}" BorderThickness="1"
+            CornerRadius="8" Padding="12" Margin="0,0,0,10">
+      <StackPanel Spacing="8">
+        <TextBlock Text="备份策略" FontWeight="Bold"
+                   Foreground="{DynamicResource PrimaryForeground}"/>
+
+        <!-- 存储路径 -->
+        <Grid ColumnDefinitions="72,*,Auto">
+          <TextBlock Grid.Column="0" Text="存储路径" VerticalAlignment="Center"
+                     Foreground="{DynamicResource SecondaryForeground}"/>
+          <TextBox Grid.Column="1" Text="{Binding Folder}" Padding="6,3" VerticalContentAlignment="Center"
+                   Watermark="相对路径按游戏目录解析；也可填绝对路径备份到移动硬盘"
+                   Background="{DynamicResource InputBackground}"
+                   BorderBrush="{DynamicResource InputBorder}"/>
+          <Button Grid.Column="2" Classes="modal-btn" Content="打开目录" Command="{Binding OpenFolderCommand}"
+                  Width="78" Margin="8,0,0,0" Padding="0,3" VerticalAlignment="Center"/>
+        </Grid>
+
+        <!-- 频率 / 数量 / 天数 -->
         <StackPanel Orientation="Horizontal" Spacing="8">
-          <Button Content="刷新" Command="{Binding RefreshCommand}"/>
-          <Button Content="执行计划备份" Command="{Binding RunScheduledCommand}" Classes="modal-btn"/>
-          <Button Content="清理过期" Command="{Binding PruneCommand}" Classes="modal-btn"/>
+          <TextBlock Text="定时备份" VerticalAlignment="Center" Width="72"
+                     Foreground="{DynamicResource SecondaryForeground}"/>
+          <ComboBox ItemsSource="{Binding Schedules}" SelectedItem="{Binding SelectedSchedule}"
+                    Width="96" HorizontalAlignment="Left"/>
+          <TextBlock Text="每来源保留" VerticalAlignment="Center" Margin="12,0,0,0"
+                     Foreground="{DynamicResource SecondaryForeground}"/>
+          <TextBox Text="{Binding KeepPerSource}" Width="52" Padding="6,3"
+                   Background="{DynamicResource InputBackground}"
+                   BorderBrush="{DynamicResource InputBorder}"/>
+          <TextBlock Text="份" VerticalAlignment="Center"
+                     Foreground="{DynamicResource SecondaryForeground}"/>
+          <TextBlock Text="自动备份保留" VerticalAlignment="Center" Margin="16,0,0,0"
+                     Foreground="{DynamicResource SecondaryForeground}"/>
+          <TextBox Text="{Binding MaxAgeDays}" Width="52" Padding="6,3"
+                   Background="{DynamicResource InputBackground}"
+                   BorderBrush="{DynamicResource InputBorder}"/>
+          <TextBlock Text="天" VerticalAlignment="Center"
+                     Foreground="{DynamicResource SecondaryForeground}"/>
         </StackPanel>
-        <TextBlock Text="{Binding Status}" Foreground="{DynamicResource SecondaryForeground}"/>
-        <ListBox x:Name="BackupList" ItemsSource="{Binding Records}" Background="{DynamicResource InputBackground}" MaxHeight="360">
+
+        <!-- 开关 + 保存 -->
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <ToggleSwitch IsChecked="{Binding BackupBeforeRestore}" Content="恢复前自动备份当前状态"
+                        VerticalAlignment="Center"/>
+          <ToggleSwitch IsChecked="{Binding AutoBeforeLaunch}" Content="启动游戏前自动备份存档"
+                        VerticalAlignment="Center"/>
+          <Button Classes="modal-btn primary" Content="保存策略" Command="{Binding SavePolicyCommand}"
+                  Padding="14,4" Margin="8,0,0,0" VerticalAlignment="Center"/>
+        </StackPanel>
+      </StackPanel>
+    </Border>
+
+    <!-- ===== 手动备份 ===== -->
+    <Grid Grid.Row="1" ColumnDefinitions="72,220,Auto,*,Auto,Auto" Margin="0,0,0,10">
+      <TextBlock Grid.Column="0" Text="备份来源" VerticalAlignment="Center"
+                 Foreground="{DynamicResource SecondaryForeground}"/>
+      <ComboBox Grid.Column="1" ItemsSource="{Binding Sources}" SelectedItem="{Binding SelectedSource}"
+                DisplayMemberBinding="{Binding Display}" HorizontalAlignment="Left"/>
+      <TextBlock Grid.Column="2" Text="备注" VerticalAlignment="Center" Margin="16,0,6,0"
+                 Foreground="{DynamicResource SecondaryForeground}"/>
+      <TextBox Grid.Column="3" Text="{Binding Note}" Padding="6,3" VerticalContentAlignment="Center"
+               Watermark="可选，方便日后辨认这份备份"
+               Background="{DynamicResource InputBackground}"
+               BorderBrush="{DynamicResource InputBorder}"/>
+      <Button Grid.Column="4" Classes="modal-btn primary" Content="立即备份" Command="{Binding CreateCommand}"
+              Padding="14,4" Margin="10,0,0,0" VerticalAlignment="Center"/>
+      <Button Grid.Column="5" Classes="modal-btn" Content="刷新" Command="{Binding RefreshCommand}"
+              Width="60" Margin="6,0,0,0" Padding="0,4" VerticalAlignment="Center"/>
+    </Grid>
+
+    <!-- ===== 备份列表 ===== -->
+    <Border Grid.Row="2" BorderBrush="{DynamicResource ControlBorder}" BorderThickness="1" CornerRadius="6">
+      <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- 表头 -->
+        <Grid Grid.Row="0" Background="{DynamicResource ControlBackground}" Height="28"
+              ColumnDefinitions="160,60,130,80,70,*">
+          <TextBlock Grid.Column="0" Text="来源" Margin="10,0,0,0" VerticalAlignment="Center"
+                     FontSize="11" Foreground="{DynamicResource SecondaryForeground}"/>
+          <TextBlock Grid.Column="1" Text="类型" VerticalAlignment="Center"
+                     FontSize="11" Foreground="{DynamicResource SecondaryForeground}"/>
+          <TextBlock Grid.Column="2" Text="创建时间" VerticalAlignment="Center"
+                     FontSize="11" Foreground="{DynamicResource SecondaryForeground}"/>
+          <TextBlock Grid.Column="3" Text="大小" VerticalAlignment="Center"
+                     FontSize="11" Foreground="{DynamicResource SecondaryForeground}"/>
+          <TextBlock Grid.Column="4" Text="文件数" VerticalAlignment="Center"
+                     FontSize="11" Foreground="{DynamicResource SecondaryForeground}"/>
+          <TextBlock Grid.Column="5" Text="备注" VerticalAlignment="Center"
+                     FontSize="11" Foreground="{DynamicResource SecondaryForeground}"/>
+        </Grid>
+
+        <ListBox Grid.Row="1" ItemsSource="{Binding Records}" SelectedItem="{Binding SelectedRecord}"
+                 Background="Transparent" BorderThickness="0">
           <ListBox.ItemTemplate>
             <DataTemplate>
-              <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto">
-                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
-                  <TextBlock Text="{Binding SourceName}" VerticalAlignment="Center"/>
-                  <Border Padding="5,1" CornerRadius="6" Background="{DynamicResource ControlBorder}"
-                          IsVisible="{Binding Auto}">
-                    <TextBlock Text="自动" FontSize="10" Foreground="{DynamicResource SecondaryForeground}"/>
+              <Grid Height="26" ColumnDefinitions="160,60,130,80,70,*">
+                <TextBlock Grid.Column="0" Text="{Binding SourceName}" VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis" FontWeight="SemiBold"/>
+                <TextBlock Grid.Column="1" Text="{Binding Kind}" VerticalAlignment="Center" FontSize="11"/>
+                <TextBlock Grid.Column="2" Text="{Binding CreatedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}"
+                           VerticalAlignment="Center" FontSize="11"/>
+                <TextBlock Grid.Column="3" Text="{Binding SizeText}" VerticalAlignment="Center" FontSize="11"/>
+                <TextBlock Grid.Column="4" Text="{Binding FileCount}" VerticalAlignment="Center" FontSize="11"/>
+                <StackPanel Grid.Column="5" Orientation="Horizontal" VerticalAlignment="Center" Spacing="6">
+                  <Border Background="{DynamicResource AccentBrush}" CornerRadius="3" Padding="4,0"
+                          IsVisible="{Binding Auto, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="自动" FontSize="10" Foreground="White"/>
                   </Border>
+                  <TextBlock Text="{Binding Note}" FontSize="11" TextTrimming="CharacterEllipsis"
+                             Foreground="{DynamicResource SecondaryForeground}"/>
                 </StackPanel>
-                <TextBlock Grid.Column="1" Text="{Binding Kind}" FontSize="11"
-                           Foreground="{DynamicResource SecondaryForeground}" VerticalAlignment="Center"/>
-                <TextBlock Grid.Column="2" Text="{Binding SizeText}" FontSize="11"
-                           Foreground="{DynamicResource SecondaryForeground}" VerticalAlignment="Center"/>
-                <TextBlock Grid.Column="3" Text="{Binding CreatedAt}" FontSize="11"
-                           Foreground="{DynamicResource SecondaryForeground}" VerticalAlignment="Center"/>
-                <Button Grid.Column="4" Content="删除" Classes="modal-btn"
-                        Command="{Binding #BackupList.DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
-                        CommandParameter="{Binding}"/>
               </Grid>
             </DataTemplate>
           </ListBox.ItemTemplate>
         </ListBox>
-      </StackPanel>
-    </StackPanel>
-  </ScrollViewer>
+
+        <!-- 操作行 -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8" Margin="10,6,10,8">
+          <Button Classes="modal-btn" Content="恢复选中" Command="{Binding RestoreCommand}" Width="86" Padding="0,3"/>
+          <Button Classes="modal-btn" Content="删除选中" Command="{Binding DeleteCommand}" Width="86" Padding="0,3"/>
+          <Button Classes="modal-btn" Content="按策略清理" Command="{Binding PruneCommand}" Width="96" Padding="0,3"/>
+          <TextBlock Text="{Binding TotalText}" VerticalAlignment="Center" Margin="8,0,0,0"
+                     FontSize="11" Foreground="{DynamicResource SecondaryForeground}"
+                     TextTrimming="CharacterEllipsis"/>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <TextBlock Grid.Row="3" Text="{Binding StatusMessage}" Margin="0,8,0,0"
+               Foreground="{DynamicResource StatusForeground}" TextWrapping="Wrap"/>
+  </Grid>
 </UserControl>

@@ -172,14 +172,27 @@ public class AppRuntimeTests
     }
 
     [Fact]
-    public void AfkViewModel_默认_Token_可被_Core_解析()
+    public void AfkViewModel_生成的_Token_包含_所有_动作()
     {
         var vm = new AfkViewModel();
-        // Bug-7 修复：默认 Token 用分号分隔、重复指令在末尾，Core 引擎可正常解析
-        var r = AfkWorkflowToken.Parse(vm.Token);
-        Assert.True(r.Ok, $"默认 Token 应可解析，错误：{r.Error}");
-        Assert.Equal(3, r.RepeatCount);
-        Assert.True(r.Instructions.Count > 0);
+        Assert.Equal("", vm.TokenText);
+
+        // 新 VM 从 Actions 序列构造 Token（分号分隔）
+        vm.AddActionCommand.Execute(null);
+        vm.AddActionCommand.Execute(null);
+        Assert.Equal(2, vm.Actions.Count);
+
+        if (vm.Actions.Count >= 2)
+        {
+            vm.Actions[0].ActionType = "F"; vm.Actions[0].Param = "60";
+            vm.Actions[1].ActionType = "D"; vm.Actions[1].Param = "8";
+        }
+
+        var token = vm.TokenText;
+        Assert.Contains("F60", token);
+        Assert.Contains("D8", token);
+        Assert.Contains(";", token); // 分号分隔
+        Assert.Equal(2, token.Split(';').Length);
     }
 
     [Fact]

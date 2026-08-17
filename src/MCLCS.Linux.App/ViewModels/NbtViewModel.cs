@@ -1,136 +1,428 @@
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows.Input;
-using MCLCS.Core.Localization;
 using MCLCS.Core.Mvvm;
 using MCLCS.Core.Save;
 using MCLCS.Core.Toolbox;
 
 namespace MCLCS.Linux.App.ViewModels;
 
+/// <summary>树形界面里的一个 NBT 节点。</summary>
+public class NbtNodeViewModel : ObservableObject
+{
+    private bool _isExpanded;
+    private bool _isSelected;
+    private string _valueText = "";
+
+    public NbtNodeViewModel(NbtTag tag, string path)
+    {
+        Tag = tag;
+        Path = path;
+        _valueText = NbtEditor.ValueText(tag);
+
+        Children = new ObservableCollection<NbtNodeViewModel>();
+        if (tag.Children is not null)
+        {
+            for (var i = 0; i < tag.Children.Count; i++)
+            {
+                var child = tag.Children[i];
+                // Compound 的子节点用名字寻址，List 的子节点用下标寻址
+                var childPath = child.Name is null
+                    ? $"{path}[{i}]"
+                    : string.IsNullOrEmpty(path) ? child.Name : $"{path}.{child.Name}";
+                Children.Add(new NbtNodeViewModel(child, childPath));
+            }
+        }
+    }
+
+    public NbtTag Tag { get; }
+
+    /// <summary>寻址路径（<see cref="NbtEditor.Resolve"/> 用）。</summary>
+    public string Path { get; }
+
+    public string DisplayName => Tag.Name ?? $"[{Path[(Path.LastIndexOf('[') + 1)..].TrimEnd(']')}]";
+
+    public string TypeText => Tag.Type.ToString();
+
+    public bool IsScalar => NbtEditor.IsScalar(Tag.Type);
+
+    public string ValueText
+    {
+        get => _valueText;
+        set => SetField(ref _valueText, value);
+    }
+
+    public ObservableCollection<NbtNodeViewModel> Children { get; }
+
+    public bool IsExpanded
+    {
+        get => _isExpanded;
+        set => SetField(ref _isExpanded, value);
+    }
+
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set => SetField(ref _isSelected, value);
+    }
+
+    /// <summary>值变更后刷新右列显示。</summary>
+    public void RefreshValue() => ValueText = NbtEditor.ValueText(Tag);
+
+    /// <summary>递归展开 / 折叠。</summary>
+    public void SetExpandedDeep(bool expanded)
+    {
+        IsExpanded = expanded;
+        foreach (var c in Children) c.SetExpandedDeep(expanded);
+    }
+}
+
 /// <summary>
-/// 工具箱 → NBT 编辑器（对齐 WPF NbtEditor）：加载 .dat（gzip）或原始 NBT，
-/// 浏览顶层标签、按路径取值 / 改值，并可写回。常用于改 level.dat 的 DataVersion。
+/// NBT 编辑器（对齐 WPF NbtViewModel）：树状编辑，保存自动备份原文件。
+/// Linux 降级：无文件选择器 / 确认框 / Toast —— 打开用路径输入框与 level.dat 快捷下拉，
+/// 另存为 / 导出文本落到当前文件同目录；未保存确认直接放弃。
 /// </summary>
 public class NbtViewModel : ObservableObject
 {
+    private static readonly NbtTagType[] AddableTypes =
+    {
+        NbtTagType.Byte, NbtTagType.Short, NbtTagType.Int, NbtTagType.Long,
+        NbtTagType.Float, NbtTagType.Double, NbtTagType.String,
+        NbtTagType.List, NbtTagType.Compound
+    };
+
+    private ObservableCollection<NbtNodeViewModel> _roots = new();
+    private ObservableCollection<string> _quickFiles = new();
+    private NbtNodeViewModel? _selectedNode;
+    private NbtTag? _root;
+
     private string _filePath = "";
+    private string _editValue = "";
+    private string _newChildName = "";
+    private NbtTagType _newChildType = NbtTagType.String;
+    private string _statusMessage = "打开一个 .dat / .nbt 文件开始编辑（存档的 level.dat 已列在下拉里）";
+    private string _summary = "";
+    private bool _isDirty;
+    private bool _autoBackup = true;
+
+    public ObservableCollection<NbtNodeViewModel> Roots
+    {
+        get => _roots;
+        set => SetField(ref _roots, value);
+    }
+
+    /// <summary>快捷入口：当前游戏目录里各存档的 level.dat。</summary>
+    public ObservableCollection<string> QuickFiles
+    {
+        get => _quickFiles;
+        set => SetField(ref _quickFiles, value);
+    }
+
+    public NbtNodeViewModel? SelectedNode
+    {
+        get => _selectedNode;
+        set
+        {
+            if (!SetField(ref _selectedNode, value)) return;
+            EditValue = value?.IsScalar == true ? value.ValueText : "";
+            OnPropertyChanged(nameof(SelectedPath));
+            OnPropertyChanged(nameof(SelectedTypeText));
+            OnPropertyChanged(nameof(CanEditValue));
+        }
+    }
+
+    public string SelectedPath => SelectedNode?.Path ?? "（未选择）";
+
+    public string SelectedTypeText => SelectedNode?.TypeText ?? "-";
+
+    public bool CanEditValue => SelectedNode?.IsScalar == true;
+
     public string FilePath
     {
         get => _filePath;
         set => SetField(ref _filePath, value);
     }
 
-    private NbtTag? _root;
-    public NbtTag? Root
+    public string EditValue
     {
-        get => _root;
-        set => SetField(ref _root, value);
+        get => _editValue;
+        set => SetField(ref _editValue, value);
     }
 
-    private ObservableCollection<NbtTag> _topLevel = new();
-    public ObservableCollection<NbtTag> TopLevel
+    public string NewChildName
     {
-        get => _topLevel;
-        set => SetField(ref _topLevel, value);
+        get => _newChildName;
+        set => SetField(ref _newChildName, value);
     }
 
-    private string _resolvePath = "DataVersion";
-    public string ResolvePath
+    public NbtTagType[] NewChildTypes => AddableTypes;
+
+    public NbtTagType NewChildType
     {
-        get => _resolvePath;
-        set => SetField(ref _resolvePath, value);
+        get => _newChildType;
+        set => SetField(ref _newChildType, value);
     }
 
-    private string _resolveResult = "";
-    public string ResolveResult
+    public string StatusMessage
     {
-        get => _resolveResult;
-        set => SetField(ref _resolveResult, value);
+        get => _statusMessage;
+        set => SetField(ref _statusMessage, value);
     }
 
-    private string _setValuePath = "DataVersion";
-    public string SetValuePath
+    public string Summary
     {
-        get => _setValuePath;
-        set => SetField(ref _setValuePath, value);
+        get => _summary;
+        set => SetField(ref _summary, value);
     }
 
-    private string _setValue = "";
-    public string SetValue
+    /// <summary>是否有未保存的改动（标题上带个 * 提示）。</summary>
+    public bool IsDirty
     {
-        get => _setValue;
-        set => SetField(ref _setValue, value);
-    }
-
-    private string _status = LocaleManager.T("status.ready");
-    public string Status
-    {
-        get => _status;
-        set => SetField(ref _status, value);
-    }
-
-    public ICommand LoadCommand => new RelayCommand(_ => Load());
-    public ICommand ResolveCommand => new RelayCommand(_ => Resolve());
-    public ICommand SetCommand => new RelayCommand(_ => Set());
-    public ICommand SaveCommand => new RelayCommand(_ => Save());
-
-    public void Load()
-    {
-        if (string.IsNullOrWhiteSpace(FilePath) || !File.Exists(FilePath))
+        get => _isDirty;
+        set
         {
-            Status = "请填写有效的 NBT 文件路径";
-            return;
+            if (SetField(ref _isDirty, value)) OnPropertyChanged(nameof(TitleText));
         }
+    }
+
+    public string TitleText => string.IsNullOrEmpty(FilePath)
+        ? "未打开文件"
+        : Path.GetFileName(FilePath) + (IsDirty ? " *" : "");
+
+    /// <summary>保存时自动备份原文件（规格要求，默认开）。</summary>
+    public bool AutoBackup
+    {
+        get => _autoBackup;
+        set => SetField(ref _autoBackup, value);
+    }
+
+    public ICommand OpenCommand { get; }
+    public ICommand OpenQuickCommand { get; }
+    public ICommand SaveCommand { get; }
+    public ICommand ApplyValueCommand { get; }
+    public ICommand AddChildCommand { get; }
+    public ICommand RemoveCommand { get; }
+    public ICommand RenameCommand { get; }
+    public ICommand ExpandAllCommand { get; }
+    public ICommand CollapseAllCommand { get; }
+    public ICommand ExportTextCommand { get; }
+
+    public NbtViewModel()
+    {
+        OpenCommand = new RelayCommand(_ => LoadFile(FilePath), _ => !string.IsNullOrWhiteSpace(FilePath));
+        OpenQuickCommand = new RelayCommand(p => LoadFile(p as string ?? ""));
+        SaveCommand = new RelayCommand(_ => Save(FilePath), _ => _root is not null);
+        ApplyValueCommand = new RelayCommand(_ => ApplyValue(), _ => CanEditValue);
+        AddChildCommand = new RelayCommand(_ => AddChild(), _ => _root is not null);
+        RemoveCommand = new RelayCommand(_ => RemoveSelected(), _ => SelectedNode is not null);
+        RenameCommand = new RelayCommand(_ => RenameSelected(), _ => SelectedNode is not null);
+        ExpandAllCommand = new RelayCommand(_ => SetExpanded(true));
+        CollapseAllCommand = new RelayCommand(_ => SetExpanded(false));
+        ExportTextCommand = new RelayCommand(_ => ExportText(), _ => _root is not null);
+
+        ScanQuickFiles();
+    }
+
+    private static string GameRoot => Services.LauncherService.Instance.GameRoot;
+
+    /// <summary>扫描 saves/*/level.dat，方便一键打开（最常改的就是它）。</summary>
+    private void ScanQuickFiles()
+    {
+        var list = new List<string>();
         try
         {
-            NbtTag? tag = null;
-            try { tag = NbtFile.ReadGzip(FilePath); }
-            catch { tag = NbtFile.Read(File.OpenRead(FilePath)); }
-            Root = tag;
-            TopLevel = new ObservableCollection<NbtTag>(tag.Children ?? new System.Collections.Generic.List<NbtTag>());
-            Status = $"已加载：{TopLevel.Count} 个顶层标签";
+            var savesDir = Path.Combine(GameRoot, "saves");
+            if (Directory.Exists(savesDir))
+            {
+                foreach (var dir in Directory.GetDirectories(savesDir).OrderBy(Path.GetFileName))
+                {
+                    var dat = Path.Combine(dir, "level.dat");
+                    if (File.Exists(dat)) list.Add(dat);
+                }
+            }
+        }
+        catch { /* 目录不可读时留空即可 */ }
+
+        QuickFiles = new ObservableCollection<string>(list);
+    }
+
+    private void LoadFile(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return;
+
+        var root = NbtEditor.Load(path);
+        if (root is null)
+        {
+            StatusMessage = $"打开失败：{path}（不是有效的 gzip NBT 文件？）";
+            return;
+        }
+
+        _root = root;
+        FilePath = path;
+        IsDirty = false;
+
+        var rootVm = new NbtNodeViewModel(root, "") { IsExpanded = true };
+        Roots = new ObservableCollection<NbtNodeViewModel> { rootVm };
+        SelectedNode = rootVm;
+
+        Summary = $"{NbtEditor.CountNodes(root)} 个标签｜{new FileInfo(path).Length / 1024.0:F1} KB";
+        StatusMessage = $"已打开 {Path.GetFileName(path)}";
+        OnPropertyChanged(nameof(TitleText));
+    }
+
+    private void ApplyValue()
+    {
+        if (_root is null || SelectedNode is null) return;
+
+        var result = NbtEditor.SetValue(_root, SelectedNode.Path, EditValue);
+        if (!result.Ok)
+        {
+            StatusMessage = $"赋值失败：{result.Error}";
+            return;
+        }
+
+        SelectedNode.RefreshValue();
+        IsDirty = true;
+        StatusMessage = $"已修改 {SelectedNode.Path}（还未写入磁盘，记得保存）";
+    }
+
+    private void AddChild()
+    {
+        if (_root is null || SelectedNode is null) { StatusMessage = "请先选中一个 Compound 节点"; return; }
+        if (string.IsNullOrWhiteSpace(NewChildName)) { StatusMessage = "请先填写新标签的名称"; return; }
+
+        var result = NbtEditor.AddChild(_root, SelectedNode.Path, NewChildName.Trim(), NewChildType);
+        if (!result.Ok)
+        {
+            StatusMessage = $"新增失败：{result.Error}";
+            return;
+        }
+
+        IsDirty = true;
+        StatusMessage = $"已新增 {NewChildName}（{NewChildType}）";
+        NewChildName = "";
+        RebuildTree(keepPath: SelectedNode.Path);
+    }
+
+    private void RemoveSelected()
+    {
+        if (_root is null || SelectedNode is null) return;
+        if (string.IsNullOrEmpty(SelectedNode.Path)) { StatusMessage = "不能删除根标签"; return; }
+
+        var result = NbtEditor.Remove(_root, SelectedNode.Path);
+        if (!result.Ok)
+        {
+            StatusMessage = $"删除失败：{result.Error}";
+            return;
+        }
+
+        IsDirty = true;
+        StatusMessage = "已删除（未写入磁盘）";
+        RebuildTree(keepPath: "");
+    }
+
+    private void RenameSelected()
+    {
+        if (_root is null || SelectedNode is null) return;
+        if (string.IsNullOrWhiteSpace(NewChildName))
+        {
+            StatusMessage = "请在「名称」框里填写新名字，然后再点重命名";
+            return;
+        }
+
+        var result = NbtEditor.Rename(_root, SelectedNode.Path, NewChildName.Trim());
+        if (!result.Ok)
+        {
+            StatusMessage = $"重命名失败：{result.Error}";
+            return;
+        }
+
+        IsDirty = true;
+        StatusMessage = $"已重命名为 {NewChildName}";
+        NewChildName = "";
+        RebuildTree(keepPath: "");
+    }
+
+    /// <summary>结构变化后重建整棵树（NBT 文件不大，重建比增量同步更不容易出错）。</summary>
+    private void RebuildTree(string keepPath)
+    {
+        if (_root is null) return;
+
+        var rootVm = new NbtNodeViewModel(_root, "") { IsExpanded = true };
+        Roots = new ObservableCollection<NbtNodeViewModel> { rootVm };
+        Summary = $"{NbtEditor.CountNodes(_root)} 个标签";
+
+        SelectedNode = FindByPath(rootVm, keepPath) ?? rootVm;
+        ExpandTo(rootVm, SelectedNode.Path);
+    }
+
+    private static NbtNodeViewModel? FindByPath(NbtNodeViewModel node, string path)
+    {
+        if (node.Path == path) return node;
+        foreach (var c in node.Children)
+        {
+            var hit = FindByPath(c, path);
+            if (hit is not null) return hit;
+        }
+        return null;
+    }
+
+    private static bool ExpandTo(NbtNodeViewModel node, string path)
+    {
+        if (node.Path == path) return true;
+        foreach (var c in node.Children)
+        {
+            if (!ExpandTo(c, path)) continue;
+            node.IsExpanded = true;
+            return true;
+        }
+        return false;
+    }
+
+    private void SetExpanded(bool expanded)
+    {
+        foreach (var r in Roots) r.SetExpandedDeep(expanded);
+    }
+
+    private void Save(string path)
+    {
+        if (_root is null || string.IsNullOrWhiteSpace(path)) return;
+
+        var result = NbtEditor.Save(_root, path, AutoBackup);
+        if (!result.Ok)
+        {
+            StatusMessage = $"保存失败：{result.Error}";
+            return;
+        }
+
+        FilePath = path;
+        IsDirty = false;
+
+        StatusMessage = result.BackupPath is null
+            ? $"已保存（{result.SizeBytes / 1024.0:F1} KB）"
+            : $"已保存（{result.SizeBytes / 1024.0:F1} KB），原文件备份为 {Path.GetFileName(result.BackupPath)}";
+        OnPropertyChanged(nameof(TitleText));
+    }
+
+    private void ExportText()
+    {
+        if (_root is null) return;
+
+        try
+        {
+            // Linux 无目录选择器：导出到当前文件同目录（未打开文件时导出到游戏目录）
+            var dir = string.IsNullOrEmpty(FilePath)
+                ? GameRoot
+                : Path.GetDirectoryName(FilePath) ?? GameRoot;
+            var name = (string.IsNullOrEmpty(FilePath) ? "nbt" : Path.GetFileNameWithoutExtension(FilePath))
+                       + ".txt";
+            var dest = Path.Combine(dir, name);
+            File.WriteAllText(dest, NbtEditor.RenderTree(_root, maxDepth: 32));
+            StatusMessage = $"已导出文本树：{dest}";
         }
         catch (Exception ex)
         {
-            Status = $"加载失败：{ex.Message}";
+            StatusMessage = $"导出失败：{ex.Message}";
         }
     }
-
-    public void Resolve()
-    {
-        if (Root is null) { Status = "请先加载文件"; return; }
-        var node = NbtEditor.Resolve(Root, string.IsNullOrWhiteSpace(ResolvePath) ? null : ResolvePath);
-        ResolveResult = node is null ? "（路径未找到）" : $"[{node.Type}] {node.Name} = {NbtValueText(node)}";
-        Status = "已取值";
-    }
-
-    public void Set()
-    {
-        if (Root is null) { Status = "请先加载文件"; return; }
-        var r = NbtEditor.SetValue(Root, SetValuePath, SetValue);
-        ResolveResult = r.Ok ? $"已写入：{SetValuePath} = {SetValue}" : $"写入失败：{r.Error}";
-        Status = r.Ok ? "已写入（未保存）" : "写入失败";
-    }
-
-    public void Save()
-    {
-        if (Root is null || string.IsNullOrWhiteSpace(FilePath)) { Status = "请先加载文件"; return; }
-        var r = NbtEditor.Save(Root, FilePath, backup: true);
-        Status = r.Ok ? $"已保存（备份：{r.BackupPath}）" : $"保存失败：{r.Error}";
-    }
-
-    public static string NbtValueText(NbtTag t) => t.Type switch
-    {
-        NbtTagType.Byte => t.ByteValue.ToString(),
-        NbtTagType.Short => t.ShortValue.ToString(),
-        NbtTagType.Int => t.IntValue.ToString(),
-        NbtTagType.Long => t.LongValue.ToString(),
-        NbtTagType.Float => t.FloatValue.ToString(),
-        NbtTagType.Double => t.DoubleValue.ToString(),
-        NbtTagType.String => t.StringValue ?? "",
-        NbtTagType.Compound => $"Compound({t.Children?.Count ?? 0})",
-        NbtTagType.List => $"List({t.Children?.Count ?? 0})",
-        _ => t.StringValue ?? ""
-    };
 }
