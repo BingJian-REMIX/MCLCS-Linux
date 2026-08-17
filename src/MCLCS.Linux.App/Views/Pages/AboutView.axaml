@@ -11,7 +11,7 @@
         <TextBlock Text="{Binding Version}" FontSize="14" Foreground="{DynamicResource AccentBrush}"/>
         <TextBlock Text="{Binding Tagline}" FontSize="14" FontWeight="SemiBold"/>
         <TextBlock Text="{Binding Description}" TextWrapping="Wrap" Foreground="{DynamicResource SecondaryForeground}"/>
-        <TextBlock Text="{Binding Framework}" FontSize="12" Foreground="#7F8C8D"/>
+        <TextBlock Text="{Binding Framework}" FontSize="12" Foreground="{DynamicResource SecondaryForeground}"/>
       </StackPanel>
 
       <StackPanel Spacing="8">

@@ -33,6 +33,10 @@ public class App : Application
         ApplyTheme(ThemeManager.Current);
         ThemeManager.OnThemeChanged += ApplyTheme;
 
+        // 高清图标偏好：profile.HighDpiIcons → IconManager（图标加载切 2x 目录，对齐 WPF）
+        Converters.IconManager.HighDpi =
+            ProfileStore.Load(GameConstants.DefaultGameRoot).HighDpiIcons;
+
         // 外观：把 profile 中持久化的主题色 / 字体缩放 / 背景图真正应用到运行时（对齐 WPF，修复空壳）
         ApplyAppearanceFromProfile();
     }

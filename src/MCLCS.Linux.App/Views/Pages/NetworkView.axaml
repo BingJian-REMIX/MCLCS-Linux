@@ -25,13 +25,13 @@
                            Fill="{Binding Reachable, Converter={StaticResource BoolToBrush}}"/>
                   <StackPanel Grid.Column="1" Spacing="2">
                     <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
-                    <TextBlock Text="{Binding Url}" FontSize="11" Foreground="#7F8C8D" TextWrapping="Wrap"/>
-                    <TextBlock Text="{Binding Error}" FontSize="11" Foreground="#E74C3C"
+                    <TextBlock Text="{Binding Url}" FontSize="11" Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding Error}" FontSize="11" Foreground="{DynamicResource DangerBrush}"
                                IsVisible="{Binding Error, Converter={x:Static ObjectConverters.IsNotNull}}"
                                TextWrapping="Wrap"/>
                   </StackPanel>
                   <TextBlock Grid.Column="2" VerticalAlignment="Center" FontFamily="Consolas" FontSize="12"
-                             Foreground="#B8C0CC"
+                             Foreground="{DynamicResource SecondaryForeground}"
                              Text="{Binding LatencyMs, StringFormat='{}{0} ms'}"/>
                 </Grid>
               </Border>

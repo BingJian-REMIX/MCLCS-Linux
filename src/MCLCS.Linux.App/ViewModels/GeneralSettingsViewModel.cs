@@ -46,7 +46,15 @@ public class GeneralSettingsViewModel : ObservableObject
     public bool FileWatchEnabled { get => _fileWatchEnabled; set => SetField(ref _fileWatchEnabled, value); }
     public bool AutoStartLauncher { get => _autoStartLauncher; set => SetField(ref _autoStartLauncher, value); }
     public bool MinimizeToTray { get => _minimizeToTray; set => SetField(ref _minimizeToTray, value); }
-    public bool HighDpiIcons { get => _highDpiIcons; set => SetField(ref _highDpiIcons, value); }
+    public bool HighDpiIcons
+    {
+        get => _highDpiIcons;
+        set
+        {
+            if (SetField(ref _highDpiIcons, value))
+                Converters.IconManager.HighDpi = value; // 即时生效：图标加载切 2x 目录（对齐 WPF IconManager）
+        }
+    }
 
     private string _status = string.Empty;
     public string Status { get => _status; set => SetField(ref _status, value); }

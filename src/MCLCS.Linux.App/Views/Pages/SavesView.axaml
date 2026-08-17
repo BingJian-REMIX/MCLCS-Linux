@@ -33,12 +33,12 @@
               </DataTemplate>
             </ListBox.ItemTemplate>
           </ListBox>
-          <TextBlock Text="（选一个存档后可执行快速降级）" FontSize="11" Foreground="#7F8C8D"/>
+          <TextBlock Text="（选一个存档后可执行快速降级）" FontSize="11" Foreground="{DynamicResource SecondaryForeground}"/>
         </StackPanel>
 
         <StackPanel Grid.Column="1" Grid.Row="0" Spacing="8" Margin="8,0,0,0">
           <TextBlock Text="兼容性检测" FontWeight="Bold" FontSize="14"/>
-          <TextBlock Text="（选一个存档后可执行快速降级）" FontSize="11" Foreground="#7F8C8D" IsVisible="False"/>
+          <TextBlock Text="（选一个存档后可执行快速降级）" FontSize="11" Foreground="{DynamicResource SecondaryForeground}" IsVisible="False"/>
           <ItemsControl ItemsSource="{Binding CompatReports}" IsVisible="{Binding CompatReports.Count, Converter={StaticResource CountToVisible}}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="core:SaveCompatibilityReport">
@@ -47,9 +47,9 @@
                     <StackPanel Orientation="Horizontal" Spacing="8">
                       <Ellipse Width="9" Height="9" Fill="{Binding Severity, Converter={StaticResource SaveSeverityToBrush}}"/>
                       <TextBlock Text="{Binding SaveName}" FontWeight="SemiBold"/>
-                      <TextBlock Text="{Binding SaveGameVersion}" Foreground="#7F8C8D" FontSize="11"/>
+                      <TextBlock Text="{Binding SaveGameVersion}" Foreground="{DynamicResource SecondaryForeground}" FontSize="11"/>
                     </StackPanel>
-                    <TextBlock Text="{Binding Message}" FontSize="11" TextWrapping="Wrap" Foreground="#B8C0CC"/>
+                    <TextBlock Text="{Binding Message}" FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource SecondaryForeground}"/>
                   </StackPanel>
                 </Border>
               </DataTemplate>
@@ -68,7 +68,7 @@
                       <Ellipse Width="9" Height="9" Fill="{Binding Severity, Converter={StaticResource SaveSeverityToBrush}}"/>
                       <TextBlock Text="{Binding SaveName}" FontWeight="SemiBold"/>
                     </StackPanel>
-                    <TextBlock Text="{Binding Summary}" FontSize="11" TextWrapping="Wrap" Foreground="#B8C0CC"/>
+                    <TextBlock Text="{Binding Summary}" FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource SecondaryForeground}"/>
                   </StackPanel>
                 </Border>
               </DataTemplate>
@@ -82,7 +82,7 @@
                 Content="快速降级（修改 DataVersion）" Command="{Binding DowngradeCommand}"
                 IsEnabled="{Binding !Busy}"/>
         <TextBlock Text="{Binding DowngradeResult}" VerticalAlignment="Center" TextWrapping="Wrap"
-                   Foreground="#B8C0CC" FontFamily="Consolas" FontSize="12"/>
+                   Foreground="{DynamicResource SecondaryForeground}" FontFamily="Consolas" FontSize="12"/>
       </DockPanel>
 
       <Grid ColumnDefinitions="*,Auto">

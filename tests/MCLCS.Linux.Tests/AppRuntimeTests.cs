@@ -213,4 +213,39 @@ public class AppRuntimeTests
             ThemeManager.OnThemeChanged -= Handler;
         }
     }
+
+    [Fact]
+    public void TokenToBitmap_按主题解析图标路径()
+    {
+        // 对齐 WPF IconImage：dark=白系图标 / light=黑系图标，主题目录优先、顶层回退。
+        // 注：测试环境无 App 资源系统（avares 不可解析），故验证路径选择逻辑而非位图加载。
+        ThemeManager.Current = ThemeType.Dark;
+        IconManager.HighDpi = false;
+        var dark = TokenToBitmapConverter.ResolveCandidates("ai");
+        Assert.Contains("Resources/Icons/dark/ai.png", dark);
+        Assert.Contains("Resources/Icons/ai.png", dark); // 顶层回退兜底
+
+        ThemeManager.Current = ThemeType.Light;
+        var light = TokenToBitmapConverter.ResolveCandidates("ai");
+        Assert.Contains("Resources/Icons/light/ai.png", light);
+
+        IconManager.HighDpi = true;
+        var hd = TokenToBitmapConverter.ResolveCandidates("ai");
+        Assert.Contains("Resources/Icons/light@2x/ai.png", hd);
+        IconManager.HighDpi = false;
+    }
+
+    [Fact]
+    public void IconManager_HighDpi_切换广播事件()
+    {
+        var fired = 0;
+        IconManager.HighDpiChanged += () => fired++;
+        IconManager.HighDpi = true;
+        IconManager.HighDpi = true; // 同值不重复触发
+        IconManager.HighDpi = false;
+        Assert.Equal(2, fired);
+    }
+
 }
+
+    

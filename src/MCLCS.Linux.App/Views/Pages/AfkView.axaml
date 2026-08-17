@@ -116,7 +116,7 @@
                         CommandParameter="{Binding}" Margin="0,0,4,0"/>
                 <Button Grid.Column="2" Classes="modal-btn" Content="✕" Width="30" Padding="0,2"
                         Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
-                        CommandParameter="{Binding}" Foreground="#E74C3C"/>
+                        CommandParameter="{Binding}" Foreground="{DynamicResource DangerBrush}"/>
               </Grid>
             </DataTemplate>
           </ListBox.ItemTemplate>

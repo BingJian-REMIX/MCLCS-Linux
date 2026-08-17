@@ -22,7 +22,7 @@
       <Button Classes="modal-btn accent" Content="查询" Command="{Binding FetchSkinCommand}"
               IsEnabled="{Binding !IsBusy}" Width="60" VerticalAlignment="Center"/>
       <TextBlock Text="{Binding ModelType, StringFormat='模型：{0}'}" VerticalAlignment="Center"
-                 Opacity="0.8" FontSize="12"
+                 Opacity="0.9" FontSize="12"
                  IsVisible="{Binding HasSkin, Converter={StaticResource BoolToVis}}"/>
     </StackPanel>
 
@@ -31,7 +31,7 @@
       <TextBlock Text="{Binding StatusMessage}" Classes="status"/>
       <StackPanel Orientation="Horizontal" Spacing="6"
                   IsVisible="{Binding Validation, Converter={x:Static ObjectConverters.IsNotNull}}">
-        <TextBlock FontSize="11" Foreground="#B8C0CC">
+        <TextBlock FontSize="11" Foreground="{DynamicResource SecondaryForeground}">
           <Run Text="尺寸："/>
           <Run Text="{Binding Validation.Width}"/>
           <Run Text=" × "/>
@@ -39,7 +39,7 @@
         </TextBlock>
         <TextBlock Text="旧版 64×32 皮肤（需转换）" FontSize="11" Foreground="#E67E22"
                    IsVisible="{Binding Validation.IsLegacy}"/>
-        <TextBlock Text="{Binding Validation.Error}" FontSize="11" Foreground="#E74C3C" TextWrapping="Wrap"
+        <TextBlock Text="{Binding Validation.Error}" FontSize="11" Foreground="{DynamicResource DangerBrush}" TextWrapping="Wrap"
                    IsVisible="{Binding Validation.Error, Converter={x:Static ObjectConverters.IsNotNull}}"/>
         <TextBlock Text="✓ 校验通过" FontSize="11" Foreground="#27AE60"
                    IsVisible="{Binding Validation.Ok, Converter={StaticResource BoolToVis}}"/>
@@ -54,7 +54,7 @@
         <ctl:SkinPreview3D SkinImage="{Binding SkinImage}" Slim="{Binding Slim}" AutoRotate="True"
                            Margin="8" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
         <TextBlock Text="拖动旋转 · 滚轮缩放" Foreground="{DynamicResource SecondaryForeground}" FontSize="11"
-                   HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="12" Opacity="0.7"/>
+                   HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="12" Opacity="0.85"/>
       </Grid>
     </Border>
 

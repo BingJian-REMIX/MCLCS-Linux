@@ -16,7 +16,7 @@
       </StackPanel>
 
       <TextBlock Text="{Binding Result}" TextWrapping="Wrap" FontFamily="Consolas" FontSize="12"
-                 Foreground="#B8C0CC"/>
+                 Foreground="{DynamicResource SecondaryForeground}"/>
       <TextBlock Classes="status" Text="{Binding Status}"/>
     </StackPanel>
   </ScrollViewer>
