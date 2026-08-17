@@ -7,29 +7,69 @@ using Avalonia.Headless;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using MCLCS.Linux.App;
 using MCLCS.Linux.App.Controls;
 using MCLCS.Linux.App.Services;
 using MCLCS.Linux.App.ViewModels;
-using MCLCS.Linux.App.Views.Pages;
-using Avalonia.VisualTree;
 using MCLCS.Core.Skin;
+using MCLCS.Core.UI;
 using SkiaSharp;
 
 namespace MCLCS.Linux.Shot;
 
 /// <summary>
-/// 无头截图工具：加载真实 App（含 App.axaml 资源 / 主题 / 转换器），
-/// 对下载中心 6 副标签、AI 助手/设置、皮肤页逐一渲染为 PNG，
-/// 并直接输出皮肤 3D 软件渲染结果（skin3d.png），用于离线验证布局与绑定不崩溃。
+/// 全量截屏工程：加载真实 App + 真实 MainWindow（含侧栏 / 标签 / 状态栏壳层），
+/// 经 NavigateTo 路由到全部主标签与副页逐一截图。
+/// 覆盖：Game×1 + Download×6 + Toolbox×20 + Settings×8 + skin3d 直出 + UI 组件×2。
 /// 用法：MCLCS.Linux.Shot &lt;输出目录&gt;（默认 /workspace/shots）
 /// </summary>
 internal static class Program
 {
-    private static readonly string[] SubTabs = { "minecraft", "mod", "shader", "resourcepack", "modpack", "map" };
-    private static readonly string[] AiPages = { "ai-assist", "ai-settings" };
-    private static readonly string[] P4Pages = { "backup", "nbt", "afk" };
-    private const int W = 1280, H = 820;
+    private const int W = 1600, H = 1000;
+
+    // (主标签, 侧栏 id, 文件名)
+    private static readonly (MainTabKind Kind, string Sid, string Name)[] Nav =
+    {
+        (MainTabKind.Game, "", "home"),
+
+        (MainTabKind.Download, "minecraft", "dl-minecraft"),
+        (MainTabKind.Download, "mod", "dl-mod"),
+        (MainTabKind.Download, "shader", "dl-shader"),
+        (MainTabKind.Download, "resourcepack", "dl-resourcepack"),
+        (MainTabKind.Download, "modpack", "dl-modpack"),
+        (MainTabKind.Download, "map", "dl-map"),
+
+        (MainTabKind.Toolbox, "log", "tb-log"),
+        (MainTabKind.Toolbox, "clean", "tb-clean"),
+        (MainTabKind.Toolbox, "backup", "tb-backup"),
+        (MainTabKind.Toolbox, "screenshot", "tb-screenshot"),
+        (MainTabKind.Toolbox, "crash", "tb-crash"),
+        (MainTabKind.Toolbox, "datapack", "tb-datapack"),
+        (MainTabKind.Toolbox, "saves", "tb-saves"),
+        (MainTabKind.Toolbox, "skin", "tb-skin"),
+        (MainTabKind.Toolbox, "network", "tb-network"),
+        (MainTabKind.Toolbox, "filewatch", "tb-filewatch"),
+        (MainTabKind.Toolbox, "nbt", "tb-nbt"),
+        (MainTabKind.Toolbox, "shortcut", "tb-shortcut"),
+        (MainTabKind.Toolbox, "afk", "tb-afk"),
+        (MainTabKind.Toolbox, "aichat", "tb-aichat"),
+        (MainTabKind.Toolbox, "perf", "tb-perf"),
+        (MainTabKind.Toolbox, "modpackio", "tb-modpackio"),
+        (MainTabKind.Toolbox, "music", "tb-music"),
+        (MainTabKind.Toolbox, "moddev", "tb-moddev"),
+        (MainTabKind.Toolbox, "packmaker", "tb-packmaker"),
+        (MainTabKind.Toolbox, "command", "tb-command"),
+
+        (MainTabKind.Settings, "appearance", "st-appearance"),
+        (MainTabKind.Settings, "account", "st-account"),
+        (MainTabKind.Settings, "general", "st-general"),
+        (MainTabKind.Settings, "launch", "st-launch"),
+        (MainTabKind.Settings, "download", "st-download"),
+        (MainTabKind.Settings, "recommend", "st-recommend"),
+        (MainTabKind.Settings, "ai", "st-ai"),
+        (MainTabKind.Settings, "about", "st-about"),
+    };
 
     [STAThread]
     private static async Task<int> Main(string[] args)
@@ -45,86 +85,43 @@ internal static class Program
         MainViewModel.Instance = new MainViewModel();
         var failures = 0;
 
-        // ---- 下载中心 6 子页 ----
-        var vm = DownloadPageViewModel.Instance;
-        foreach (var id in SubTabs)
-        {
-            try
-            {
-                var view = new DownloadPageView(); // 内部已绑定 DownloadPageViewModel.Instance
-                vm.SetSubTab(id);
-                var path = Path.Combine(outDir, $"dl-{id}.png");
-                Render(view, path);
-                Console.WriteLine($"[ok]   {id,-12} -> {path}  cards={vm.Cards.Count} queue={vm.Queue.Count}");
-            }
-            catch (Exception ex)
-            {
-                failures++;
-                Console.Error.WriteLine($"[fail] {id}: {ex.GetType().Name}: {ex.Message}");
-            }
-        }
+        // ---- 真实 MainWindow：完整壳层（侧栏 + 主标签 + 状态栏）----
+        var mw = new MainWindow { Width = W, Height = H };
+        mw.Show();
+        Dispatcher.UIThread.RunJobs();
 
-        // ---- AI 助手 / AI 设置 ----
-        foreach (var id in AiPages)
+        foreach (var (kind, sid, name) in Nav)
         {
             try
             {
-                Control view = id switch
+                mw.NavigateTo(kind, sid);
+                Dispatcher.UIThread.RunJobs();
+
+                // 皮肤页：注入测试皮肤以渲染 3D（并关闭自动旋转，headless 下 DispatcherTimer 会卡 RunJobs）
+                if (sid == "skin")
                 {
-                    "ai-assist" => new AiAssistView(),
-                    _ => new AiSettingsView(),
-                };
-                var path = Path.Combine(outDir, $"{id}.png");
-                Render(view, path);
-                Console.WriteLine($"[ok]   {id,-12} -> {path}");
+                    foreach (var c in mw.GetVisualDescendants().OfType<SkinPreview3D>())
+                        c.AutoRotate = false;
+                    if (FindSkinVm(mw) is { } svm)
+                    {
+                        svm.SkinImage = CreateTestSkin();
+                        svm.HasSkin = true;
+                        svm.SkinInfo = new SkinInfo { SkinUrl = "test://skin", Model = "classic" };
+                    }
+                    Dispatcher.UIThread.RunJobs();
+                }
+
+                var path = Path.Combine(outDir, $"{name}.png");
+                Capture(mw, path);
+                Console.WriteLine($"[ok]   {name,-16} -> {path}");
             }
             catch (Exception ex)
             {
                 failures++;
-                Console.Error.WriteLine($"[fail] {id}: {ex.GetType().Name}: {ex.Message}");
+                Console.Error.WriteLine($"[fail] {name}: {ex.GetType().Name}: {ex.Message}");
             }
         }
-
-        // ---- 皮肤页（注入测试皮肤，验证 3D 预览控件集成）----
-        try
-        {
-            var skinView = new SkinView();
-            // headless 下 DispatcherTimer 会让 RunJobs 卡死：关闭自动旋转，改为显式注入触发渲染
-            foreach (var c in skinView.GetVisualDescendants().OfType<SkinPreview3D>())
-                c.AutoRotate = false;
-
-            var window = new Window
-            {
-                Width = W,
-                Height = H,
-                Content = skinView,
-                Background = new SolidColorBrush(Color.Parse("#0F1115")),
-            };
-            window.Show();
-            Dispatcher.UIThread.RunJobs();
-
-            // 布局完成后再注入皮肤：触发 3D 控件属性回调 → RebuildTexture + Render
-            if (skinView.DataContext is SkinViewModel svm)
-            {
-                svm.SkinImage = CreateTestSkin();
-                svm.HasSkin = true;
-                svm.SkinInfo = new SkinInfo { SkinUrl = "test://skin", Model = "classic" };
-            }
-            Dispatcher.UIThread.RunJobs();
-
-            var path = Path.Combine(outDir, "skin.png");
-            using var bmp = window.CaptureRenderedFrame()
-                ?? throw new InvalidOperationException("CaptureRenderedFrame 返回 null");
-            using (var fs = File.Create(path))
-                bmp.Save(fs);
-            window.Close();
-            Console.WriteLine($"[ok]   skin         -> {path}");
-        }
-        catch (Exception ex)
-        {
-            failures++;
-            Console.Error.WriteLine($"[fail] skin: {ex.GetType().Name}: {ex.Message}");
-        }
+        mw.Close();
 
         // ---- 皮肤 3D 渲染管线直出（不依赖 UI，确定性验证）----
         try
@@ -134,7 +131,7 @@ internal static class Program
             var p3d = Path.Combine(outDir, "skin3d.png");
             using (var fs = File.Create(p3d))
                 frame.Encode(SKEncodedImageFormat.Png, 100).SaveTo(fs);
-            Console.WriteLine($"[ok]   skin3d       -> {p3d}");
+            Console.WriteLine($"[ok]   skin3d         -> {p3d}");
         }
         catch (Exception ex)
         {
@@ -142,43 +139,7 @@ internal static class Program
             Console.Error.WriteLine($"[fail] skin3d: {ex.GetType().Name}: {ex.Message}");
         }
 
-        // ---- P4：备份 / NBT / AFK ----
-        foreach (var id in P4Pages)
-        {
-            try
-            {
-                Control view = id switch
-                {
-                    "backup" => new BackupView(),
-                    "nbt" => new NbtView(),
-                    _ => new AfkView(),
-                };
-                // AFK 注入两个示例动作并选中第一个，验证动作列表/编辑区/Token 预览
-                if (id == "afk" && view.DataContext is AfkViewModel avm)
-                {
-                    avm.AddActionCommand.Execute(null);
-                    avm.AddActionCommand.Execute(null);
-                    if (avm.Actions.Count >= 2)
-                    {
-                        avm.Actions[0].ActionType = "F";
-                        avm.Actions[0].Param = "60";
-                        avm.Actions[1].ActionType = "C";
-                        avm.Actions[1].Param = "1-500";
-                        avm.SelectedAction = avm.Actions[0];
-                    }
-                }
-                var path = Path.Combine(outDir, $"{id}.png");
-                Render(view, path);
-                Console.WriteLine($"[ok]   {id,-12} -> {path}");
-            }
-            catch (Exception ex)
-            {
-                failures++;
-                Console.Error.WriteLine($"[fail] {id}: {ex.GetType().Name}: {ex.Message}");
-            }
-        }
-
-        // ---- UI 服务组件：确认对话框 / Toast ----
+        // ---- UI 组件：确认对话框 / Toast ----
         try
         {
             var dlg = new ConfirmDialog("确认恢复",
@@ -186,7 +147,7 @@ internal static class Program
                 "确定", danger: true);
             var p1 = Path.Combine(outDir, "ui-confirm.png");
             RenderWindow(dlg, p1);
-            Console.WriteLine($"[ok]   ui-confirm    -> {p1}");
+            Console.WriteLine($"[ok]   ui-confirm     -> {p1}");
         }
         catch (Exception ex)
         {
@@ -199,7 +160,7 @@ internal static class Program
             var toast = new ToastWindow("备份完成", "存档 · Test World → 3.4 MB", ToastKind.Success);
             var p2 = Path.Combine(outDir, "ui-toast.png");
             RenderWindow(toast, p2);
-            Console.WriteLine($"[ok]   ui-toast      -> {p2}");
+            Console.WriteLine($"[ok]   ui-toast       -> {p2}");
         }
         catch (Exception ex)
         {
@@ -211,31 +172,27 @@ internal static class Program
         return failures == 0 ? 0 : 1;
     }
 
-    private static void Render(Control view, string path)
+    private static SkinViewModel? FindSkinVm(Window mw)
     {
-        var window = new Window
+        foreach (var c in mw.GetVisualDescendants())
         {
-            Width = W,
-            Height = H,
-            Content = view,
-            Background = new SolidColorBrush(Color.Parse("#0F1115")),
-        };
-        window.Show();
-        window.InvalidateVisual();
-        Dispatcher.UIThread.RunJobs();
+            if (c is Control { DataContext: SkinViewModel svm }) return svm;
+        }
+        return null;
+    }
 
+    private static void Capture(Window window, string path)
+    {
         using var bmp = window.CaptureRenderedFrame()
             ?? throw new InvalidOperationException("CaptureRenderedFrame 返回 null");
         using (var fs = File.Create(path))
             bmp.Save(fs);
-        window.Close();
     }
 
-    /// <summary>渲染独立窗口（对话框 / Toast 等），先强制布局收敛再截图（headless 下 SizeToContent 需显式 Measure/Arrange）。</summary>
+    /// <summary>渲染独立窗口（对话框 / Toast 等），先强制布局收敛再截图。</summary>
     private static void RenderWindow(Window window, string path)
     {
         window.Show();
-        // 强制布局：headless 下 SizeToContent 需手动 Measure/Arrange 才能收敛到 DesiredSize
         window.Measure(new Size(window.Width, double.PositiveInfinity));
         window.Arrange(new Rect(0, 0, window.DesiredSize.Width, window.DesiredSize.Height));
         Dispatcher.UIThread.RunJobs();
