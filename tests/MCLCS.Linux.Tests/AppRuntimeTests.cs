@@ -10,6 +10,7 @@ using MCLCS.Linux.App;
 using MCLCS.Linux.App.Converters;
 using MCLCS.Linux.App.ViewModels;
 using Xunit;
+using Avalonia.Headless.XUnit;
 
 namespace MCLCS.Linux.Tests;
 
@@ -17,9 +18,14 @@ namespace MCLCS.Linux.Tests;
 /// 无头运行时验证：不依赖显示，直接验证「视图模型 → Core 数据 → 本地化 → 颜色转换器」整条链路，
 /// 用于捕捉编译通过但运行时才暴露的隐式问题。
 /// </summary>
+/// <remarks>
+/// 本类大量创建 Avalonia 线程亲和对象（SolidColorBrush / Color / MainViewModel），须在 Avalonia UI 线程执行，
+/// 否则抛 “Call from invalid thread”。改用 Avalonia.Headless.XUnit 的 [AvaloniaTest] 替代 [Fact]，
+/// 由框架自动拉起 headless 会话并在 UI 线程运行，从根本消除线程亲和竞争。
+/// </remarks>
 public class AppRuntimeTests
 {
-    [Fact]
+    [AvaloniaFact]
     public void MainViewModel_Tabs_来自_Core_四色标签()
     {
         var vm = new MainViewModel();
@@ -31,7 +37,7 @@ public class AppRuntimeTests
         Assert.Equal("#607D8B", vm.Tabs[3].DefaultColor);
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void KeyToTextConverter_把_l10nKey_翻译为中文()
     {
         var conv = new KeyToTextConverter();
@@ -43,7 +49,7 @@ public class AppRuntimeTests
         Assert.Equal("", conv.Convert(null, typeof(string), null, null));
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void Localization_ToolDescription_覆盖_工具箱20项()
     {
         foreach (var item in Sidebar.Toolbox)
@@ -52,7 +58,7 @@ public class AppRuntimeTests
         Assert.Equal("（待接入 Core 能力）", Localization.ToolDescription("nope"));
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void MainViewModel_SelectedTab_联动_SidebarItems()
     {
         var vm = new MainViewModel();
@@ -67,7 +73,7 @@ public class AppRuntimeTests
         Assert.Equal(Sidebar.Toolbox.Count, vm.SidebarItems.Count);
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void MainViewModel_选中副标签_联动_右面板()
     {
         var vm = new MainViewModel();
@@ -78,7 +84,7 @@ public class AppRuntimeTests
         Assert.NotEmpty(vm.PanelDescription);
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void MainViewModel_外观页_展示主题编辑器()
     {
         var vm = new MainViewModel();
@@ -89,7 +95,7 @@ public class AppRuntimeTests
         Assert.Equal(MainTabs.DefaultGameColor, vm.Theme.ColorOf(MainTabKind.Game));
     }
 
-    [Fact]
+    [AvaloniaFact]
     public async Task MainViewModel_DetectJavaAsync_在Linux真实可用()
     {
         var vm = new MainViewModel();
@@ -100,7 +106,7 @@ public class AppRuntimeTests
         Assert.DoesNotContain("就绪", vm.Status); // Status 已被更新
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void HexToBrushConverter_解析_Core_四色()
     {
         var conv = new HexToBrushConverter();
@@ -115,7 +121,7 @@ public class AppRuntimeTests
         Assert.IsType<SolidColorBrush>(fallback);
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void KindToBrushConverter_按_Theme_取色_降级Gray()
     {
         var conv = new KindToBrushConverter();
@@ -127,7 +133,7 @@ public class AppRuntimeTests
         Assert.IsType<SolidColorBrush>(bad);
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void LocaleManager_T_随语言切换返回对应文案()
     {
         var before = LocaleManager.CurrentLocale;
@@ -147,7 +153,7 @@ public class AppRuntimeTests
         }
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void Localization_Get_委托_LocaleManager_且保留约定()
     {
         // 已知 key 走 Core 多语言框架
@@ -157,7 +163,7 @@ public class AppRuntimeTests
         Assert.Equal("", Localization.Get(null));
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void Localization_ToolDescription_覆盖_下载页与设置页_desc_键()
     {
         // 下载页副标签的 desc 键应全部解析（Bug-3 修复）
@@ -171,7 +177,7 @@ public class AppRuntimeTests
         Assert.NotEqual("tab.mods.desc", Localization.ToolDescription("mod"));
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void AfkViewModel_生成的_Token_包含_所有_动作()
     {
         var vm = new AfkViewModel();
@@ -195,7 +201,7 @@ public class AppRuntimeTests
         Assert.Equal(2, token.Split(';').Length);
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void ThemeManager_切换触发_OnThemeChanged()
     {
         var before = ThemeManager.Current;
@@ -214,7 +220,7 @@ public class AppRuntimeTests
         }
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void TokenToBitmap_按主题解析图标路径()
     {
         // 对齐 WPF IconImage：dark=白系图标 / light=黑系图标，主题目录优先、顶层回退。
@@ -235,7 +241,7 @@ public class AppRuntimeTests
         IconManager.HighDpi = false;
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void IconManager_HighDpi_切换广播事件()
     {
         var fired = 0;
