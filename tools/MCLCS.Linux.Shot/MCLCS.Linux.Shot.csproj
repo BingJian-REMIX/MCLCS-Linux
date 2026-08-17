@@ -17,6 +17,7 @@
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.*" />
     <PackageReference Include="Avalonia.Skia" Version="11.2.*" />
     <PackageReference Include="Avalonia.Headless" Version="11.2.8" />
+    <PackageReference Include="SkiaSharp" Version="2.88.9" />
   </ItemGroup>
 
   <ItemGroup>

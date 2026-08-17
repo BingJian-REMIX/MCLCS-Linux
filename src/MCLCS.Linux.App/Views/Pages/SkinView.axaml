@@ -1,55 +1,67 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:MCLCS.Linux.App.ViewModels"
+             xmlns:ctl="clr-namespace:MCLCS.Linux.App.Controls"
+             xmlns:conv="clr-namespace:MCLCS.Linux.App.Converters"
              x:Class="MCLCS.Linux.App.Views.Pages.SkinView"
              x:DataType="vm:SkinViewModel">
-  <ScrollViewer Margin="18">
-    <StackPanel Spacing="16" MaxWidth="900" HorizontalAlignment="Left">
+  <UserControl.Resources>
+    <conv:BoolToVisibleConverter x:Key="BoolToVis"/>
+    <conv:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
+  </UserControl.Resources>
 
-      <DockPanel>
-        <Button Classes="modal-btn accent" DockPanel.Dock="Right" Content="获取皮肤"
-                Command="{Binding FetchCommand}" IsEnabled="{Binding !Busy}"/>
-        <TextBox Watermark="输入玩家用户名（正版）" Text="{Binding Username}"
-                 VerticalAlignment="Center"/>
-      </DockPanel>
+  <Grid Margin="18" RowDefinitions="Auto,Auto,Auto,*">
 
-      <Grid ColumnDefinitions="*,*">
-        <StackPanel Grid.Column="0" Spacing="8" Margin="0,0,8,0">
-          <TextBlock Text="皮肤预览" FontWeight="Bold"/>
-          <Border Width="160" Height="160" Background="#0E1117" CornerRadius="8"
-                  HorizontalAlignment="Center" BorderBrush="#2A2F3A" BorderThickness="1">
-            <Image Source="{Binding SkinImage}" Width="128" Height="128"
-                   Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-          </Border>
-          <TextBlock Text="（无预览说明尚未获取或获取失败）" FontSize="11" Foreground="#7F8C8D"
-                     IsVisible="{Binding SkinImage, Converter={x:Static ObjectConverters.IsNull}}"/>
-        </StackPanel>
+    <TextBlock Grid.Row="0" Text="皮肤预览" FontSize="16" FontWeight="Bold" Margin="0,0,0,8"/>
 
-        <StackPanel Grid.Column="1" Spacing="8" Margin="8,0,0,0">
-          <TextBlock Text="校验信息" FontWeight="Bold"/>
-          <TextBlock Text="{Binding SkinInfo.Model, StringFormat='模型：{0}'}"
-                     IsVisible="{Binding SkinInfo, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-          <TextBlock IsVisible="{Binding Validation, Converter={x:Static ObjectConverters.IsNotNull}}"
-                     Foreground="#B8C0CC">
-            <Run Text="尺寸："/>
-            <Run Text="{Binding Validation.Width}"/>
-            <Run Text=" × "/>
-            <Run Text="{Binding Validation.Height}"/>
-          </TextBlock>
-          <TextBlock Text="旧版 64×32 皮肤（需转换）" Foreground="#E67E22"
-                     IsVisible="{Binding Validation.IsLegacy}"/>
-          <TextBlock Text="{Binding Validation.Error}" Foreground="#E74C3C"
-                     IsVisible="{Binding Validation.Error, Converter={x:Static ObjectConverters.IsNotNull}}"
-                     TextWrapping="Wrap"/>
-          <TextBlock Text="✓ 校验通过" Foreground="#27AE60"
-                     IsVisible="{Binding Validation.Ok, Converter={StaticResource BoolToVisible}}"/>
-        </StackPanel>
-      </Grid>
-
-      <Grid ColumnDefinitions="*,Auto">
-        <ProgressBar IsIndeterminate="{Binding Busy}" IsVisible="{Binding Busy}"/>
-        <TextBlock Grid.Column="1" Classes="status" Text="{Binding Status}"/>
-      </Grid>
+    <!-- 查询行 -->
+    <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+      <TextBlock Text="玩家名：" VerticalAlignment="Center"/>
+      <TextBox Text="{Binding PlayerName}" Width="160" VerticalAlignment="Center"
+               Watermark="正版用户名"/>
+      <Button Classes="modal-btn accent" Content="查询" Command="{Binding FetchSkinCommand}"
+              IsEnabled="{Binding !IsBusy}" Width="60" VerticalAlignment="Center"/>
+      <TextBlock Text="{Binding ModelType, StringFormat='模型：{0}'}" VerticalAlignment="Center"
+                 Opacity="0.8" FontSize="12"
+                 IsVisible="{Binding HasSkin, Converter={StaticResource BoolToVis}}"/>
     </StackPanel>
-  </ScrollViewer>
+
+    <!-- 状态 + 校验信息 -->
+    <StackPanel Grid.Row="2" Spacing="2" Margin="0,0,0,8">
+      <TextBlock Text="{Binding StatusMessage}" Classes="status"/>
+      <StackPanel Orientation="Horizontal" Spacing="6"
+                  IsVisible="{Binding Validation, Converter={x:Static ObjectConverters.IsNotNull}}">
+        <TextBlock FontSize="11" Foreground="#B8C0CC">
+          <Run Text="尺寸："/>
+          <Run Text="{Binding Validation.Width}"/>
+          <Run Text=" × "/>
+          <Run Text="{Binding Validation.Height}"/>
+        </TextBlock>
+        <TextBlock Text="旧版 64×32 皮肤（需转换）" FontSize="11" Foreground="#E67E22"
+                   IsVisible="{Binding Validation.IsLegacy}"/>
+        <TextBlock Text="{Binding Validation.Error}" FontSize="11" Foreground="#E74C3C" TextWrapping="Wrap"
+                   IsVisible="{Binding Validation.Error, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+        <TextBlock Text="✓ 校验通过" FontSize="11" Foreground="#27AE60"
+                   IsVisible="{Binding Validation.Ok, Converter={StaticResource BoolToVis}}"/>
+      </StackPanel>
+    </StackPanel>
+
+    <!-- 3D 预览区 -->
+    <Border Grid.Row="3" BorderBrush="{DynamicResource ControlBorder}" BorderThickness="1"
+            CornerRadius="8" Background="{DynamicResource ControlBackground}"
+            IsVisible="{Binding HasSkin, Converter={StaticResource BoolToVis}}">
+      <Grid>
+        <ctl:SkinPreview3D SkinImage="{Binding SkinImage}" Slim="{Binding Slim}" AutoRotate="True"
+                           Margin="8" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+        <TextBlock Text="拖动旋转 · 滚轮缩放" Foreground="{DynamicResource SecondaryForeground}" FontSize="11"
+                   HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="12" Opacity="0.7"/>
+      </Grid>
+    </Border>
+
+    <!-- 空状态占位 -->
+    <TextBlock Grid.Row="3" Text="输入 Minecraft 正版用户名以获取皮肤"
+               Foreground="{DynamicResource SecondaryForeground}"
+               HorizontalAlignment="Center" VerticalAlignment="Center"
+               IsVisible="{Binding HasSkin, Converter={StaticResource InvBoolToVis}}"/>
+  </Grid>
 </UserControl>
