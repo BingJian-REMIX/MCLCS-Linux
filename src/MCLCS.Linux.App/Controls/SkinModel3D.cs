@@ -20,8 +20,13 @@ public readonly record struct SkinFace(Vec3 TL, Vec3 TR, Vec3 BR, Vec3 BL, UvRec
 /// UV 布局（标准 64×64，Java 版 1.8+）：头 x0-32/y0-16、帽子 x32-64/y0-16；右腿 x0-16、
 /// 躯干 x16-40、右臂 x40-56 均在 y16-32；右裤 x0-16、外套 x16-40、右袖 x40-56 均在 y32-48；
 /// 左裤 x0-16、左腿 x16-32、左臂 x32-48、左袖 x48-64 均在 y48-64。
-/// 64×32 旧皮肤无第二层，左臂 / 左腿镜像复用右侧。slim 双臂宽 3px。
-/// 模型已平移使垂直中心落于原点，便于绕身体旋转。
+/// 旧格式（2:1，如 64×32 / 128×64 / 256×128）无第二层，左臂 / 左腿镜像复用右侧。
+/// slim 双臂宽 3px。模型已平移使垂直中心落于原点，便于绕身体旋转。
+/// <para>
+/// 说明：面列表的 UvRect 统一使用「64×64 标准布局」的像素坐标（第一层在 y0-32 与
+/// 64×32 旧格式共用同一坐标空间），渲染器按皮肤实际尺寸归一化采样
+/// （新格式 x/64·y/64；旧格式 x/64·y/32），从而天然支持任意分辨率皮肤
+/// （64×64 / 128×128 / 64×32 / 128×64 / 256×128 …）。
 /// </para>
 /// </summary>
 public static class SkinModel3D
@@ -39,11 +44,11 @@ public static class SkinModel3D
         (LimbUv(20, 52),    4, 12, 4, -2, 6),   // 左腿 Left Leg   x16-32 / y48-64
     };
 
-    /// <summary>64×32 旧皮肤：左臂 / 左腿由右侧镜像复用（与原版渲染一致）。</summary>
+    /// <summary>旧格式（2:1 比例，如 64×32 / 128×64 / 256×128）：左臂 / 左腿由右侧镜像复用（与原版渲染一致）。</summary>
     private static readonly Uv LegacyLeftArm = LimbUv(44, 20);
     private static readonly Uv LegacyLeftLeg = LimbUv(4, 20);
 
-    /// <summary>第二层（叠加：帽子/外套/袖/裤）UV 表，与第一层一一对应。仅 64×64 使用。</summary>
+    /// <summary>第二层（叠加：帽子/外套/袖/裤）UV 表，与第一层一一对应。仅正方形新格式使用。</summary>
     private static readonly Uv[] Overlay =
     {
         HatUv(),                 // 0 帽子   Hat      x32-64 / y0-16
@@ -54,13 +59,12 @@ public static class SkinModel3D
         LimbUv(4, 52),           // 5 左裤   L Pants  x0-16  / y48-64
     };
 
-    /// <summary>构建角色面列表（头/躯干/双臂/双腿；64×64 额外含第二层叠加）。</summary>
+    /// <summary>构建角色面列表（头/躯干/双臂/双腿；正方形新格式额外含第二层叠加）。
+    /// <para>legacy = 2:1 旧格式（64×32 / 128×64 / 256×128…）：无第二层，左臂 / 左腿镜像复用右侧。</para></summary>
     public static List<SkinFace> BuildFaces(double skinWidth, double skinHeight, bool slim)
     {
         var faces = new List<SkinFace>(72);
-        bool legacy = skinHeight <= 32; // 64×32 旧皮肤：无第二层
-        double tw = Math.Max(1, skinWidth);
-        double th = Math.Max(1, skinHeight);
+        bool legacy = skinHeight * 2 <= skinWidth; // 2:1 或更扁：旧格式（无第二层，左镜像）
 
         // 第一层
         for (int i = 0; i < FirstLayer.Length; i++)
@@ -74,16 +78,16 @@ public static class SkinModel3D
             Uv uv = p.Uv;
             if (legacy)
             {
-                // 64×32：无左臂 / 左腿独立区域，镜像复用右侧
+                // 旧格式：无左臂 / 左腿独立区域，镜像复用右侧
                 if (i == 3) uv = LegacyLeftArm;
                 else if (i == 5) uv = LegacyLeftLeg;
             }
             if (isArm && slim) uv = SlimUv(uv);
 
-            AddBox(faces, cx, p.Cy - CenterY, 0, w, p.H, p.D, uv, tw, th);
+            AddBox(faces, cx, p.Cy - CenterY, 0, w, p.H, p.D, uv);
         }
 
-        // 第二层叠加（仅 64×64）：帽子层外扩 0.5px/边（盒 ±1，8→9）；衣裤层外扩 0.25px/边（盒 ±0.5）。
+        // 第二层叠加（仅正方形新格式）：帽子层外扩 0.5px/边（盒 ±1，8→9）；衣裤层外扩 0.25px/边（盒 ±0.5）。
         if (!legacy)
         {
             for (int i = 0; i < Overlay.Length; i++)
@@ -95,7 +99,7 @@ public static class SkinModel3D
                 double w = (isArm && slim) ? 3 + expand : p.W + expand;
                 double cx = (isArm && slim) ? (i == 2 ? p.Cx - 0.5 : p.Cx + 0.5) : p.Cx;
                 Uv uv = (isArm && slim) ? SlimUv(Overlay[i]) : Overlay[i];
-                AddBox(faces, cx, p.Cy - CenterY, 0, w, p.H + expand, p.D + expand, uv, tw, th);
+                AddBox(faces, cx, p.Cy - CenterY, 0, w, p.H + expand, p.D + expand, uv);
             }
         }
 
@@ -135,7 +139,7 @@ public static class SkinModel3D
     };
 
     private static void AddBox(List<SkinFace> faces, double cx, double cy, double cz,
-        double w, double h, double d, Uv uv, double tw, double th)
+        double w, double h, double d, Uv uv)
     {
         double hx = w / 2, hy = h / 2, hz = d / 2;
 
