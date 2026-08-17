@@ -185,6 +185,8 @@
         <conv:ListJoinConverter x:Key="ListJoin"/>
         <conv:CountToVisibleConverter x:Key="CountToVisible"/>
         <conv:BoolToVisibleConverter x:Key="BoolToVisible"/>
+        <conv:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
+        <conv:InverseBoolConverter x:Key="InvBool"/>
         <conv:BoolToBrushConverter x:Key="BoolToBrush"/>
         <conv:FileChangeKindToTextConverter x:Key="FileChangeKindToText"/>
         <conv:FileChangeKindToBrushConverter x:Key="FileChangeKindToBrush"/>

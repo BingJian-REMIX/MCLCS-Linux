@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows.Input;
+using SkiaSharp;
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -38,6 +40,7 @@ public class SkinEditorViewModel : ObservableObject
     private int _faceZoom = 10;
     private string _statusMessage = "从 0 创建皮肤，或导入 PNG 开始编辑";
     private bool _hasSkin;
+    private bool _isEditing2D = true;
 
     public SkinEditorViewModel()
     {
@@ -106,6 +109,8 @@ public class SkinEditorViewModel : ObservableObject
 
     /// <summary>是否有皮肤内容（驱动空状态提示显隐，HTML 设计）。</summary>
     public bool HasSkin { get => _hasSkin; set => SetField(ref _hasSkin, value); }
+    /// <summary>当前是否处于 2D 编辑模式（false = 3D 预览）。xaml 双向绑定 Editor2D/Preview3D 可见性。</summary>
+    public bool IsEditing2D { get => _isEditing2D; set => SetField(ref _isEditing2D, value); }
 
     public Color[] Palette { get; } =
     {
@@ -390,6 +395,24 @@ public class SkinEditorViewModel : ObservableObject
         HasSkin = AnyOpaque(_pixels);
         OnPropertyChanged(nameof(FullBitmap));
         OnPropertyChanged(nameof(HasSkin));
+    }
+
+    /// <summary>从外部 SKBitmap 加载 64×64 皮肤（供截屏/测试注入等场景，绕过文件选择对话框）。</summary>
+    public void LoadFromSkia(SKBitmap bmp)
+    {
+        if (bmp is null || bmp.Width != 64 || bmp.Height != 64)
+        {
+            StatusMessage = $"皮肤尺寸应为 64×64，当前 {(bmp?.Width ?? 0)}×{(bmp?.Height ?? 0)}";
+            return;
+        }
+        var src = bmp.GetPixels();
+        int rb = bmp.RowBytes;
+        for (int y = 0; y < 64; y++)
+            Marshal.Copy(IntPtr.Add(src, y * rb), _pixels, y * 64 * 4, 64 * 4);
+        SaveUndo();
+        FlushFull();
+        UpdateFacePreview();
+        StatusMessage = "已加载皮肤（注入）";
     }
 
     /// <summary>整张皮肤是否存在非透明像素（驱动空状态提示）。</summary>

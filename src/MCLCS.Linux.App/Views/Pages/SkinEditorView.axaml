@@ -89,10 +89,13 @@
       </Grid.RowDefinitions>
 
       <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto,*,Auto,Auto" Margin="0,0,0,6">
+        <!-- IsChecked 绑 VM（VM 是 SoT，避免字面值在 layout pass 反向覆盖）。
+             Converter 复用 InvBoolToVis（其本质就是反转 bool，IsVisible / IsChecked 都用）。 -->
         <ToggleButton x:Name="Mode2D" Grid.Column="0" Content="2D 编辑" Width="64" Height="24"
-                      FontSize="11" IsChecked="True" Click="Mode_Changed"/>
+                      FontSize="11" IsChecked="{Binding IsEditing2D, Mode=TwoWay}" Click="Mode_Changed"/>
         <ToggleButton x:Name="Mode3D" Grid.Column="1" Content="3D 预览" Width="64" Height="24"
-                      FontSize="11" IsChecked="False" Click="Mode_Changed" Margin="4,0,0,0"/>
+                      FontSize="11" IsChecked="{Binding IsEditing2D, Mode=TwoWay, Converter={StaticResource InvBool}}"
+                      Click="Mode_Changed" Margin="4,0,0,0"/>
         <TextBlock Grid.Column="2" Text="{Binding FaceTitle}" VerticalAlignment="Center" Margin="12,0,0,0"
                    Foreground="{DynamicResource AccentBrush}" FontWeight="SemiBold"/>
         <TextBlock Grid.Column="3" Text="缩放" VerticalAlignment="Center" Margin="12,0,4,0"
@@ -109,7 +112,7 @@
       <!-- 2D 面编辑画布 -->
       <Border Grid.Row="1" Background="{DynamicResource ControlBackground}"
               BorderBrush="{DynamicResource ControlBorder}" BorderThickness="1" CornerRadius="8"
-              x:Name="Editor2D">
+              x:Name="Editor2D" IsVisible="{Binding IsEditing2D}">
         <Grid>
           <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
             <Grid Margin="16">
@@ -148,7 +151,8 @@
       </Border>
 
       <!-- 3D 预览 -->
-      <Border Grid.Row="1" x:Name="Preview3D" IsVisible="False"
+      <Border Grid.Row="1" x:Name="Preview3D"
+              IsVisible="{Binding IsEditing2D, Converter={StaticResource InvBoolToVis}}"
               Background="{DynamicResource ControlBackground}"
               BorderBrush="{DynamicResource ControlBorder}" BorderThickness="1" CornerRadius="8">
         <ctl:SkinPreview3D SkinImage="{Binding FullBitmap}" AutoRotate="True" Margin="8"/>

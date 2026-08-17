@@ -3,7 +3,9 @@ using System.IO;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
@@ -12,6 +14,7 @@ using MCLCS.Linux.App;
 using MCLCS.Linux.App.Controls;
 using MCLCS.Linux.App.Services;
 using MCLCS.Linux.App.ViewModels;
+using MCLCS.Linux.App.Views.Pages;
 using MCLCS.Core.Skin;
 using MCLCS.Core.Theme;
 using MCLCS.Core.UI;
@@ -28,6 +31,9 @@ namespace MCLCS.Linux.Shot;
 internal static class Program
 {
     private const int W = 1600, H = 1000;
+
+    // 皮肤预览区尺寸（运行时由皮肤页的 SkinPreview3D.Bounds 填充，供 skin3d 直出精确匹配投影）
+    private static Avalonia.Size _previewSize = new(480, 640);
 
     // (主标签, 侧栏 id, 文件名)
     private static readonly (MainTabKind Kind, string Sid, string Name)[] Nav =
@@ -113,18 +119,37 @@ internal static class Program
                         WaitForNetwork(sid == "minecraft" ? 9000 : 6000);
                     Dispatcher.UIThread.RunJobs();
 
-                    // 皮肤页：注入测试皮肤以渲染 3D（并关闭自动旋转，headless 下 DispatcherTimer 会卡 RunJobs）
+                    // 皮肤页：注入真实皮肤到皮肤编辑器（同时切到 3D 预览，关自动旋转）
                     if (sid == "skin")
                     {
-                        foreach (var c in mw.GetVisualDescendants().OfType<SkinPreview3D>())
-                            c.AutoRotate = false;
-                        if (FindSkinVm(mw) is { } svm)
+                        var editorView = mw.GetVisualDescendants().OfType<SkinEditorView>().FirstOrDefault();
+                        if (editorView is { DataContext: SkinEditorViewModel evm })
                         {
-                            svm.SkinImage = CreateTestSkin();
-                            svm.HasSkin = true;
-                            svm.SkinInfo = new SkinInfo { SkinUrl = "test://skin", Model = "classic" };
+                            evm.LoadFromSkia(LoadRealSkinSkia());  // 写入 _pixels + FlushFull → FullBitmap 通知
+                            // 切到 3D 预览：公共方法同时设 Border.IsVisible + VM.IsEditing2D + ToggleButton.IsChecked
+                            // （单设任一项 headless 下 binding/trigger 偶发不生效，三处同步最稳）
+                            editorView.Show3D();
+                            // 验证
+                            var ed2 = mw.GetVisualDescendants().OfType<Border>().FirstOrDefault(b => b.Name == "Editor2D");
+                            var pv3 = mw.GetVisualDescendants().OfType<Border>().FirstOrDefault(b => b.Name == "Preview3D");
+                            Console.WriteLine($"  [dbg-skin] Show3D后 IsEditing2D={evm.IsEditing2D} Editor2D.IsVisible={ed2?.IsVisible} Preview3D.IsVisible={pv3?.IsVisible} evm.HasSkin={evm.HasSkin} FullBitmap!=null={evm.FullBitmap != null}");
+                            Console.WriteLine($"  [dbg-skin] Mode2D.IsChecked={editorView.FindControl<ToggleButton>("Mode2D")?.IsChecked} Mode3D.IsChecked={editorView.FindControl<ToggleButton>("Mode3D")?.IsChecked}");
                         }
+                        foreach (var c in mw.GetVisualDescendants().OfType<SkinPreview3D>())
+                            c.AutoRotate = false;                // headless DispatcherTimer 会卡 RunJobs
                         Dispatcher.UIThread.RunJobs();
+                        Thread.Sleep(400);                         // 给 SkinPreview3D 几帧渲染时间
+                        Dispatcher.UIThread.RunJobs();
+                        // 记录 SkinPreview3D 在窗口中的矩形（headless 下 Image 不绘制位图，后期用 skin3d 合成进该区域）
+                        var pv = mw.GetVisualDescendants().OfType<SkinPreview3D>().FirstOrDefault();
+                        if (pv is not null)
+                        {
+                            var pt = pv.TranslatePoint(new Point(0, 0), mw);
+                            _previewSize = new Avalonia.Size(pv.Bounds.Width, pv.Bounds.Height);
+                            var rect = $"{(pt?.X ?? 0):F0} {(pt?.Y ?? 0):F0} {pv.Bounds.Width:F0} {pv.Bounds.Height:F0}";
+                            Console.WriteLine($"  [dbg-skin] Preview3D 窗口矩形=({rect})");
+                            try { File.WriteAllText(Path.Combine(outDir, "skin_preview_rect.txt"), rect); } catch { }
+                        }
                     }
 
                     var path = Path.Combine(outDir, $"{name}{suffix}.png");
@@ -141,11 +166,12 @@ internal static class Program
         }
         mw.Close();
 
-        // ---- 皮肤 3D 渲染管线直出（不依赖 UI，确定性验证）----
+        // ---- 皮肤 3D 渲染管线直出（真实皮肤，确定性验证）----
         try
         {
-            using var skin = CreateTestSkinSkia();
-            using var frame = Skin3DRenderer.Render(skin, slim: false, yawDeg: 35, pitchDeg: -8, camZ: 58, 480, 640);
+            using var skin = LoadRealSkinSkia();
+            using var frame = Skin3DRenderer.Render(skin, slim: false, yawDeg: 35, pitchDeg: -8, camZ: 58,
+                (int)_previewSize.Width, (int)_previewSize.Height);
             var p3d = Path.Combine(outDir, "skin3d.png");
             using (var fs = File.Create(p3d))
                 frame.Encode(SKEncodedImageFormat.Png, 100).SaveTo(fs);
@@ -155,6 +181,29 @@ internal static class Program
         {
             failures++;
             Console.Error.WriteLine($"[fail] skin3d: {ex.GetType().Name}: {ex.Message}");
+        }
+
+        // 后处理：headless 下 Image 控件不绘制位图，把 skin3d 直出合成进皮肤页 3D 区
+        try
+        {
+            var psi = new System.Diagnostics.ProcessStartInfo("python3", $"tools/MCLCS.Linux.Shot/postprocess_skin.py \"{outDir}\"")
+            {
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false
+            };
+            using var proc = System.Diagnostics.Process.Start(psi);
+            if (proc is not null)
+            {
+                proc.WaitForExit();
+                Console.Write(proc.StandardOutput.ReadToEnd());
+                var err = proc.StandardError.ReadToEnd();
+                if (!string.IsNullOrEmpty(err)) Console.Error.WriteLine(err);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[warn] skin postprocess failed: {ex.Message}");
         }
 
         // ---- UI 组件：确认对话框 / Toast ----
@@ -214,6 +263,14 @@ internal static class Program
 
     private static void Capture(Window window, string path)
     {
+        // headless false 模式下，局部 IsVisible 切换不会自动触发合成层重绘（CaptureRenderedFrame 可能取到
+        // NavigateTo 时的旧帧）。Hide + Show 强制整窗 CompositionTarget 重建，使 3D 预览（Preview3D 可见 /
+        // Editor2D 隐藏）按当前逻辑状态重新合成。
+        window.InvalidateVisual();
+        Dispatcher.UIThread.RunJobs();
+        window.Hide();
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
         using var bmp = window.CaptureRenderedFrame()
             ?? throw new InvalidOperationException("CaptureRenderedFrame 返回 null");
         using (var fs = File.Create(path))
@@ -287,6 +344,28 @@ internal static class Program
     private static Bitmap CreateTestSkin()
     {
         using var sk = CreateTestSkinSkia();
+        using var png = sk.Encode(SKEncodedImageFormat.Png, 100);
+        using var ms = new MemoryStream();
+        png.SaveTo(ms);
+        ms.Position = 0;
+        return new Bitmap(ms);
+    }
+
+    /// <summary>真实皮肤路径（@daidr/minecraft-skin-renderer 库自带示例皮肤，用户提供）。</summary>
+    private const string RealSkinPath = "/workspace/real-skin.png";
+
+    /// <summary>加载真实皮肤为 SKBitmap（供 3D 渲染管线直出）。</summary>
+    private static SKBitmap LoadRealSkinSkia()
+    {
+        if (!File.Exists(RealSkinPath))
+            throw new FileNotFoundException($"真实皮肤不存在：{RealSkinPath}");
+        return SKBitmap.Decode(RealSkinPath);
+    }
+
+    /// <summary>加载真实皮肤为 Avalonia Bitmap（供启动器皮肤页注入）。</summary>
+    private static Bitmap LoadRealSkin()
+    {
+        using var sk = LoadRealSkinSkia();
         using var png = sk.Encode(SKEncodedImageFormat.Png, 100);
         using var ms = new MemoryStream();
         png.SaveTo(ms);
