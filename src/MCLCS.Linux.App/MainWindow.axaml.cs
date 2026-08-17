@@ -6,9 +6,11 @@ using Avalonia.Media.Imaging;
 using Avalonia.Media.Transformation;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using MCLCS.Core.Launcher;
 using MCLCS.Core.Localization;
 using MCLCS.Core.UI;
 using MCLCS.Linux.App.Converters;
+using MCLCS.Linux.App.Services;
 using MCLCS.Linux.App.ViewModels;
 using MCLCS.Linux.App.Views;
 using MCLCS.Linux.App.Views.Pages;
@@ -28,6 +30,11 @@ public partial class MainWindow : Window
         MainViewModel.Instance = _vm;
         DataContext = _vm;
         InitializeComponent();
+        // 注入音频解码宿主（BASS），并联动游戏启动 / 退出做 AutoDuck（对齐 WPF 的 MediaElementPlayer 注入）
+        var player = new BassPlayer();
+        MusicPlayerViewModel.Instance.Host = player;
+        MusicPlayerViewModel.Instance.SetVolumeFromHost();
+        GameLauncher.GameProcessStarted += OnGameProcessStarted;
         SyncSidebarSelection();
         UpdateMaxIcon();
         // 语言切换时重绑侧栏（走 KeyToTextConverter 的项需重绑才能刷新）
@@ -349,6 +356,14 @@ public partial class MainWindow : Window
     }
 
     private void BtnClose_Click(object? sender, RoutedEventArgs e) => Close();
+
+    /// <summary>游戏进程启动：触发音乐 AutoDuck（降低音量）；进程退出时恢复音量。</summary>
+    private void OnGameProcessStarted(System.Diagnostics.Process proc, long _)
+    {
+        MusicPlayerViewModel.Instance.OnGameLaunch();
+        proc.EnableRaisingEvents = true;
+        proc.Exited += (_, _) => MusicPlayerViewModel.Instance.OnGameExit();
+    }
 
     /// <summary>语言切换时重绑侧栏列表（走 KeyToTextConverter 的项需重建项才能刷新文本）；
     /// 其余由 {loc:Loc} 绑定自动刷新。</summary>

@@ -14,6 +14,7 @@
     <PackageReference Include="Avalonia" Version="11.2.*" />
     <PackageReference Include="Avalonia.Desktop" Version="11.2.*" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.*" />
+    <PackageReference Include="ManagedBass" Version="4.0.2" />
   </ItemGroup>
 
   <ItemGroup>
@@ -24,6 +25,13 @@
   <ItemGroup>
     <!-- 复用自 MCLCS-WPF 的图标资源（token 与 Core.SidebarItem.Icon 一致），供 Avalonia 通过 avares:// 加载 -->
     <AvaloniaResource Include="Resources\Icons\*.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- BASS 原生库（x86_64 Linux）：由 ManagedBass 在运行时动态加载。
+         来自 un4seen BASS（https://www.un4seen.com），非商业免费，商用需授权。
+         无音频设备的环境（如 headless 沙箱）下 Bass.Init 会失败，播放器自动降级为「仅状态展示」。 -->
+    <Content Include="Runtimes/linux-x64/native/libbass.so" CopyToOutputDirectory="PreserveNewest" Link="libbass.so" />
   </ItemGroup>
 
 </Project>
