@@ -9,6 +9,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using MCLCS.Linux.App;
 using MCLCS.Linux.App.Controls;
+using MCLCS.Linux.App.Services;
 using MCLCS.Linux.App.ViewModels;
 using MCLCS.Linux.App.Views.Pages;
 using Avalonia.VisualTree;
@@ -177,6 +178,35 @@ internal static class Program
             }
         }
 
+        // ---- UI 服务组件：确认对话框 / Toast ----
+        try
+        {
+            var dlg = new ConfirmDialog("确认恢复",
+                "将备份「Test World（2026-08-17 15:00）」恢复到：\n/root/.minecraft/saves/Test World\n\n恢复前会自动备份当前状态。\n\n确定继续？",
+                "确定", danger: true);
+            var p1 = Path.Combine(outDir, "ui-confirm.png");
+            RenderWindow(dlg, p1);
+            Console.WriteLine($"[ok]   ui-confirm    -> {p1}");
+        }
+        catch (Exception ex)
+        {
+            failures++;
+            Console.Error.WriteLine($"[fail] ui-confirm: {ex.GetType().Name}: {ex.Message}");
+        }
+
+        try
+        {
+            var toast = new ToastWindow("备份完成", "存档 · Test World → 3.4 MB", ToastKind.Success);
+            var p2 = Path.Combine(outDir, "ui-toast.png");
+            RenderWindow(toast, p2);
+            Console.WriteLine($"[ok]   ui-toast      -> {p2}");
+        }
+        catch (Exception ex)
+        {
+            failures++;
+            Console.Error.WriteLine($"[fail] ui-toast: {ex.GetType().Name}: {ex.Message}");
+        }
+
         Console.WriteLine(failures == 0 ? "ALL OK" : $"{failures} FAILED");
         return failures == 0 ? 0 : 1;
     }
@@ -191,6 +221,24 @@ internal static class Program
             Background = new SolidColorBrush(Color.Parse("#0F1115")),
         };
         window.Show();
+        window.InvalidateVisual();
+        Dispatcher.UIThread.RunJobs();
+
+        using var bmp = window.CaptureRenderedFrame()
+            ?? throw new InvalidOperationException("CaptureRenderedFrame 返回 null");
+        using (var fs = File.Create(path))
+            bmp.Save(fs);
+        window.Close();
+    }
+
+    /// <summary>渲染独立窗口（对话框 / Toast 等），先强制布局收敛再截图（headless 下 SizeToContent 需显式 Measure/Arrange）。</summary>
+    private static void RenderWindow(Window window, string path)
+    {
+        window.Show();
+        // 强制布局：headless 下 SizeToContent 需手动 Measure/Arrange 才能收敛到 DesiredSize
+        window.Measure(new Size(window.Width, double.PositiveInfinity));
+        window.Arrange(new Rect(0, 0, window.DesiredSize.Width, window.DesiredSize.Height));
+        Dispatcher.UIThread.RunJobs();
         window.InvalidateVisual();
         Dispatcher.UIThread.RunJobs();
 

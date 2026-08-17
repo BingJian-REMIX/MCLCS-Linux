@@ -63,7 +63,8 @@
                       ItemsSource="{Binding LocalModels}"
                       DisplayMemberBinding="{Binding DisplayName}"
                       SelectedValue="{Binding SelectedLocalModel}"
-                      SelectedValueBinding="{Binding DisplayName}"/>
+                      SelectedValueBinding="{Binding DisplayName}"
+                      SelectionChanged="LocalModel_SelectionChanged"/>
             <TextBlock Text="{Binding SelectedModelSizeText}" FontSize="12"
                        Foreground="{DynamicResource SecondaryForeground}"/>
             <TextBlock Text="{Binding SelectedModelSubText}" FontSize="12" TextWrapping="Wrap"

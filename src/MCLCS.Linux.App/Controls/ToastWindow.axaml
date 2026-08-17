@@ -1,0 +1,30 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="MCLCS.Linux.App.Controls.ToastWindow"
+        Title=""
+        Width="340"
+        SizeToContent="Height"
+        WindowStartupLocation="Manual"
+        SystemDecorations="None"
+        Background="Transparent"
+        Topmost="True"
+        CanResize="False"
+        ShowInTaskbar="False"
+        IsHitTestVisible="False">
+  <Border Background="{DynamicResource WindowBackground}"
+          BorderBrush="{DynamicResource ControlBorder}" BorderThickness="1"
+          CornerRadius="10" Padding="12,10"
+          BoxShadow="{DynamicResource ToastShadow}">
+    <Grid ColumnDefinitions="3,*">
+      <Border Grid.Column="0" x:Name="KindBar" Background="{DynamicResource AccentBrush}"
+              CornerRadius="2" Margin="0,2,10,2"/>
+      <StackPanel Grid.Column="1" Spacing="2">
+        <TextBlock x:Name="TitleText" FontSize="13" FontWeight="Bold"
+                   Foreground="{DynamicResource PrimaryForeground}" TextTrimming="CharacterEllipsis"/>
+        <TextBlock x:Name="MessageText" FontSize="12" TextWrapping="Wrap" MaxLines="3"
+                   TextTrimming="CharacterEllipsis"
+                   Foreground="{DynamicResource SecondaryForeground}" LineHeight="18"/>
+      </StackPanel>
+    </Grid>
+  </Border>
+</Window>

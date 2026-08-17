@@ -19,15 +19,17 @@
                    Foreground="{DynamicResource PrimaryForeground}"/>
 
         <!-- 存储路径 -->
-        <Grid ColumnDefinitions="72,*,Auto">
+        <Grid ColumnDefinitions="72,*,Auto,Auto">
           <TextBlock Grid.Column="0" Text="存储路径" VerticalAlignment="Center"
                      Foreground="{DynamicResource SecondaryForeground}"/>
           <TextBox Grid.Column="1" Text="{Binding Folder}" Padding="6,3" VerticalContentAlignment="Center"
                    Watermark="相对路径按游戏目录解析；也可填绝对路径备份到移动硬盘"
                    Background="{DynamicResource InputBackground}"
                    BorderBrush="{DynamicResource InputBorder}"/>
-          <Button Grid.Column="2" Classes="modal-btn" Content="打开目录" Command="{Binding OpenFolderCommand}"
-                  Width="78" Margin="8,0,0,0" Padding="0,3" VerticalAlignment="Center"/>
+          <Button Grid.Column="2" Classes="modal-btn" Content="浏览…" Command="{Binding BrowseFolderCommand}"
+                  Width="68" Margin="8,0,0,0" Padding="0,3" VerticalAlignment="Center"/>
+          <Button Grid.Column="3" Classes="modal-btn" Content="打开目录" Command="{Binding OpenFolderCommand}"
+                  Width="78" Margin="6,0,0,0" Padding="0,3" VerticalAlignment="Center"/>
         </Grid>
 
         <!-- 频率 / 数量 / 天数 -->

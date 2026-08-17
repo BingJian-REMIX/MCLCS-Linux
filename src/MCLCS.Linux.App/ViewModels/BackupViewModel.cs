@@ -136,6 +136,7 @@ public class BackupViewModel : ObservableObject
     public ICommand RestoreCommand { get; }
     public ICommand DeleteCommand { get; }
     public ICommand PruneCommand { get; }
+    public ICommand BrowseFolderCommand { get; }
     public ICommand SavePolicyCommand { get; }
     public ICommand OpenFolderCommand { get; }
 
@@ -146,6 +147,7 @@ public class BackupViewModel : ObservableObject
         RestoreCommand = new AsyncRelayCommand(_ => RestoreAsync(), _ => !IsBusy);
         DeleteCommand = new AsyncRelayCommand(_ => DeleteAsync(), _ => !IsBusy);
         PruneCommand = new AsyncRelayCommand(_ => PruneAsync(), _ => !IsBusy);
+        BrowseFolderCommand = new AsyncRelayCommand(_ => BrowseFolderAsync());
         SavePolicyCommand = new RelayCommand(_ => SavePolicy());
         OpenFolderCommand = new RelayCommand(_ => OpenFolder());
 
@@ -192,12 +194,21 @@ public class BackupViewModel : ObservableObject
             profile.Backup = CurrentPolicy();
             ProfileStore.Save(profile);
             StatusMessage = "备份策略已保存";
+            Services.ToastService.Show("备份管理器", "备份策略已保存", Services.ToastKind.Success);
             _ = RefreshAsync();
         }
         catch (Exception ex)
         {
             StatusMessage = $"保存失败：{ex.Message}";
         }
+    }
+
+    private async Task BrowseFolderAsync()
+    {
+        var picked = await Services.UIService.PickFolderAsync("选择备份存储目录");
+        if (string.IsNullOrWhiteSpace(picked)) return;
+        Folder = picked;
+        StatusMessage = "已选择新的备份目录，记得点「保存策略」";
     }
 
     private void OpenFolder()
@@ -293,6 +304,7 @@ public class BackupViewModel : ObservableObject
             if (result.Ok && result.Record is not null)
             {
                 StatusMessage = $"备份完成：{Path.GetFileName(result.Record.ArchivePath)}（{result.Record.SizeText}）";
+                Services.ToastService.Show("备份完成", $"{source.Display} → {result.Record.SizeText}", Services.ToastKind.Success);
                 Note = "";
 
                 // 数量限制：自动删旧
@@ -302,6 +314,7 @@ public class BackupViewModel : ObservableObject
             else
             {
                 StatusMessage = $"备份失败：{result.Error}";
+                Services.ToastService.Show("备份失败", result.Error ?? "未知错误", Services.ToastKind.Error);
             }
         }
         finally
@@ -320,6 +333,15 @@ public class BackupViewModel : ObservableObject
         var target = ResolveRestoreTarget(rec);
         var policy = CurrentPolicy();
 
+        var tip = policy.BackupBeforeRestore
+            ? "恢复前会自动备份当前状态。"
+            : "⚠ 当前未开启「恢复前自动备份」，目标目录会被直接覆盖。";
+
+        if (!await Services.UIService.ConfirmAsync(
+                $"将备份「{rec.SourceName}（{rec.CreatedAt:yyyy-MM-dd HH:mm}）」恢复到：\n{target}\n\n{tip}\n\n确定继续？",
+                "确认恢复", danger: true))
+            return;
+
         IsBusy = true;
         StatusMessage = "正在恢复 …";
         try
@@ -332,10 +354,12 @@ public class BackupViewModel : ObservableObject
                 StatusMessage = safety is null
                     ? $"已恢复到 {target}"
                     : $"已恢复到 {target}（恢复前状态已另存为 {Path.GetFileName(safety.ArchivePath)}）";
+                Services.ToastService.Show("恢复完成", rec.SourceName, Services.ToastKind.Success);
             }
             else
             {
                 StatusMessage = $"恢复失败：{restore.Error}";
+                Services.ToastService.Show("恢复失败", restore.Error ?? "未知错误", Services.ToastKind.Error);
             }
         }
         finally
@@ -354,6 +378,11 @@ public class BackupViewModel : ObservableObject
     {
         var rec = SelectedRecord;
         if (rec is null) { StatusMessage = "请先选择要删除的备份"; return; }
+
+        if (!await Services.UIService.ConfirmAsync(
+                $"删除备份「{rec.SourceName}（{rec.CreatedAt:yyyy-MM-dd HH:mm}）」？\nzip 文件会一并删除，不可撤销。",
+                "确认删除", danger: true))
+            return;
 
         var policy = CurrentPolicy();
         var ok = await Task.Run(() => BackupManager.Delete(GameRoot, rec.Id, policy));

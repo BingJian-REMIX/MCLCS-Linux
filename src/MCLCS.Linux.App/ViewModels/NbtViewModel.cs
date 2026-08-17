@@ -199,6 +199,7 @@ public class NbtViewModel : ObservableObject
     public ICommand OpenCommand { get; }
     public ICommand OpenQuickCommand { get; }
     public ICommand SaveCommand { get; }
+    public ICommand SaveAsCommand { get; }
     public ICommand ApplyValueCommand { get; }
     public ICommand AddChildCommand { get; }
     public ICommand RemoveCommand { get; }
@@ -209,16 +210,17 @@ public class NbtViewModel : ObservableObject
 
     public NbtViewModel()
     {
-        OpenCommand = new RelayCommand(_ => LoadFile(FilePath), _ => !string.IsNullOrWhiteSpace(FilePath));
+        OpenCommand = new AsyncRelayCommand(_ => OpenAsync());
         OpenQuickCommand = new RelayCommand(p => LoadFile(p as string ?? ""));
         SaveCommand = new RelayCommand(_ => Save(FilePath), _ => _root is not null);
+        SaveAsCommand = new AsyncRelayCommand(_ => SaveAsAsync(), _ => _root is not null);
         ApplyValueCommand = new RelayCommand(_ => ApplyValue(), _ => CanEditValue);
         AddChildCommand = new RelayCommand(_ => AddChild(), _ => _root is not null);
         RemoveCommand = new RelayCommand(_ => RemoveSelected(), _ => SelectedNode is not null);
         RenameCommand = new RelayCommand(_ => RenameSelected(), _ => SelectedNode is not null);
         ExpandAllCommand = new RelayCommand(_ => SetExpanded(true));
         CollapseAllCommand = new RelayCommand(_ => SetExpanded(false));
-        ExportTextCommand = new RelayCommand(_ => ExportText(), _ => _root is not null);
+        ExportTextCommand = new AsyncRelayCommand(_ => ExportTextAsync(), _ => _root is not null);
 
         ScanQuickFiles();
     }
@@ -246,6 +248,12 @@ public class NbtViewModel : ObservableObject
         QuickFiles = new ObservableCollection<string>(list);
     }
 
+    private async Task OpenAsync()
+    {
+        var picked = await Services.UIService.PickFileAsync("打开 NBT 文件", "*.dat;*.nbt;*.dat_old;*.schematic");
+        if (!string.IsNullOrWhiteSpace(picked)) LoadFile(picked);
+    }
+
     private void LoadFile(string path)
     {
         if (string.IsNullOrWhiteSpace(path)) return;
@@ -254,6 +262,7 @@ public class NbtViewModel : ObservableObject
         if (root is null)
         {
             StatusMessage = $"打开失败：{path}（不是有效的 gzip NBT 文件？）";
+            Services.ToastService.Show("NBT 编辑器", "文件打开失败", Services.ToastKind.Error);
             return;
         }
 
@@ -384,6 +393,15 @@ public class NbtViewModel : ObservableObject
         foreach (var r in Roots) r.SetExpandedDeep(expanded);
     }
 
+    private async Task SaveAsAsync()
+    {
+        var picked = await Services.UIService.PickFolderAsync("选择保存目录");
+        if (string.IsNullOrWhiteSpace(picked)) return;
+
+        var name = string.IsNullOrEmpty(FilePath) ? "output.dat" : Path.GetFileName(FilePath);
+        Save(Path.Combine(picked, name));
+    }
+
     private void Save(string path)
     {
         if (_root is null || string.IsNullOrWhiteSpace(path)) return;
@@ -392,6 +410,7 @@ public class NbtViewModel : ObservableObject
         if (!result.Ok)
         {
             StatusMessage = $"保存失败：{result.Error}";
+            Services.ToastService.Show("NBT 编辑器", $"保存失败：{result.Error}", Services.ToastKind.Error);
             return;
         }
 
@@ -401,24 +420,24 @@ public class NbtViewModel : ObservableObject
         StatusMessage = result.BackupPath is null
             ? $"已保存（{result.SizeBytes / 1024.0:F1} KB）"
             : $"已保存（{result.SizeBytes / 1024.0:F1} KB），原文件备份为 {Path.GetFileName(result.BackupPath)}";
+        Services.ToastService.Show("NBT 已保存", Path.GetFileName(path), Services.ToastKind.Success);
         OnPropertyChanged(nameof(TitleText));
     }
 
-    private void ExportText()
+    private async Task ExportTextAsync()
     {
         if (_root is null) return;
 
         try
         {
-            // Linux 无目录选择器：导出到当前文件同目录（未打开文件时导出到游戏目录）
-            var dir = string.IsNullOrEmpty(FilePath)
-                ? GameRoot
-                : Path.GetDirectoryName(FilePath) ?? GameRoot;
+            var dir = await Services.UIService.PickFolderAsync("选择导出目录");
+            if (string.IsNullOrWhiteSpace(dir)) return;
             var name = (string.IsNullOrEmpty(FilePath) ? "nbt" : Path.GetFileNameWithoutExtension(FilePath))
                        + ".txt";
             var dest = Path.Combine(dir, name);
             File.WriteAllText(dest, NbtEditor.RenderTree(_root, maxDepth: 32));
             StatusMessage = $"已导出文本树：{dest}";
+            Services.ToastService.Show("NBT 编辑器", $"已导出 {name}", Services.ToastKind.Success);
         }
         catch (Exception ex)
         {

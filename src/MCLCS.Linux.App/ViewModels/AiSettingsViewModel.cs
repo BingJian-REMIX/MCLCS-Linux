@@ -187,11 +187,29 @@ public class AiSettingsViewModel : ObservableObject
         OnPropertyChanged(nameof(ModelButtonText));
     }
 
-    /// <summary>用户切换本地模型时的回调：已拉取直接接受；未拉取按规格弹确认窗（Linux 无确认框，直接接受，由拉取按钮把关）。</summary>
-    public void TrySelectLocalModel(string displayName)
+    /// <summary>用户切换本地模型时的回调：已拉取直接接受；未拉取弹确认窗（对齐 WPF），取消则回退。</summary>
+    public async Task TrySelectLocalModelAsync(string displayName)
     {
         var info = OllamaModels.ByDisplayName(displayName);
         if (info is null) return;
+        if (displayName == _lastCommittedModel || _pulledTags.Contains(info.OllamaTag))
+        {
+            _lastCommittedModel = displayName;
+            return;
+        }
+
+        var msg = info.OllamaTag.Contains("phi")
+            ? "需额外下载 2.2GB，文件较大，是否继续？"
+            : info.OllamaTag.Contains("internlm")
+                ? "需额外下载 1.1GB，是否继续？"
+                : $"需额外下载 {info.SizeGb}GB，是否继续？";
+
+        if (!await Services.UIService.ConfirmAsync(msg, "下载模型"))
+        {
+            // 回退到上一次已确认的模型
+            SelectedLocalModel = _lastCommittedModel;
+            return;
+        }
         _lastCommittedModel = displayName;
     }
 

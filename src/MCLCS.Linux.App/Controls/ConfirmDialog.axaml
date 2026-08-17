@@ -1,0 +1,28 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="MCLCS.Linux.App.Controls.ConfirmDialog"
+        Title="确认"
+        Width="420"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        SystemDecorations="None"
+        Background="Transparent"
+        CanResize="False"
+        ShowInTaskbar="False">
+  <Border Background="{DynamicResource WindowBackground}"
+          BorderBrush="{DynamicResource ControlBorder}" BorderThickness="1"
+          CornerRadius="12" Padding="20"
+          BoxShadow="{DynamicResource ModalShadow}">
+    <StackPanel Spacing="14">
+      <TextBlock x:Name="TitleText" FontSize="16" FontWeight="Bold"
+                 Foreground="{DynamicResource PrimaryForeground}"/>
+      <TextBlock x:Name="MessageText" TextWrapping="Wrap" FontSize="13"
+                 Foreground="{DynamicResource SecondaryForeground}" LineHeight="20"/>
+      <Grid ColumnDefinitions="*,Auto,Auto">
+        <Button Grid.Column="1" x:Name="CancelButton" Content="取消" Width="80" Margin="0,0,8,0"/>
+        <Button Grid.Column="2" x:Name="OkButton" Content="确定" Width="80"
+                Classes="modal-btn primary"/>
+      </Grid>
+    </StackPanel>
+  </Border>
+</Window>
