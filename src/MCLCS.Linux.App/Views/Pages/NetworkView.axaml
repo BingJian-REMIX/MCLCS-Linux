@@ -19,7 +19,7 @@
         <ItemsControl ItemsSource="{Binding Results}" IsVisible="{Binding Results.Count, Converter={StaticResource CountToVisible}}">
           <ItemsControl.ItemTemplate>
             <DataTemplate>
-              <Border Margin="0,0,0,6" Padding="10,8" Background="#1B1F2A" CornerRadius="6">
+              <Border Margin="0,0,0,6" Padding="10,8" Background="{DynamicResource CardBackground}" CornerRadius="6">
                 <Grid ColumnDefinitions="12,*,Auto">
                   <Ellipse Grid.Column="0" Width="10" Height="10" VerticalAlignment="Center"
                            Fill="{Binding Reachable, Converter={StaticResource BoolToBrush}}"/>

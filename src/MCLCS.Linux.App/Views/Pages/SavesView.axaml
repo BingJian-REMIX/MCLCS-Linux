@@ -42,7 +42,7 @@
           <ItemsControl ItemsSource="{Binding CompatReports}" IsVisible="{Binding CompatReports.Count, Converter={StaticResource CountToVisible}}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="core:SaveCompatibilityReport">
-                <Border Margin="0,0,0,6" Padding="8,6" Background="#1B1F2A" CornerRadius="6">
+                <Border Margin="0,0,0,6" Padding="8,6" Background="{DynamicResource CardBackground}" CornerRadius="6">
                   <StackPanel Spacing="2">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                       <Ellipse Width="9" Height="9" Fill="{Binding Severity, Converter={StaticResource SaveSeverityToBrush}}"/>
@@ -62,7 +62,7 @@
           <ItemsControl ItemsSource="{Binding CorruptionReports}" IsVisible="{Binding CorruptionReports.Count, Converter={StaticResource CountToVisible}}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="core:SaveCorruptionReport">
-                <Border Margin="0,0,0,6" Padding="8,6" Background="#1B1F2A" CornerRadius="6">
+                <Border Margin="0,0,0,6" Padding="8,6" Background="{DynamicResource CardBackground}" CornerRadius="6">
                   <StackPanel Spacing="2">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                       <Ellipse Width="9" Height="9" Fill="{Binding Severity, Converter={StaticResource SaveSeverityToBrush}}"/>

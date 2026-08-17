@@ -230,7 +230,7 @@
             <StackPanel Orientation="Horizontal" Spacing="8"
                         IsVisible="{Binding PanelGroup, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
               <TextBlock Text="分组：" Foreground="{DynamicResource SecondaryForeground}"/>
-              <TextBlock Text="{Binding PanelGroup}" Foreground="#9cdcfe"/>
+              <TextBlock Text="{Binding PanelGroup}" Foreground="{DynamicResource SecondaryForeground}"/>
             </StackPanel>
             <TextBlock Text="{Binding PanelDescription}" Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"/>
           </StackPanel>

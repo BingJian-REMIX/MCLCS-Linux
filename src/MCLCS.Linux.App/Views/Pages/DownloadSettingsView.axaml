@@ -38,7 +38,7 @@
         <ItemsControl ItemsSource="{Binding MirrorUrls}" IsVisible="{Binding MirrorUrls.Count, Converter={StaticResource CountToVisible}}">
           <ItemsControl.ItemTemplate>
             <DataTemplate>
-              <Border Margin="0,0,0,6" Padding="10,8" Background="#1B1F2A" CornerRadius="6">
+              <Border Margin="0,0,0,6" Padding="10,8" Background="{DynamicResource CardBackground}" CornerRadius="6">
                 <TextBlock Text="{Binding}" FontFamily="Consolas" FontSize="12" TextWrapping="Wrap"/>
               </Border>
             </DataTemplate>

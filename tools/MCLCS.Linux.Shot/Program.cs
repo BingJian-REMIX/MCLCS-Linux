@@ -17,6 +17,8 @@ using MCLCS.Linux.App.ViewModels;
 using MCLCS.Linux.App.Views.Pages;
 using MCLCS.Core.Skin;
 using MCLCS.Core.Theme;
+using MCLCS.Core.Toolbox;
+using MCLCS.Core.Save;
 using MCLCS.Core.UI;
 using SkiaSharp;
 
@@ -118,6 +120,9 @@ internal static class Program
                     if (kind == MainTabKind.Download)
                         WaitForNetwork(sid == "minecraft" ? 9000 : 6000);
                     Dispatcher.UIThread.RunJobs();
+
+                    // 注入演示数据：让硬编码背景卡片在亮模式下真实渲染，验证双模式字体亮度修复
+                    InjectDemoData(mw, sid);
 
                     // 皮肤页：注入真实皮肤到皮肤编辑器（同时切到 3D 预览，关自动旋转）
                     if (sid == "skin")
@@ -275,6 +280,59 @@ internal static class Program
             ?? throw new InvalidOperationException("CaptureRenderedFrame 返回 null");
         using (var fs = File.Create(path))
             bmp.Save(fs);
+    }
+
+    /// <summary>
+    /// 给若干 Toolbox / Settings 子页注入演示数据，让原本无数据的 ItemsControl 卡片真正渲染，
+    /// 以便截图中验证「硬编码深色卡片背景 → 动态 CardBackground」在亮模式下的修复效果。
+    /// </summary>
+    private static void InjectDemoData(MainWindow mw, string sid)
+    {
+        switch (sid)
+        {
+            case "filewatch":
+                if (mw.GetVisualDescendants().OfType<FileWatchView>().FirstOrDefault()?.DataContext is FileWatchViewModel fw)
+                {
+                    fw.Changes.Add(new FileChange(FileChangeKind.Modified, "mods/optifine_1.20.1.jar", "哈希变化 a1b2→c3d4"));
+                    fw.Changes.Add(new FileChange(FileChangeKind.Added, "resourcepacks/faithful-64x.zip"));
+                    fw.Changes.Add(new FileChange(FileChangeKind.Removed, "config/old-mod.toml"));
+                }
+                break;
+            case "network":
+                if (mw.GetVisualDescendants().OfType<NetworkView>().FirstOrDefault()?.DataContext is NetworkViewModel nv)
+                {
+                    nv.Results.Add(new DiagnosticResult { Name = "BMCLAPI 镜像", Url = "https://bmclapi.cn", Reachable = true, LatencyMs = 23 });
+                    nv.Results.Add(new DiagnosticResult { Name = "Mojang 官方", Url = "https://piston-meta.mojang.com", Reachable = false, Error = "连接超时" });
+                }
+                break;
+            case "download": // DownloadSettingsView
+                if (mw.GetVisualDescendants().OfType<DownloadSettingsView>().FirstOrDefault()?.DataContext is DownloadSettingsViewModel ds)
+                {
+                    ds.MirrorUrls.Add("https://bmclapi.cn/version/{id}/version.json");
+                    ds.MirrorUrls.Add("https://mirror.nju.edu.cn/minecraft/");
+                }
+                break;
+            case "recommend":
+                if (mw.GetVisualDescendants().OfType<RecommendSettingsView>().FirstOrDefault()?.DataContext is RecommendSettingsViewModel rs)
+                {
+                    rs.Items.Add("建议分配 4 GB 内存（当前 2 GB）—— 大型整合包易 OOM");
+                    rs.Items.Add("启用异步资产加载以缩短启动时间约 18%");
+                }
+                break;
+            case "saves":
+                if (mw.GetVisualDescendants().OfType<SavesView>().FirstOrDefault()?.DataContext is SavesViewModel sv)
+                {
+                    sv.CompatReports.Add(new SaveCompatibilityReport
+                    {
+                        SaveName = "测试世界 A",
+                        SaveGameVersion = "1.20.4",
+                        Severity = SaveCompatibilitySeverity.SlightlyNewer,
+                        Message = "存档版本略新于当前游戏版本，可直接降级且风险较低。",
+                    });
+                }
+                break;
+        }
+        Dispatcher.UIThread.RunJobs();
     }
 
     /// <summary>渲染独立窗口（对话框 / Toast 等），先强制布局收敛再截图。</summary>
