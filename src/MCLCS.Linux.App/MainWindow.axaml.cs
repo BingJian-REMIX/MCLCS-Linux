@@ -213,7 +213,7 @@ public partial class MainWindow : Window
             (MainTabKind.Toolbox, "crash") => new CrashView(),
             (MainTabKind.Toolbox, "datapack") => new DataPackView(),
             (MainTabKind.Toolbox, "saves") => new SavesView(),
-            (MainTabKind.Toolbox, "skin") => new SkinView(),
+            (MainTabKind.Toolbox, "skin") => new SkinEditorView(),
             (MainTabKind.Toolbox, "network") => new NetworkView(),
             (MainTabKind.Toolbox, "filewatch") => new FileWatchView(),
             (MainTabKind.Toolbox, "nbt") => new NbtView(),

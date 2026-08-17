@@ -376,8 +376,9 @@ public class TabItemViewModel : ObservableObject
     public MainTabKind Kind => Def.Kind;
     /// <summary>本地化后的显示名（Def.Title 是 l10n key）。</summary>
     public string DisplayName => Localization.Get(Def.Title);
-    /// <summary>游戏页恒展开（WPF 规格：AlwaysExpanded=true）。</summary>
-    public bool AlwaysExpanded => Kind == MainTabKind.Game;
+    /// <summary>是否展开显示文字：仅选中时展开（用户反馈：四色索引贴未选中时不显文字，含游戏页）。</summary>
+    public bool AlwaysExpanded => false;
+
     /// <summary>在四色序列中的次序（0=游戏）。决定重叠方向与默认 Z 序。</summary>
     public int Order { get; }
     public int TotalTabs { get; }
@@ -396,8 +397,8 @@ public class TabItemViewModel : ObservableObject
         }
     }
 
-    /// <summary>是否展开显示文字：游戏页恒展开，其余仅选中时展开。</summary>
-    public bool IsExpanded => AlwaysExpanded || _isSelected;
+    /// <summary>是否展开显示文字：仅选中时展开（其余折叠为 56px 色条，不显示文字）。</summary>
+    public bool IsExpanded => _isSelected;
 
     /// <summary>语言切换时由 VM 调用，强制刷新显示名（DisplayName 依赖当前语言）。</summary>
     public void RaiseDisplayNameChanged() => OnPropertyChanged(nameof(DisplayName));

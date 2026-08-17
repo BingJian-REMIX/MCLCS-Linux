@@ -1,0 +1,216 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:MCLCS.Linux.App.ViewModels"
+             xmlns:ctl="clr-namespace:MCLCS.Linux.App.Controls"
+             xmlns:conv="clr-namespace:MCLCS.Linux.App.Converters"
+             x:Class="MCLCS.Linux.App.Views.Pages.SkinEditorView"
+             x:DataType="vm:SkinEditorViewModel">
+  <UserControl.Resources>
+    <conv:BoolToVisibleConverter x:Key="BoolToVis"/>
+    <conv:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
+  </UserControl.Resources>
+
+  <Grid Margin="14" ColumnDefinitions="200,*,200">
+
+    <!-- ==== 左：部位 + 工具 + 调色板 ==== -->
+    <Grid Grid.Column="0">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="*"/>
+        <RowDefinition Height="Auto"/>
+      </Grid.RowDefinitions>
+
+      <TextBlock Grid.Row="0" Text="身体部位" FontWeight="Bold" Margin="0,0,0,6"
+                 Foreground="{DynamicResource PrimaryForeground}"/>
+
+      <!-- 部位分组（HTML 设计：可展开组 + 子面列表） -->
+      <ScrollViewer Grid.Row="1" MaxHeight="240" VerticalScrollBarVisibility="Auto">
+        <ItemsControl ItemsSource="{Binding Parts}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Expander Header="{Binding Name}" Margin="0,1,0,1">
+                <ItemsControl ItemsSource="{Binding Faces}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Button Classes="modal-btn" Content="{Binding FaceName}" FontSize="11"
+                              HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                              Margin="12,1,4,1" Padding="8,2"
+                              Command="{Binding $parent[UserControl].((vm:SkinEditorViewModel)DataContext).SelectFaceCommand}"
+                              CommandParameter="{Binding}"/>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </Expander>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+
+      <!-- 工具 -->
+      <StackPanel Grid.Row="2" Spacing="4" Margin="0,10,0,0">
+        <TextBlock Text="工具" FontWeight="Bold" Margin="0,0,0,2"
+                   Foreground="{DynamicResource PrimaryForeground}"/>
+        <ToggleSwitch IsChecked="{Binding SymmetryEnabled}" Content="对称绘制" HorizontalAlignment="Left"/>
+        <ToggleSwitch IsChecked="{Binding IsEraser}" Content="橡皮擦" HorizontalAlignment="Left"/>
+
+        <TextBlock Text="画笔大小" FontSize="12" Margin="0,4,0,0"
+                   Foreground="{DynamicResource SecondaryForeground}"/>
+        <ComboBox SelectedValue="{Binding BrushSize}" SelectedValueBinding="{Binding Tag}" Width="88" HorizontalAlignment="Left">
+          <ComboBoxItem Content="1px" Tag="1"/>
+          <ComboBoxItem Content="2px" Tag="2"/>
+          <ComboBoxItem Content="3px" Tag="3"/>
+        </ComboBox>
+
+        <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,8,0,0">
+          <Button Classes="modal-btn" Content="← 撤销" Command="{Binding UndoCommand}" Width="70" Padding="0,3"/>
+          <Button Classes="modal-btn" Content="重做 →" Command="{Binding RedoCommand}" Width="70" Padding="0,3"/>
+        </StackPanel>
+        <Button Classes="modal-btn" Content="清空全部" Command="{Binding ClearCommand}"
+                Width="146" Padding="0,3" HorizontalAlignment="Left"/>
+        <Button Classes="modal-btn" Content="导入 PNG" Command="{Binding ImportCommand}"
+                Width="146" Padding="0,4" HorizontalAlignment="Left"/>
+        <Button Classes="modal-btn primary" Content="导出 PNG" Command="{Binding ExportCommand}"
+                Width="146" Padding="0,4" HorizontalAlignment="Left"/>
+        <Button Classes="modal-btn" Content="应用到离线账号" Command="{Binding ApplyToAccountCommand}"
+                Width="146" Padding="0,4" HorizontalAlignment="Left"/>
+      </StackPanel>
+
+      <TextBlock Grid.Row="3" Text="{Binding StatusMessage}" TextWrapping="Wrap" FontSize="10"
+                 Foreground="{DynamicResource StatusForeground}" Margin="0,6,0,0"/>
+    </Grid>
+
+    <!-- ==== 中：面编辑画布 + 3D ==== -->
+    <Grid Grid.Column="1" Margin="12,0">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="*"/>
+        <RowDefinition Height="Auto"/>
+      </Grid.RowDefinitions>
+
+      <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto,*,Auto,Auto" Margin="0,0,0,6">
+        <ToggleButton x:Name="Mode2D" Grid.Column="0" Content="2D 编辑" Width="64" Height="24"
+                      FontSize="11" IsChecked="True" Click="Mode_Changed"/>
+        <ToggleButton x:Name="Mode3D" Grid.Column="1" Content="3D 预览" Width="64" Height="24"
+                      FontSize="11" IsChecked="False" Click="Mode_Changed" Margin="4,0,0,0"/>
+        <TextBlock Grid.Column="2" Text="{Binding FaceTitle}" VerticalAlignment="Center" Margin="12,0,0,0"
+                   Foreground="{DynamicResource AccentBrush}" FontWeight="SemiBold"/>
+        <TextBlock Grid.Column="3" Text="缩放" VerticalAlignment="Center" Margin="12,0,4,0"
+                   Foreground="{DynamicResource SecondaryForeground}" FontSize="12"/>
+        <ComboBox Grid.Column="4" SelectedValue="{Binding FaceZoom}" SelectedValueBinding="{Binding Tag}"
+                  Width="70" VerticalAlignment="Center">
+          <ComboBoxItem Content="8x" Tag="8"/>
+          <ComboBoxItem Content="10x" Tag="10"/>
+          <ComboBoxItem Content="16x" Tag="16"/>
+          <ComboBoxItem Content="24x" Tag="24"/>
+        </ComboBox>
+      </Grid>
+
+      <!-- 2D 面编辑画布 -->
+      <Border Grid.Row="1" Background="{DynamicResource ControlBackground}"
+              BorderBrush="{DynamicResource ControlBorder}" BorderThickness="1" CornerRadius="8"
+              x:Name="Editor2D">
+        <Grid>
+          <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+            <Grid Margin="16">
+              <Image x:Name="FaceImage" Source="{Binding FaceBitmap}"
+                     Width="{Binding FaceZoomedW}" Height="{Binding FaceZoomedH}"
+                     RenderOptions.BitmapInterpolationMode="None" Stretch="Fill"
+                     RenderTransformOrigin="0,0"
+                     PointerPressed="FaceCanvas_PointerPressed"
+                     PointerMoved="FaceCanvas_PointerMoved"
+                     PointerReleased="FaceCanvas_PointerReleased"
+                     Cursor="Cross"/>
+            </Grid>
+          </ScrollViewer>
+
+          <!-- 空状态（HTML 设计：创建新皮肤 / 导入 PNG） -->
+          <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="10"
+                      IsVisible="{Binding HasSkin, Converter={StaticResource InvBoolToVis}}">
+            <TextBlock Text="🧍" FontSize="44" HorizontalAlignment="Center"/>
+            <TextBlock Text="点击创建新皮肤或导入 PNG" Foreground="{DynamicResource SecondaryForeground}"
+                       HorizontalAlignment="Center"/>
+            <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+              <Button Classes="modal-btn primary" Content="创建新皮肤" Command="{Binding ClearCommand}"
+                      Padding="14,6"/>
+              <Button Classes="modal-btn" Content="导入 PNG" Command="{Binding ImportCommand}"
+                      Padding="14,6"/>
+            </StackPanel>
+          </StackPanel>
+
+          <!-- 交互提示（HTML 设计） -->
+          <StackPanel Orientation="Horizontal" Spacing="16" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                      Margin="0,0,0,8" Opacity="0.8">
+            <TextBlock Text="🖱️ 单击填充/清除" FontSize="11" Foreground="{DynamicResource SecondaryForeground}"/>
+            <TextBlock Text="🔲 右键选择颜色" FontSize="11" Foreground="{DynamicResource SecondaryForeground}"/>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- 3D 预览 -->
+      <Border Grid.Row="1" x:Name="Preview3D" IsVisible="False"
+              Background="{DynamicResource ControlBackground}"
+              BorderBrush="{DynamicResource ControlBorder}" BorderThickness="1" CornerRadius="8">
+        <ctl:SkinPreview3D SkinImage="{Binding FullBitmap}" AutoRotate="True" Margin="8"/>
+      </Border>
+
+      <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="10" Margin="0,6,0,0">
+        <Button Classes="modal-btn" Content="填充" Command="{Binding FillCommand}"
+                Width="52" Padding="0,2" VerticalAlignment="Center"/>
+        <TextBlock Text="填充：点击画布以颜色填充连通区域" FontSize="11" VerticalAlignment="Center"
+                   Foreground="{DynamicResource SecondaryForeground}"/>
+      </StackPanel>
+    </Grid>
+
+    <!-- ==== 右：整体预览 + 当前颜色 + 调色板 ==== -->
+    <Grid Grid.Column="2">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="*"/>
+      </Grid.RowDefinitions>
+
+      <TextBlock Grid.Row="0" Text="64x64 预览" FontWeight="Bold" Margin="0,0,0,4"
+                 Foreground="{DynamicResource PrimaryForeground}"/>
+      <Border Grid.Row="1" Background="{DynamicResource ControlBackground}" CornerRadius="6" Padding="4">
+        <Image Source="{Binding FullBitmap}" Width="192" Height="192" Stretch="Uniform"
+               RenderOptions.BitmapInterpolationMode="None"/>
+      </Border>
+
+      <StackPanel Grid.Row="2" Spacing="4" Margin="0,10,0,0">
+        <TextBlock Text="当前颜色" FontWeight="Bold" Margin="0,0,0,2"
+                   Foreground="{DynamicResource PrimaryForeground}"/>
+        <Grid>
+          <Border Width="40" Height="40" CornerRadius="4" HorizontalAlignment="Left"
+                  Background="{Binding PrimaryBrush}" BorderBrush="{DynamicResource ControlBorder}" BorderThickness="1"/>
+          <Border Width="20" Height="20" CornerRadius="2" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                  Margin="22,0,0,-2" Background="{Binding SecondaryBrush}"
+                  BorderBrush="{DynamicResource ControlBorder}" BorderThickness="1"/>
+        </Grid>
+      </StackPanel>
+
+      <ScrollViewer Grid.Row="3" Margin="0,10,0,0" VerticalScrollBarVisibility="Auto">
+        <ItemsControl ItemsSource="{Binding Palette}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <WrapPanel/>
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Button Width="24" Height="24" Margin="2" Padding="0" CornerRadius="4" Cursor="Hand"
+                      BorderThickness="1"
+                      Command="{Binding $parent[UserControl].((vm:SkinEditorViewModel)DataContext).SetColorCommand}"
+                      CommandParameter="{Binding}">
+                <Button.Background>
+                  <SolidColorBrush Color="{Binding}"/>
+                </Button.Background>
+              </Button>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+    </Grid>
+  </Grid>
+</UserControl>

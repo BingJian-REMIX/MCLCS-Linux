@@ -56,6 +56,22 @@ public static class UIService
         });
         return files.FirstOrDefault()?.TryGetLocalPath();
     }
+
+    /// <summary>保存文件（另存为对话框，如导出 PNG）。无主窗口或取消时返回 null。</summary>
+    public static async Task<string?> SaveFileAsync(string title = "保存文件", string? suggestedName = null, string? filterPattern = null)
+    {
+        var owner = MainWindow;
+        if (owner is null) return null;
+        var file = await owner.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = title,
+            SuggestedFileName = suggestedName,
+            FileTypeChoices = filterPattern is null
+                ? null
+                : new[] { new FilePickerFileType(title) { Patterns = new[] { filterPattern } } }
+        });
+        return file?.TryGetLocalPath();
+    }
 }
 
 /// <summary>Linux 版 Toast（对齐 WPF ToastService）：右下角 2.5s 提示。无主窗口时静默跳过。</summary>
