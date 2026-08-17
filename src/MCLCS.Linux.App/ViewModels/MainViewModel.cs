@@ -287,11 +287,21 @@ public class MainViewModel : ObservableObject
     /// <summary>状态栏：运行中的实例数（占位）。</summary>
     public string RunningInstancesText => LocaleManager.Tf("status.running", 0);
 
-    /// <summary>状态栏：下载进度文本（占位）。</summary>
-    public string DownloadText => "下载 0%";
+    /// <summary>状态栏：下载进度文本（由下载页 ViewModel 回写）。</summary>
+    private string _downloadText = "下载 0%";
+    public string DownloadText
+    {
+        get => _downloadText;
+        set => SetField(ref _downloadText, value);
+    }
 
-    /// <summary>状态栏：下载进度（0-100，占位）。</summary>
-    public double DownloadProgress => 0;
+    /// <summary>状态栏：下载进度（0-100，由下载页 ViewModel 回写）。</summary>
+    private double _downloadProgress;
+    public double DownloadProgress
+    {
+        get => _downloadProgress;
+        set => SetField(ref _downloadProgress, value);
+    }
 
     /// <summary>状态栏：网络是否正常（占位，默认正常）。</summary>
     public bool IsNetworkOk => true;

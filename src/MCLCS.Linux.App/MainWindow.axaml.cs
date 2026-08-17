@@ -199,12 +199,13 @@ public partial class MainWindow : Window
         UserControl page = (_vm.SelectedTab.Kind, _vm.SelectedSidebarId) switch
         {
             (MainTabKind.Game, _) => new GameHomeView(),
-            (MainTabKind.Download, "minecraft") => new InstallView(),
-            (MainTabKind.Download, "mod") => new ModsView(),
-            (MainTabKind.Download, "shader") => new ShaderView(),
-            (MainTabKind.Download, "resourcepack") => new ResourcePackView(),
-            (MainTabKind.Download, "modpack") => new ModpackView(),
-            (MainTabKind.Download, "map") => new MapView(),
+            // 下载中心：六个副标签统一路由到单一 DownloadPageView（对齐 WPF 的单页 + 子标签切换）
+            (MainTabKind.Download, "minecraft") => new DownloadPageView(),
+            (MainTabKind.Download, "mod") => new DownloadPageView(),
+            (MainTabKind.Download, "shader") => new DownloadPageView(),
+            (MainTabKind.Download, "resourcepack") => new DownloadPageView(),
+            (MainTabKind.Download, "modpack") => new DownloadPageView(),
+            (MainTabKind.Download, "map") => new DownloadPageView(),
             (MainTabKind.Toolbox, "log") => new LogView(),
             (MainTabKind.Toolbox, "clean") => new CleanerView(),
             (MainTabKind.Toolbox, "backup") => new BackupView(),

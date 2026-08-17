@@ -186,6 +186,10 @@
         <conv:AfkInstructionToTextConverter x:Key="AfkInstructionToText"/>
         <conv:NbtTagTypeToTextConverter x:Key="NbtTagTypeToText"/>
         <conv:OllamaStatusToTextConverter x:Key="OllamaStatusToText"/>
+        <conv:NonEmptyToVisibilityConverter x:Key="NonEmptyToVis"/>
+        <conv:SourceToDetailTextConverter x:Key="SourceToDetailText"/>
+        <conv:SourceNotMinecraftConverter x:Key="SourceNotMinecraft"/>
+        <conv:StringEqualsConverter x:Key="StringEquals"/>
         <SolidColorBrush x:Key="WindowBackground" Color="#0F1115"/>
         <SolidColorBrush x:Key="ControlBackground" Color="#1A1D24"/>
         <SolidColorBrush x:Key="ControlBorder" Color="#2A2F3A"/>
@@ -213,5 +217,6 @@
         <SolidColorBrush x:Key="InputFocusBorder" Color="#3B82F6"/>
 
         <SolidColorBrush x:Key="ProgressBackground" Color="#2A2F3A"/>
+
     </Application.Resources>
 </Application>

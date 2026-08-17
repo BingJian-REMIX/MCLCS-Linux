@@ -1,0 +1,414 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:MCLCS.Linux.App.ViewModels"
+             xmlns:conv="clr-namespace:MCLCS.Linux.App.Converters"
+             xmlns:ctl="clr-namespace:MCLCS.Linux.App.Controls"
+             x:Class="MCLCS.Linux.App.Views.Pages.DownloadPageView"
+             x:DataType="vm:DownloadPageViewModel">
+  <UserControl.Resources>
+    <conv:NonEmptyToVisibilityConverter x:Key="NonEmptyToVis"/>
+    <conv:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
+    <conv:BoolToVisibleConverter x:Key="BoolToVis"/>
+    <conv:SourceToDetailTextConverter x:Key="SourceToDetailText"/>
+    <conv:SourceNotMinecraftConverter x:Key="SourceNotMinecraft"/>
+    <conv:StringEqualsConverter x:Key="StringEquals"/>
+
+    <!-- 卡片模板（mod / 资源包 / 地图 / 整合包 / Minecraft 版本 通用） -->
+    <DataTemplate x:Key="CardDataTemplate">
+      <Border Background="{DynamicResource CardBackground}"
+              BorderBrush="{DynamicResource ControlBorder}" BorderThickness="1"
+              CornerRadius="10" Margin="6" Width="196">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="110"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+          </Grid.RowDefinitions>
+
+          <Border Grid.Row="0" Background="{DynamicResource ControlBackground}" CornerRadius="10">
+            <ctl:ExternalIcon Url="{Binding IconUrl}" FallbackToken="{Binding FallbackToken}" CornerRadius="10"/>
+          </Border>
+
+          <Border Grid.Row="0" Background="{DynamicResource AccentBrush}" CornerRadius="4"
+                  Padding="5,1" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,8,8,0"
+                  IsVisible="{Binding HasExtra}"
+                  ToolTip.Tip="该地图附带资源包 / 光影，可在详情窗一并安装">
+            <TextBlock Text="含附加资源" FontSize="10" Foreground="White"/>
+          </Border>
+
+          <TextBlock Grid.Row="1" Text="{Binding Title}" FontWeight="Bold"
+                     Margin="10,8,10,2" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Title}"/>
+          <TextBlock Grid.Row="2" Text="{Binding Author}" FontSize="11" Opacity="0.7" Margin="10,0,10,2"/>
+
+          <TextBlock Grid.Row="3" Text="{Binding ViewsText}" FontSize="11" Margin="10,0,10,2"
+                     Foreground="{DynamicResource AccentBrush}"
+                     IsVisible="{Binding ViewsText, Converter={StaticResource NonEmptyToVis}}"/>
+
+          <TextBlock Grid.Row="3" Text="{Binding MetaText}" FontSize="11" Margin="10,0,10,2"
+                     Foreground="{DynamicResource AccentBrush}" Opacity="0.9"
+                     IsVisible="{Binding MetaText, Converter={StaticResource NonEmptyToVis}}"/>
+
+          <TextBlock Grid.Row="4" Text="{Binding Summary}" FontSize="11" Opacity="0.7"
+                     Margin="10,0,10,2" TextWrapping="Wrap" Height="32" TextTrimming="CharacterEllipsis"/>
+          <StackPanel Grid.Row="5" Orientation="Horizontal" Margin="10,6,10,8">
+            <Button Classes="modal-btn primary"
+                    Command="{Binding DataContext.EnqueueCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    CommandParameter="{Binding}" Padding="6,2"
+                    IsVisible="{Binding Source, Converter={StaticResource SourceNotMinecraft}}">
+              <TextBlock Text="加入队列"/>
+            </Button>
+            <Button Classes="modal-btn"
+                    Command="{Binding DataContext.OpenDetailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    CommandParameter="{Binding}" Margin="6,0,0,0" Padding="6,2">
+              <TextBlock Text="{Binding Source, Converter={StaticResource SourceToDetailText}}"/>
+            </Button>
+          </StackPanel>
+        </Grid>
+      </Border>
+    </DataTemplate>
+  </UserControl.Resources>
+
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="200"/>
+    </Grid.RowDefinitions>
+
+    <!-- 顶部搜索（始终） -->
+    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="12,12,12,4">
+      <TextBox Width="240" Text="{Binding Query, Mode=TwoWay}" Watermark="搜索关键词"/>
+      <Button Content="搜索" Command="{Binding SearchCommand}" Margin="8,0,0,0" Padding="12,2"
+              Classes="modal-btn primary"/>
+      <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Margin="12,0,0,0" Opacity="0.8"/>
+    </StackPanel>
+
+    <!-- 筛选行：Modrinth 风格（版本 + 加载器，不含整合包） -->
+    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="12,0,12,8"
+                IsVisible="{Binding ModrinthFilterVisible}">
+      <ComboBox Width="140" ItemsSource="{Binding GameVersions}" SelectedItem="{Binding SelectedGameVersion}" ToolTip.Tip="游戏版本"/>
+      <ComboBox Width="120" Margin="8,0,0,0" ItemsSource="{Binding Loaders}" SelectedItem="{Binding SelectedLoader}" ToolTip.Tip="加载器"/>
+    </StackPanel>
+
+    <!-- 筛选行：整合包（版本 + 加载器 + 来源） -->
+    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="12,0,12,8"
+                IsVisible="{Binding ModpackSourceVisible}">
+      <ComboBox Width="140" ItemsSource="{Binding GameVersions}" SelectedItem="{Binding SelectedGameVersion}" ToolTip.Tip="游戏版本"/>
+      <ComboBox Width="120" Margin="8,0,0,0" ItemsSource="{Binding Loaders}" SelectedItem="{Binding SelectedLoader}" ToolTip.Tip="加载器"/>
+      <ComboBox Width="150" Margin="8,0,0,0"
+              ItemsSource="{Binding ModpackSources}" SelectedValue="{Binding SelectedModpackSource}" SelectedValueBinding="{Binding Id}"
+              DisplayMemberBinding="{Binding DisplayName}"
+                ToolTip.Tip="整合包来源">
+        <ComboBox.ItemContainerTheme>
+          <ControlTheme TargetType="ComboBoxItem">
+            <Setter Property="IsEnabled" Value="{Binding IsAvailable}"/>
+            <Setter Property="ToolTip.Tip" Value="{Binding UnavailableReason}"/>
+          </ControlTheme>
+        </ComboBox.ItemContainerTheme>
+      </ComboBox>
+    </StackPanel>
+
+    <!-- 筛选行：Minecraft 版本类型 -->
+    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="12,0,12,8"
+                IsVisible="{Binding IsMinecraft}">
+      <ComboBox Width="160" SelectedValue="{Binding SelectedVersionType}" SelectedValueBinding="{Binding Tag}" ToolTip.Tip="版本类型">
+        <ComboBoxItem Content="全部" Tag="all"/>
+        <ComboBoxItem Content="正式版" Tag="release"/>
+        <ComboBoxItem Content="快照" Tag="snapshot"/>
+        <ComboBoxItem Content="旧版" Tag="old"/>
+      </ComboBox>
+    </StackPanel>
+
+    <!-- 筛选行：地图（分类 + 版本 + 排序 + 分页） -->
+    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="12,0,12,8"
+                IsVisible="{Binding IsMap}">
+      <ComboBox Width="150"               ItemsSource="{Binding MapCategories}"
+              SelectedValue="{Binding SelectedCategory}" SelectedValueBinding="{Binding Id}"
+              DisplayMemberBinding="{Binding Name}" ToolTip.Tip="分类"/>
+      <ComboBox Width="120" Margin="8,0,0,0" ItemsSource="{Binding MapVersions}"
+                SelectedItem="{Binding SelectedMapVersion}" ToolTip.Tip="版本"/>
+      <ComboBox Width="120" Margin="8,0,0,0" SelectedValue="{Binding MapSortKey}" SelectedValueBinding="{Binding Tag}" ToolTip.Tip="排序">
+        <ComboBoxItem Content="最新发布" Tag="published"/>
+        <ComboBoxItem Content="最多浏览" Tag="views"/>
+      </ComboBox>
+      <Button Content="上一页" Command="{Binding ChangeMapPageCommand}" CommandParameter="prev"
+              Margin="8,0,0,0" Padding="8,2" Classes="modal-btn"/>
+      <Button Content="下一页" Command="{Binding ChangeMapPageCommand}" CommandParameter="next"
+              Margin="8,0,0,0" Padding="8,2" Classes="modal-btn"/>
+      <TextBlock Text="{Binding MapPage, StringFormat='第 {0} 页'}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+    </StackPanel>
+
+    <!-- 卡片网格 -->
+    <ScrollViewer Grid.Row="2" Margin="12,0,12,8" VerticalScrollBarVisibility="Auto">
+      <StackPanel>
+        <ItemsControl ItemsSource="{Binding Cards}"
+                      IsVisible="{Binding IsMinecraft, Converter={StaticResource InvBoolToVis}}"
+                      ItemTemplate="{StaticResource CardDataTemplate}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <WrapPanel Orientation="Horizontal"/>
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+        </ItemsControl>
+
+        <ItemsControl ItemsSource="{Binding VersionGroups}"
+                      IsVisible="{Binding IsMinecraft}"
+                      Margin="0,4,0,0">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Expander Header="{Binding Header}" Margin="0,4,8,4">
+                <ItemsControl ItemsSource="{Binding Items}" ItemTemplate="{StaticResource CardDataTemplate}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <WrapPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                </ItemsControl>
+              </Expander>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </ScrollViewer>
+
+    <!-- 下载队列 -->
+    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="12,0,12,4">
+      <Button Content="开始下载队列" Command="{Binding StartQueueCommand}" Width="130" Padding="0,4"
+              Classes="modal-btn primary"/>
+      <TextBlock Text="{Binding Queue.Count, StringFormat='共 {0} 项'}" VerticalAlignment="Center" Margin="12,0,0,0" Opacity="0.8"/>
+    </StackPanel>
+    <ListBox Grid.Row="4" ItemsSource="{Binding Queue}" Margin="12,0,12,12"
+             Background="{DynamicResource InputBackground}" Foreground="{DynamicResource PrimaryForeground}"
+             BorderBrush="{DynamicResource InputBorder}">
+      <ListBox.ItemTemplate>
+        <DataTemplate>
+          <Grid Margin="2">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="120"/>
+              <ColumnDefinition Width="60"/>
+              <ColumnDefinition Width="60"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0">
+              <TextBlock FontWeight="Bold" Text="{Binding Title}"/>
+              <ProgressBar Minimum="0" Maximum="100" Value="{Binding Progress}" Height="10"
+                           Foreground="{DynamicResource AccentBrush}" Background="{DynamicResource ProgressBackground}"/>
+            </StackPanel>
+            <TextBlock Grid.Column="1" Text="{Binding Status}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+            <Button Grid.Column="2" Content="暂停" Padding="2" Margin="4,0"
+                    Command="{Binding DataContext.PauseItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    CommandParameter="{Binding}"/>
+            <Button Grid.Column="3" Content="取消" Padding="2"
+                    Command="{Binding DataContext.CancelItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    CommandParameter="{Binding}"/>
+          </Grid>
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
+
+    <!-- 地图详情弹窗 -->
+    <Grid Grid.RowSpan="5" Background="{DynamicResource ScrimBrush}"
+          IsVisible="{Binding IsDetailOpen}">
+      <Border Background="{DynamicResource CardBackground}" BorderBrush="{DynamicResource ControlBorder}"
+              BorderThickness="1" CornerRadius="12" BoxShadow="{DynamicResource ModalShadow}"
+              HorizontalAlignment="Center" VerticalAlignment="Center">
+        <Grid Margin="18" Width="560" MaxHeight="620">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="240"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+          </Grid.RowDefinitions>
+
+          <DockPanel Grid.Row="0" LastChildFill="True">
+            <Button DockPanel.Dock="Right" Content="关闭" Command="{Binding CloseDetailCommand}" Padding="10,2" Classes="modal-btn"/>
+            <TextBlock Text="{Binding CurrentMapDetail.Title}" FontWeight="Bold" FontSize="17"
+                       VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                       ToolTip.Tip="{Binding CurrentMapDetail.Title}"/>
+          </DockPanel>
+
+          <Border Grid.Row="1" Background="{DynamicResource ControlBackground}" CornerRadius="8" Margin="0,12,0,0">
+            <ctl:ExternalIcon Url="{Binding CurrentMapDetail.CoverImageUrl}" FallbackToken="map" CornerRadius="8"/>
+          </Border>
+
+          <WrapPanel Grid.Row="2" Orientation="Horizontal" Margin="0,10,0,0">
+            <TextBlock Text="作者" FontSize="11" Opacity="0.6" Margin="0,0,4,0"/>
+            <TextBlock Text="{Binding CurrentMapDetail.Author}" FontSize="11" FontWeight="Bold" Margin="0,0,14,0"/>
+            <TextBlock Text="浏览" FontSize="11" Opacity="0.6" Margin="0,0,4,0"/>
+            <TextBlock Text="{Binding CurrentMapDetail.Views}" FontSize="11" Margin="0,0,14,0"/>
+            <TextBlock Text="点赞" FontSize="11" Opacity="0.6" Margin="0,0,4,0"/>
+            <TextBlock Text="{Binding CurrentMapDetail.Likes}" FontSize="11" Margin="0,0,14,0"/>
+            <TextBlock Text="评分" FontSize="11" Opacity="0.6" Margin="0,0,4,0"/>
+            <TextBlock Text="{Binding CurrentMapDetail.RatingSummary}" FontSize="11"/>
+          </WrapPanel>
+
+          <WrapPanel Grid.Row="3" Orientation="Horizontal" Margin="0,2,0,0">
+            <TextBlock Text="版本" FontSize="11" Opacity="0.6" Margin="0,0,4,0"/>
+            <TextBlock Text="{Binding CurrentMapDetail.VersionSummary}" FontSize="11" Margin="0,0,14,0"/>
+            <TextBlock Text="分类" FontSize="11" Opacity="0.6" Margin="0,0,4,0"/>
+            <TextBlock Text="{Binding CurrentMapDetail.CategorySummary}" FontSize="11"/>
+          </WrapPanel>
+
+          <ScrollViewer Grid.Row="4" VerticalScrollBarVisibility="Auto" Margin="0,10,0,0" MinHeight="60">
+            <TextBlock Text="{Binding CurrentMapDetail.DescriptionText}" TextWrapping="Wrap"
+                       Opacity="0.85" LineHeight="20"/>
+          </ScrollViewer>
+
+          <TextBlock Grid.Row="5" Text="{Binding DetailHint}" TextWrapping="Wrap" Margin="0,10,0,0"
+                     Foreground="{DynamicResource AccentBrush}" FontSize="12"
+                     IsVisible="{Binding DetailHint, Converter={StaticResource NonEmptyToVis}}"/>
+
+          <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button Content="地图站页面" Command="{Binding OpenMapPageCommand}"
+                    Padding="10,4" Margin="0,0,8,0" Classes="modal-btn ghost"/>
+            <Button Content="附加资源" Command="{Binding DownloadExtraCommand}" Padding="10,4" Margin="0,0,8,0"
+                    ToolTip.Tip="下载资源包 / 光影并自动分发到 resourcepacks、shaderpacks"
+                    IsVisible="{Binding DetailHasExtra}"/>
+            <Button Content="下载到存档" Command="{Binding DownloadDetailCommand}"
+                    Padding="10,4" Classes="modal-btn primary"
+                    IsVisible="{Binding DetailCanDownload}"/>
+          </StackPanel>
+        </Grid>
+      </Border>
+    </Grid>
+
+    <!-- 整合包详情弹窗 -->
+    <Grid Grid.RowSpan="5" Background="{DynamicResource ScrimBrush}"
+          IsVisible="{Binding IsModpackDetailOpen}">
+      <Border Background="{DynamicResource CardBackground}" BorderBrush="{DynamicResource ControlBorder}"
+              BorderThickness="1" CornerRadius="12" BoxShadow="{DynamicResource ModalShadow}"
+              HorizontalAlignment="Center" VerticalAlignment="Center">
+        <Grid Margin="18" Width="560" MaxHeight="640">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="200"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+          </Grid.RowDefinitions>
+
+          <DockPanel Grid.Row="0" LastChildFill="True">
+            <Button DockPanel.Dock="Right" Content="关闭" Command="{Binding CloseModpackDetailCommand}" Padding="10,2" Classes="modal-btn"/>
+            <TextBlock Text="{Binding CurrentModpackDetail.Title}" FontWeight="Bold" FontSize="17"
+                       VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                       ToolTip.Tip="{Binding CurrentModpackDetail.Title}"/>
+          </DockPanel>
+
+          <Border Grid.Row="1" Background="{DynamicResource ControlBackground}" CornerRadius="8" Margin="0,12,0,0">
+            <ctl:ExternalIcon Url="{Binding CurrentModpackDetail.IconUrl}" FallbackToken="pack" CornerRadius="8"/>
+          </Border>
+
+          <WrapPanel Grid.Row="2" Orientation="Horizontal" Margin="0,10,0,0">
+            <TextBlock Text="作者" FontSize="11" Opacity="0.6" Margin="0,0,4,0"/>
+            <TextBlock Text="{Binding CurrentModpackDetail.Author}" FontSize="11" FontWeight="Bold" Margin="0,0,14,0"/>
+            <TextBlock Text="下载" FontSize="11" Opacity="0.6" Margin="0,0,4,0"/>
+            <TextBlock Text="{Binding CurrentModpackDetail.DownloadsText}" FontSize="11" Margin="0,0,14,0"/>
+            <TextBlock Text="加载器" FontSize="11" Opacity="0.6" Margin="0,0,4,0"/>
+            <TextBlock Text="{Binding ModpackDetailLoaders}" FontSize="11" Margin="0,0,14,0"/>
+            <TextBlock Text="版本" FontSize="11" Opacity="0.6" Margin="0,0,4,0"/>
+            <TextBlock Text="{Binding ModpackDetailLatestVersion}" FontSize="11"/>
+          </WrapPanel>
+
+          <StackPanel Grid.Row="3" Margin="0,8,0,0"
+                      IsVisible="{Binding CurrentModpackDetail.HasVersions}">
+            <TextBlock Text="选择版本" FontSize="12" Opacity="0.8" Margin="0,0,0,4"/>
+            <ComboBox ItemsSource="{Binding CurrentModpackDetail.Versions}"
+                      DisplayMemberBinding="{Binding DisplayText}"
+                      SelectedItem="{Binding SelectedModpackVersion}"
+                      MaxDropDownHeight="220"/>
+          </StackPanel>
+
+          <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,10,0,0">
+            <ToggleSwitch IsChecked="{Binding InstallIsolated, Mode=TwoWay}" VerticalAlignment="Center"/>
+            <TextBlock Text="隔离安装（独立 versions/&lt;包名&gt; 目录）" VerticalAlignment="Center"
+                       Margin="8,0,0,0" Foreground="{DynamicResource PrimaryForeground}"/>
+          </StackPanel>
+
+          <ScrollViewer Grid.Row="6" VerticalScrollBarVisibility="Auto" Margin="0,10,0,0" MinHeight="40">
+            <TextBlock Text="{Binding CurrentModpackDetail.Description}" TextWrapping="Wrap"
+                       Opacity="0.85" LineHeight="20"/>
+          </ScrollViewer>
+
+          <TextBlock Grid.Row="6" Text="{Binding ModpackDetailHint}" TextWrapping="Wrap" Margin="0,10,0,0"
+                     Foreground="{DynamicResource AccentBrush}" FontSize="12"
+                     IsVisible="{Binding ModpackDetailHint, Converter={StaticResource NonEmptyToVis}}"/>
+
+          <StackPanel Grid.Row="7" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button Content="来源页面" Command="{Binding OpenModpackPageCommand}"
+                    Padding="10,4" Margin="0,0,8,0" Classes="modal-btn ghost"/>
+            <Button Content="安装" Command="{Binding InstallModpackCommand}"
+                    Padding="10,4" Classes="modal-btn primary"
+                    IsVisible="{Binding ModpackDetailCanInstall}"/>
+          </StackPanel>
+        </Grid>
+      </Border>
+    </Grid>
+
+    <!-- Minecraft 版本安装弹窗 -->
+    <Grid Grid.RowSpan="5" Background="{DynamicResource ScrimBrush}"
+          IsVisible="{Binding IsInstallOpen}">
+      <Border Background="{DynamicResource CardBackground}" BorderBrush="{DynamicResource ControlBorder}"
+              BorderThickness="1" CornerRadius="12" BoxShadow="{DynamicResource ModalShadow}"
+              HorizontalAlignment="Center" VerticalAlignment="Center">
+        <Grid Margin="16" Width="420">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+          </Grid.RowDefinitions>
+
+          <DockPanel Grid.Row="0" LastChildFill="True">
+            <Button DockPanel.Dock="Right" Content="关闭" Command="{Binding CloseInstallCommand}" Padding="10,2" Classes="modal-btn"/>
+            <TextBlock Text="安装 Minecraft 版本" FontWeight="Bold" FontSize="16" VerticalAlignment="Center"/>
+          </DockPanel>
+
+          <TextBlock Grid.Row="1" Margin="0,10,0,0">
+            <Run Text="版本 "/>
+            <Run Text="{Binding CurrentInstallVersion.Title}" FontWeight="Bold"/>
+          </TextBlock>
+
+          <StackPanel Grid.Row="2" Margin="0,12,0,0">
+            <TextBlock Text="选择加载器（可不选）" Margin="0,0,0,6" Opacity="0.8"/>
+            <ListBox SelectedValue="{Binding SelectedInstallLoader}" SelectedValueBinding="{Binding Tag}"
+                     BorderThickness="0" Background="Transparent">
+              <ListBoxItem Content="原版（不安装加载器）" Tag="none"/>
+              <ListBoxItem Content="Forge" Tag="forge"/>
+              <ListBoxItem Content="Fabric（自动配对最新 Fabric API）" Tag="fabric"/>
+              <ListBoxItem Content="NeoForge" Tag="neoforge"/>
+              <ListBoxItem Content="Quilt" Tag="quilt"/>
+            </ListBox>
+            <TextBlock Margin="0,6,0,0" Foreground="{DynamicResource AccentBrush}" TextWrapping="Wrap"
+                       IsVisible="{Binding SelectedInstallLoader, Converter={StaticResource StringEquals}, ConverterParameter=fabric}">
+              选择 Fabric 时将自动安装最新正式版 Fabric API 到 mods 目录。
+            </TextBlock>
+          </StackPanel>
+
+          <TextBlock Grid.Row="3" Margin="0,12,0,0" Text="{Binding InstallStatus}"
+                     TextWrapping="Wrap" Opacity="0.85"/>
+          <ProgressBar Grid.Row="4" Margin="0,10,0,0" Height="8" IsIndeterminate="True"
+                       IsVisible="{Binding IsInstalling}"/>
+
+          <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+            <Button Content="取消" Command="{Binding CloseInstallCommand}" Margin="0,0,8,0" Padding="10,4" Classes="modal-btn"/>
+            <Button Content="加入队列" Command="{Binding EnqueueInstallCommand}"
+                    Padding="10,4" Classes="modal-btn primary"/>
+          </StackPanel>
+        </Grid>
+      </Border>
+    </Grid>
+  </Grid>
+</UserControl>

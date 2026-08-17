@@ -1,0 +1,12 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctl="clr-namespace:MCLCS.Linux.App.Controls"
+             x:Class="MCLCS.Linux.App.Controls.ExternalIcon">
+  <Grid x:Name="Root" ClipToBounds="True" Background="{DynamicResource ControlBackground}">
+    <Border x:Name="FallbackBorder" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+      <TextBlock x:Name="FallbackText" HorizontalAlignment="Center" VerticalAlignment="Center"
+                 Foreground="{DynamicResource SecondaryForeground}" FontSize="12"/>
+    </Border>
+    <Image x:Name="Cover" Stretch="UniformToFill" IsVisible="False"/>
+  </Grid>
+</UserControl>
