@@ -219,7 +219,7 @@ public partial class MainWindow : Window
             (MainTabKind.Toolbox, "nbt") => new NbtView(),
             (MainTabKind.Toolbox, "shortcut") => new ShortcutView(),
             (MainTabKind.Toolbox, "afk") => new AfkView(),
-            (MainTabKind.Toolbox, "aichat") => new AiChatView(),
+            (MainTabKind.Toolbox, "aichat") => new AiAssistView(),
             (MainTabKind.Toolbox, "perf") => new PerfView(),
             (MainTabKind.Toolbox, "modpackio") => new ModpackIoView(),
             (MainTabKind.Toolbox, "music") => new MusicView(),

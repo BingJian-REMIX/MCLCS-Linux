@@ -2,49 +2,117 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:MCLCS.Linux.App.ViewModels"
              xmlns:ai="clr-namespace:MCLCS.Core.Ai;assembly=MCLCS.Core"
+             xmlns:conv="clr-namespace:MCLCS.Linux.App.Converters"
              x:Class="MCLCS.Linux.App.Views.Pages.AiSettingsView"
              x:DataType="vm:AiSettingsViewModel">
+  <UserControl.Resources>
+    <conv:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
+  </UserControl.Resources>
   <ScrollViewer Margin="18">
-    <StackPanel Spacing="16" MaxWidth="760" HorizontalAlignment="Left">
+    <StackPanel Spacing="16" MaxWidth="820" HorizontalAlignment="Left">
 
-      <StackPanel Spacing="8">
-        <TextBlock Text="本地 Ollama 服务" FontWeight="Bold" FontSize="14"/>
-        <Grid ColumnDefinitions="*,Auto">
-          <TextBlock Grid.Column="0" Text="{Binding ServiceStatus, StringFormat='状态：{0}'}"
-                     VerticalAlignment="Center"/>
-          <Button Grid.Column="1" Classes="modal-btn accent" Content="检查" Command="{Binding CheckCommand}"
-                  IsEnabled="{Binding !Busy}"/>
-        </Grid>
+      <TextBlock Text="AI 助手" FontWeight="Bold" FontSize="16"/>
+
+      <!-- 第一层：总开关 -->
+      <StackPanel Spacing="6">
+        <StackPanel Orientation="Horizontal" Spacing="10">
+          <ToggleSwitch IsChecked="{Binding Enabled}" VerticalAlignment="Center"/>
+          <TextBlock Text="启用 AI 助手" VerticalAlignment="Center"/>
+        </StackPanel>
+        <TextBlock Text="开启后可选本地部署或外部 API，用于崩溃分析、Mod 推荐翻译等场景。"
+                   Foreground="{DynamicResource SecondaryForeground}" FontSize="12" TextWrapping="Wrap"/>
       </StackPanel>
 
-      <StackPanel Spacing="10">
-        <TextBlock Text="AI 助手配置" FontWeight="Bold" FontSize="14"/>
-        <ToggleSwitch IsChecked="{Binding Enabled}" Content="启用 AI 助手" HorizontalAlignment="Left"/>
+      <!-- 第二层：部署方式（总开关开启后显示）-->
+      <StackPanel Spacing="8" IsVisible="{Binding Enabled}">
+        <StackPanel Orientation="Horizontal" Spacing="10">
+          <TextBlock Text="部署方式" FontWeight="Bold" VerticalAlignment="Center"/>
+          <ComboBox SelectedValue="{Binding Mode}" SelectedValueBinding="{Binding Tag}" Width="240" HorizontalAlignment="Left">
+            <ComboBoxItem Content="外部 API（填 Key 即用，零下载、零占用）" Tag="{x:Static ai:AiMode.External}"/>
+            <ComboBoxItem Content="本地部署（自动安装 Ollama + 轻量模型）" Tag="{x:Static ai:AiMode.Local}"/>
+          </ComboBox>
+        </StackPanel>
 
-        <StackPanel Spacing="10" IsVisible="{Binding Enabled}">
+        <!-- 本地部署面板 -->
+        <StackPanel Spacing="8" IsVisible="{Binding IsLocalMode}">
+          <TextBlock Text="本地部署（Ollama）" FontWeight="Bold" Margin="0,4,0,0"/>
+
+          <!-- Ollama 安装状态 -->
+          <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding OllamaInstalled}">
+            <Ellipse Width="12" Height="12" Fill="#32CD32" VerticalAlignment="Center"/>
+            <TextBlock Text="{Binding OllamaVersion, StringFormat='Ollama 已安装（{0}）'}" VerticalAlignment="Center"/>
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="10" IsVisible="{Binding OllamaInstalled, Converter={StaticResource InvBoolToVis}}">
+            <Button Classes="modal-btn accent" Content="一键安装 Ollama" Command="{Binding InstallOllamaCommand}"
+                    IsEnabled="{Binding !Busy}" Width="130" HorizontalAlignment="Left"/>
+            <TextBlock Text="{Binding OllamaInstallText}" VerticalAlignment="Center"
+                       Foreground="{DynamicResource SecondaryForeground}"/>
+          </StackPanel>
+
+          <!-- 安装进度 -->
+          <StackPanel Spacing="4" IsVisible="{Binding OllamaInstalling}">
+            <ProgressBar Value="{Binding OllamaInstallProgress}" Minimum="0" Maximum="1" Height="16"/>
+            <Button Classes="modal-btn" Content="取消" Command="{Binding CancelOllamaInstallCommand}"
+                    Width="80" HorizontalAlignment="Left"/>
+          </StackPanel>
+
+          <!-- 模型选择与拉取（未安装 Ollama 时禁用）-->
+          <StackPanel Spacing="6" IsEnabled="{Binding OllamaInstalled}" Margin="0,6,0,0">
+            <TextBlock Text="模型" FontWeight="Bold"/>
+            <ComboBox Width="380" HorizontalAlignment="Left"
+                      ItemsSource="{Binding LocalModels}"
+                      DisplayMemberBinding="{Binding DisplayName}"
+                      SelectedValue="{Binding SelectedLocalModel}"
+                      SelectedValueBinding="{Binding DisplayName}"/>
+            <TextBlock Text="{Binding SelectedModelSizeText}" FontSize="12"
+                       Foreground="{DynamicResource SecondaryForeground}"/>
+            <TextBlock Text="{Binding SelectedModelSubText}" FontSize="12" TextWrapping="Wrap"
+                       Foreground="{DynamicResource SecondaryForeground}"/>
+
+            <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,4,0,0">
+              <Button Classes="modal-btn accent" Content="{Binding ModelButtonText}"
+                      Command="{Binding PullModelCommand}" IsEnabled="{Binding !ModelReady}"
+                      Width="170" HorizontalAlignment="Left"/>
+              <TextBlock Text="{Binding ModelDownloadText}" VerticalAlignment="Center"
+                         Foreground="{DynamicResource SecondaryForeground}"/>
+            </StackPanel>
+            <StackPanel Spacing="4" IsVisible="{Binding ModelDownloading}">
+              <ProgressBar Value="{Binding ModelDownloadProgress}" Minimum="0" Maximum="1" Height="16"/>
+              <Button Classes="modal-btn" Content="取消" Command="{Binding CancelModelDownloadCommand}"
+                      Width="80" HorizontalAlignment="Left"/>
+            </StackPanel>
+
+            <!-- Ollama 服务状态（服务灯）-->
+            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+              <TextBlock Text="服务状态：" VerticalAlignment="Center"/>
+              <Ellipse Width="12" Height="12" VerticalAlignment="Center"
+                       Fill="{Binding OllamaServiceStatus, Converter={StaticResource OllamaStatusBrush}}"/>
+              <TextBlock Text="{Binding OllamaServiceStatus, Converter={StaticResource OllamaStatusToText}}"
+                         VerticalAlignment="Center" Foreground="{DynamicResource SecondaryForeground}"/>
+              <Button Classes="modal-btn" Content="刷新" Command="{Binding RefreshStatusCommand}"
+                      IsEnabled="{Binding !Busy}" Padding="10,2" Margin="8,0,0,0" HorizontalAlignment="Left"/>
+            </StackPanel>
+          </StackPanel>
+        </StackPanel>
+
+        <!-- 外部 API 面板 -->
+        <StackPanel Spacing="6" IsVisible="{Binding IsExternalMode}">
+          <TextBlock Text="外部 API（OpenAI 兼容）" FontWeight="Bold" Margin="0,4,0,0"/>
+          <TextBlock Text="API 端点" Foreground="{DynamicResource SecondaryForeground}"/>
+          <TextBox Text="{Binding Endpoint}" Watermark="https://api.openai.com/v1/chat/completions" Width="480" HorizontalAlignment="Left"/>
+          <TextBlock Text="API Key" Foreground="{DynamicResource SecondaryForeground}"/>
+          <TextBox Text="{Binding ApiKey}" PasswordChar="•" Watermark="sk-..." Width="480" HorizontalAlignment="Left"/>
+          <TextBlock Text="模型名" Foreground="{DynamicResource SecondaryForeground}"/>
           <StackPanel Orientation="Horizontal" Spacing="10">
-            <TextBlock Text="部署方式" VerticalAlignment="Center" Foreground="{DynamicResource SecondaryForeground}"/>
-            <ComboBox SelectedValue="{Binding Mode}" SelectedValueBinding="{Binding Tag}" Width="200" HorizontalAlignment="Left">
-              <ComboBoxItem Content="外部 API（OpenAI 兼容）" Tag="{x:Static ai:AiMode.External}"/>
-              <ComboBoxItem Content="本地 Ollama" Tag="{x:Static ai:AiMode.Local}"/>
-            </ComboBox>
+            <TextBox Text="{Binding Model}" Watermark="gpt-4o-mini" Width="200" HorizontalAlignment="Left"/>
+            <Button Classes="modal-btn accent" Content="测试连接" Command="{Binding TestConnectionCommand}"
+                    IsEnabled="{Binding !Busy}" HorizontalAlignment="Left"/>
           </StackPanel>
+        </StackPanel>
 
-          <StackPanel Spacing="6" IsVisible="{Binding IsExternalMode}">
-            <TextBlock Text="API 端点" Foreground="{DynamicResource SecondaryForeground}"/>
-            <TextBox Text="{Binding Endpoint}" Watermark="https://api.openai.com/v1/chat/completions"/>
-            <TextBlock Text="模型名" Foreground="{DynamicResource SecondaryForeground}"/>
-            <TextBox Text="{Binding Model}" Watermark="gpt-4o-mini"/>
-            <TextBlock Text="API Key" Foreground="{DynamicResource SecondaryForeground}"/>
-            <TextBox Text="{Binding ApiKey}" PasswordChar="•" Watermark="sk-..."/>
-          </StackPanel>
-
-          <StackPanel Spacing="6" IsVisible="{Binding IsLocalMode}">
-            <TextBlock Text="本地模型（Ollama tag）" Foreground="{DynamicResource SecondaryForeground}"/>
-            <TextBox Text="{Binding SelectedLocalModel}" Watermark="Qwen2.5-Coder-1.5B"/>
-          </StackPanel>
-
-          <TextBlock Text="能力开关" FontWeight="Bold" FontSize="13" Margin="0,6,0,0"/>
+        <!-- 第三层：功能子开关 -->
+        <StackPanel Spacing="2" Margin="0,8,0,0">
+          <TextBlock Text="AI 功能" FontWeight="Bold" Margin="0,0,0,6"/>
           <ToggleSwitch IsChecked="{Binding CrashInterpret}" Content="崩溃日志智能解读" HorizontalAlignment="Left"/>
           <ToggleSwitch IsChecked="{Binding RecommendReason}" Content="生成推荐理由" HorizontalAlignment="Left"/>
           <ToggleSwitch IsChecked="{Binding ModTranslate}" Content="Mod 描述翻译" HorizontalAlignment="Left"/>
@@ -52,7 +120,7 @@
       </StackPanel>
 
       <Grid ColumnDefinitions="*,Auto">
-        <TextBlock Grid.Column="0" Classes="status" Text="{Binding Status}" VerticalAlignment="Center"/>
+        <TextBlock Grid.Column="0" Classes="status" Text="{Binding Status}" VerticalAlignment="Center" TextWrapping="Wrap"/>
         <Button Grid.Column="1" Classes="modal-btn primary" Content="保存" Command="{Binding SaveCommand}"
                 HorizontalAlignment="Right"/>
       </Grid>

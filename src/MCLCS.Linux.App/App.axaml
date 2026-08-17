@@ -186,6 +186,7 @@
         <conv:AfkInstructionToTextConverter x:Key="AfkInstructionToText"/>
         <conv:NbtTagTypeToTextConverter x:Key="NbtTagTypeToText"/>
         <conv:OllamaStatusToTextConverter x:Key="OllamaStatusToText"/>
+        <conv:OllamaStatusToBrushConverter x:Key="OllamaStatusBrush"/>
         <conv:NonEmptyToVisibilityConverter x:Key="NonEmptyToVis"/>
         <conv:SourceToDetailTextConverter x:Key="SourceToDetailText"/>
         <conv:SourceNotMinecraftConverter x:Key="SourceNotMinecraft"/>

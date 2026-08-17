@@ -3,11 +3,11 @@ using MCLCS.Linux.App.ViewModels;
 
 namespace MCLCS.Linux.App.Views.Pages;
 
-public partial class AiChatView : UserControl
+public partial class AiAssistView : UserControl
 {
-    public AiChatView()
+    public AiAssistView()
     {
         InitializeComponent();
-        DataContext = new AiChatViewModel();
+        DataContext = new AiAssistViewModel();
     }
 }
