@@ -33,7 +33,7 @@
               </DataTemplate>
             </ListBox.ItemTemplate>
           </ListBox>
-          <TextBlock Text="（选一个存档后可执行快速降级）" FontSize="11" Foreground="{DynamicResource SecondaryForeground}"/>
+          <TextBlock Text="（选中存档后可执行 备份 / 删除 / 恢复 / 提取种子 / 降级）" FontSize="11" Foreground="{DynamicResource SecondaryForeground}"/>
         </StackPanel>
 
         <StackPanel Grid.Column="1" Grid.Row="0" Spacing="8" Margin="8,0,0,0">
@@ -76,6 +76,19 @@
           </ItemsControl>
         </StackPanel>
       </Grid>
+
+      <DockPanel>
+        <Button Classes="modal-btn danger" DockPanel.Dock="Right" Content="删除"
+                Command="{Binding DeleteCommand}" IsEnabled="{Binding !Busy}"/>
+        <Button Classes="modal-btn" DockPanel.Dock="Right" Margin="8,0,0,0" Content="恢复备份"
+                Command="{Binding RestoreCommand}" IsEnabled="{Binding !Busy}"/>
+        <Button Classes="modal-btn" DockPanel.Dock="Right" Margin="8,0,0,0" Content="备份"
+                Command="{Binding BackupCommand}" IsEnabled="{Binding !Busy}"/>
+        <Button Classes="modal-btn accent" DockPanel.Dock="Right" Margin="8,0,0,0" Content="提取种子"
+                Command="{Binding ExtractSeedCommand}"/>
+        <TextBlock Text="{Binding ActionResult}" VerticalAlignment="Center" TextWrapping="Wrap"
+                   Foreground="{DynamicResource SecondaryForeground}" FontSize="12"/>
+      </DockPanel>
 
       <DockPanel>
         <Button Classes="modal-btn danger" DockPanel.Dock="Right"
