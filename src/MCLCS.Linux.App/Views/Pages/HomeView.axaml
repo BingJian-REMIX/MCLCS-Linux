@@ -1,0 +1,81 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MCLCS.Linux.App.ViewModels"
+             xmlns:core="using:MCLCS.Core.Recommend"
+             x:Class="MCLCS.Linux.App.Views.Pages.HomeView"
+             x:DataType="vm:HomeViewModel">
+  <ScrollViewer>
+    <StackPanel Margin="28,22" Spacing="18">
+
+      <TextBlock Text="主页 · 快速开始" FontSize="20" FontWeight="Bold"/>
+
+      <!-- 快速启动 -->
+      <Border Padding="16" Background="{DynamicResource CardBackground}" CornerRadius="10">
+        <StackPanel Spacing="12">
+          <TextBlock Text="启动游戏" FontWeight="SemiBold" FontSize="15"/>
+          <Grid ColumnDefinitions="*,Auto,Auto">
+            <ComboBox Grid.Column="0" Margin="0,0,10,0" ItemsSource="{Binding Versions}" SelectedItem="{Binding SelectedVersion, Mode=TwoWay}"
+                      HorizontalAlignment="Stretch" PlaceholderText="选择版本">
+              <ComboBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:VersionListEntry">
+                  <TextBlock Text="{Binding Display}"/>
+                </DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
+            <Button Grid.Column="1" Margin="0,0,10,0" Classes="modal-btn" Content="刷新" Command="{Binding RefreshCommand}" IsEnabled="{Binding !Busy}"/>
+            <Button Grid.Column="2" Classes="modal-btn accent" Content="启动" Command="{Binding LaunchCommand}" IsEnabled="{Binding CanLaunch}"/>
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <!-- 游玩统计 -->
+      <StackPanel Spacing="8">
+        <TextBlock Text="本年游玩" FontWeight="SemiBold" FontSize="15"/>
+        <Grid ColumnDefinitions="*,*,*">
+          <Border Grid.Column="0" Margin="0,0,12,0" Padding="14,10" Background="{DynamicResource CardBackground}" CornerRadius="8">
+            <StackPanel Spacing="2">
+              <TextBlock Text="最近版本" FontSize="11" Foreground="{DynamicResource SecondaryForeground}"/>
+              <TextBlock Text="{Binding RecentVersionText}" FontWeight="SemiBold" FontSize="15"/>
+            </StackPanel>
+          </Border>
+          <Border Grid.Column="1" Margin="0,0,12,0" Padding="14,10" Background="{DynamicResource CardBackground}" CornerRadius="8">
+            <StackPanel Spacing="2">
+              <TextBlock Text="本周时长" FontSize="11" Foreground="{DynamicResource SecondaryForeground}"/>
+              <TextBlock Text="{Binding WeeklyPlayText}" FontWeight="SemiBold" FontSize="15"/>
+            </StackPanel>
+          </Border>
+          <Border Grid.Column="2" Padding="14,10" Background="{DynamicResource CardBackground}" CornerRadius="8">
+            <StackPanel Spacing="2">
+              <TextBlock Text="本年崩溃" FontSize="11" Foreground="{DynamicResource SecondaryForeground}"/>
+              <TextBlock Text="{Binding CrashCountText}" FontWeight="SemiBold" FontSize="15"/>
+            </StackPanel>
+          </Border>
+        </Grid>
+      </StackPanel>
+
+      <!-- 智能推荐 -->
+      <StackPanel Spacing="8">
+        <TextBlock Text="为你推荐" FontWeight="SemiBold" FontSize="15"/>
+        <TextBlock Text="{Binding RecommendStatus}" FontSize="12" Foreground="{DynamicResource SecondaryForeground}"/>
+        <ItemsControl ItemsSource="{Binding Recommendations}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="core:RecommendationItem">
+              <Border Margin="0,0,0,8" Padding="12,10" Background="{DynamicResource CardBackground}" CornerRadius="8">
+                <StackPanel Spacing="2">
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="14"/>
+                    <TextBlock Text="{Binding CategoryLabel}" FontSize="11" Foreground="{DynamicResource SecondaryForeground}"/>
+                  </StackPanel>
+                  <TextBlock Text="{Binding Description}" FontSize="12" Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"/>
+                  <TextBlock Text="{Binding Reason}" FontSize="11" Foreground="#9cdcfe" TextWrapping="Wrap"/>
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+
+      <TextBlock Text="{Binding Status}" Foreground="{DynamicResource SecondaryForeground}" FontSize="12" TextWrapping="Wrap"/>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

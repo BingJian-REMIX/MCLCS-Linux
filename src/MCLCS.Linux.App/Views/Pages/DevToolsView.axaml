@@ -1,0 +1,73 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MCLCS.Linux.App.ViewModels"
+             x:Class="MCLCS.Linux.App.Views.Pages.DevToolsView"
+             x:DataType="vm:DevToolsViewModel">
+  <ScrollViewer>
+    <StackPanel Margin="28,22" Spacing="16">
+
+      <TextBlock Text="开发工具" FontSize="18" FontWeight="Bold"/>
+
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <Button Classes="modal-btn" Content="命令速查" Command="{Binding SetModeCommand}" CommandParameter="commands"
+                IsEnabled="{Binding !ShowCommands}"/>
+        <Button Classes="modal-btn" Content="生成 Mod" Command="{Binding SetModeCommand}" CommandParameter="mod"
+                IsEnabled="{Binding !ShowMod}"/>
+        <Button Classes="modal-btn" Content="生成资源包" Command="{Binding SetModeCommand}" CommandParameter="resourcepack"
+                IsEnabled="{Binding !ShowResourcePack}"/>
+      </StackPanel>
+
+      <!-- 命令速查 -->
+      <StackPanel IsVisible="{Binding ShowCommands}" Spacing="10">
+        <TextBox Watermark="搜索命令 / 分类 / 说明" Text="{Binding CommandFilter}"/>
+        <ItemsControl ItemsSource="{Binding Commands}" MaxHeight="360">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:CommandEntry">
+              <Border Margin="0,0,0,6" Padding="10,6" Background="{DynamicResource CardBackground}" CornerRadius="6"
+                      IsVisible="{Binding MatchesFilter}">
+                <StackPanel Spacing="2">
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontFamily="Consolas"/>
+                    <TextBlock Text="{Binding Category}" FontSize="11" Foreground="{DynamicResource SecondaryForeground}"/>
+                  </StackPanel>
+                  <TextBlock Text="{Binding Syntax}" FontFamily="Consolas" FontSize="12" Foreground="#9cdcfe"/>
+                  <TextBlock Text="{Binding Description}" FontSize="11" Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"/>
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+
+      <!-- 生成 Mod -->
+      <StackPanel IsVisible="{Binding ShowMod}" Spacing="8">
+        <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+          <TextBlock Grid.Row="0" Grid.Column="0" Margin="0,0,10,8" Text="Mod 名称" VerticalAlignment="Center"/>
+          <TextBox Grid.Row="0" Grid.Column="1" Margin="0,0,0,8" Text="{Binding ModName}" Watermark="例如 MyMod"/>
+          <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,0,10,8" Text="版本号" VerticalAlignment="Center"/>
+          <TextBox Grid.Row="1" Grid.Column="1" Margin="0,0,0,8" Text="{Binding ModVersion}"/>
+          <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,0,10,8" Text="加载器" VerticalAlignment="Center"/>
+          <TextBox Grid.Row="2" Grid.Column="1" Margin="0,0,0,8" Text="{Binding ModLoader}"/>
+          <TextBlock Grid.Row="3" Grid.Column="0" Margin="0,0,10,8" Text="游戏版本" VerticalAlignment="Center"/>
+          <TextBox Grid.Row="3" Grid.Column="1" Margin="0,0,0,8" Text="{Binding ModGameVersion}"/>
+          <TextBlock Grid.Row="4" Grid.Column="0" Margin="0,0,10,0" Text="包名" VerticalAlignment="Center"/>
+          <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding ModPackage}" Watermark="留空则 com.example.&lt;name&gt;"/>
+        </Grid>
+        <Button Classes="modal-btn" Content="生成 Mod 项目骨架" Command="{Binding GenerateModCommand}"/>
+      </StackPanel>
+
+      <!-- 生成资源包 -->
+      <StackPanel IsVisible="{Binding ShowResourcePack}" Spacing="8">
+        <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto">
+          <TextBlock Grid.Row="0" Grid.Column="0" Margin="0,0,10,8" Text="资源包名称" VerticalAlignment="Center"/>
+          <TextBox Grid.Row="0" Grid.Column="1" Margin="0,0,0,8" Text="{Binding RpName}" Watermark="例如 MyPack"/>
+          <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,0,10,0" Text="pack_format" VerticalAlignment="Center"/>
+          <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding RpFormat}"/>
+        </Grid>
+        <Button Classes="modal-btn" Content="生成资源包" Command="{Binding GenerateRpCommand}"/>
+      </StackPanel>
+
+      <TextBlock Text="{Binding Status}" Foreground="{DynamicResource SecondaryForeground}" FontSize="12" TextWrapping="Wrap"/>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

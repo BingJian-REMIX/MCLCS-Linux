@@ -39,21 +39,29 @@ public class CoreBridgeTests
     }
 
     [Fact]
-    public void Sidebar_Toolbox_HasTwentyItems_WithGroups()
+    public void Sidebar_Toolbox_HasItems_WithGroups()
     {
         var items = Sidebar.For(MainTabKind.Toolbox);
-        Assert.Equal(20, items.Count);
+        // 20 原工具 + 4 入口（toolbox/devtools/achievement/annual）= 24
+        Assert.Equal(24, items.Count);
         Assert.Contains(items, i => i.Id == "log");
         Assert.Contains(items, i => i.Id == "aichat");
+        Assert.Contains(items, i => i.Id == "toolbox");
+        Assert.Contains(items, i => i.Id == "devtools");
+        Assert.Contains(items, i => i.Id == "achievement");
+        Assert.Contains(items, i => i.Id == "annual");
         // 全部带分组（四组分区）
         Assert.All(items, i => Assert.NotNull(i.Group));
     }
 
     [Fact]
-    public void Sidebar_Game_IsEmpty_BySpec()
+    public void Sidebar_Game_HasLaunchAndHome()
     {
-        Assert.Empty(Sidebar.For(MainTabKind.Game));
-        Assert.False(Sidebar.Has(MainTabKind.Game));
+        var items = Sidebar.For(MainTabKind.Game);
+        Assert.Equal(2, items.Count);
+        Assert.Contains(items, i => i.Id == "play");
+        Assert.Contains(items, i => i.Id == "home");
+        Assert.True(Sidebar.Has(MainTabKind.Game));
     }
 
     [Fact]
@@ -65,7 +73,7 @@ public class CoreBridgeTests
         Assert.Equal(MainTabKind.Download, state.Owner);
 
         state.SwitchOwner(MainTabKind.Game);
-        Assert.Null(state.SelectedId);
+        Assert.Equal("play", state.SelectedId);
     }
 
     [Fact]

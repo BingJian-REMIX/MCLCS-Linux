@@ -198,6 +198,8 @@ public partial class MainWindow : Window
         if (PageRegion is null) return;
         UserControl page = (_vm.SelectedTab.Kind, _vm.SelectedSidebarId) switch
         {
+            (MainTabKind.Game, "home") => new HomeView(),
+            (MainTabKind.Game, "play") => new GameHomeView(),
             (MainTabKind.Game, _) => new GameHomeView(),
             // 下载中心：六个副标签统一路由到单一 DownloadPageView（对齐 WPF 的单页 + 子标签切换）
             (MainTabKind.Download, "minecraft") => new DownloadPageView(),
@@ -206,6 +208,7 @@ public partial class MainWindow : Window
             (MainTabKind.Download, "resourcepack") => new DownloadPageView(),
             (MainTabKind.Download, "modpack") => new DownloadPageView(),
             (MainTabKind.Download, "map") => new DownloadPageView(),
+            (MainTabKind.Download, "versionlist") => new VersionListView(),
             (MainTabKind.Toolbox, "log") => new LogView(),
             (MainTabKind.Toolbox, "clean") => new CleanerView(),
             (MainTabKind.Toolbox, "backup") => new BackupView(),
@@ -226,6 +229,10 @@ public partial class MainWindow : Window
             (MainTabKind.Toolbox, "moddev") => new ModDevView(),
             (MainTabKind.Toolbox, "packmaker") => new PackMakerView(),
             (MainTabKind.Toolbox, "command") => new CommandView(),
+            (MainTabKind.Toolbox, "toolbox") => new ToolboxView(),
+            (MainTabKind.Toolbox, "devtools") => new DevToolsView(),
+            (MainTabKind.Toolbox, "achievement") => new AchievementView(),
+            (MainTabKind.Toolbox, "annual") => new AnnualReportView(),
             (MainTabKind.Settings, "appearance") => new AppearanceView(),
             (MainTabKind.Settings, "account") => new AccountsView(),
             (MainTabKind.Settings, "general") => new GeneralSettingsView(),

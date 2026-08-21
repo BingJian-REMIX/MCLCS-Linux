@@ -1,0 +1,91 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MCLCS.Linux.App.ViewModels"
+             xmlns:conv="using:MCLCS.Linux.App.Converters"
+             x:Class="MCLCS.Linux.App.Views.Pages.AnnualReportView"
+             x:DataType="vm:AnnualReportViewModel">
+  <UserControl.Resources>
+    <conv:CountToVisibleConverter x:Key="CountToVisible"/>
+  </UserControl.Resources>
+  <ScrollViewer>
+    <StackPanel Margin="28,22" Spacing="16">
+
+      <DockPanel>
+        <Button Classes="modal-btn accent" DockPanel.Dock="Right" Content="重新生成"
+                Command="{Binding GenerateCommand}" IsEnabled="{Binding !IsBusy}"/>
+        <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+          <TextBlock Text="年度报告" FontSize="18" FontWeight="Bold"/>
+          <ComboBox ItemsSource="{Binding Years}" SelectedItem="{Binding Year, Mode=TwoWay}" Width="100"/>
+        </StackPanel>
+      </DockPanel>
+
+      <TextBlock Text="{Binding Narrative}" FontSize="13" TextWrapping="Wrap"
+                 Foreground="{DynamicResource SecondaryForeground}"/>
+
+      <!-- 月度分布 -->
+      <StackPanel Spacing="6">
+        <TextBlock Text="月度游玩时长（小时）" FontWeight="SemiBold" FontSize="14"/>
+        <ItemsControl ItemsSource="{Binding MonthlyBars}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:MonthlyBar">
+              <Grid ColumnDefinitions="36,*,Auto" Margin="0,2">
+                <TextBlock Grid.Column="0" Margin="0,0,8,0" Text="{Binding Month, StringFormat='{}{0}月'}" FontSize="11"
+                           Foreground="{DynamicResource SecondaryForeground}" VerticalAlignment="Center"/>
+                <Border Grid.Column="1" Margin="0,0,8,0" Height="10" CornerRadius="3" Background="#5BBF6A"
+                        HorizontalAlignment="Left" Width="{Binding BarWidth}"/>
+                <TextBlock Grid.Column="2" Text="{Binding Hours, StringFormat='{}{0}h'}" FontSize="11"
+                           Foreground="{DynamicResource SecondaryForeground}" VerticalAlignment="Center"/>
+              </Grid>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+
+      <!-- 版本排行 -->
+      <StackPanel Spacing="6" IsVisible="{Binding TopVersionRows.Count, Converter={StaticResource CountToVisible}}">
+        <TextBlock Text="最常游玩的版本" FontWeight="SemiBold" FontSize="14"/>
+        <ItemsControl ItemsSource="{Binding TopVersionRows}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:VersionRow">
+              <Grid ColumnDefinitions="*,Auto" Margin="0,2">
+                <TextBlock Grid.Column="0" Text="{Binding Version}" FontSize="12"/>
+                <TextBlock Grid.Column="1" Text="{Binding Hours, StringFormat='{}{0}h'}" FontSize="11"
+                           Foreground="{DynamicResource SecondaryForeground}"/>
+              </Grid>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+
+      <!-- 分享 Token -->
+      <StackPanel Spacing="6">
+        <TextBlock Text="分享 Token（完全离线）" FontWeight="SemiBold" FontSize="14"/>
+        <TextBox Text="{Binding TokenText}" IsReadOnly="True" FontFamily="Consolas" FontSize="11" TextWrapping="Wrap"
+                 AcceptsReturn="True" Height="60"/>
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <Button Classes="modal-btn" Content="复制 Token" Click="CopyToken_Click"/>
+          <Button Classes="modal-btn" Content="导出 Markdown" Command="{Binding ExportMdCommand}"/>
+        </StackPanel>
+      </StackPanel>
+
+      <!-- 导入共享报告 -->
+      <StackPanel Spacing="6">
+        <TextBlock Text="导入他人的年度报告" FontWeight="SemiBold" FontSize="14"/>
+        <TextBox Text="{Binding ImportText}" Watermark="粘贴分享 Token" FontFamily="Consolas" FontSize="11" AcceptsReturn="True" Height="48"/>
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <Button Classes="modal-btn accent" Content="导入" Command="{Binding ImportCommand}"/>
+          <Button Classes="modal-btn" Content="清除" Command="{Binding ClearSharedCommand}"/>
+        </StackPanel>
+        <Border Padding="10" Background="{DynamicResource CardBackground}" CornerRadius="8"
+                IsVisible="{Binding Shared, Converter={x:Static ObjectConverters.IsNotNull}}">
+          <TextBlock Text="{Binding SharedTitleText}" FontWeight="SemiBold"/>
+        </Border>
+      </StackPanel>
+
+      <Grid ColumnDefinitions="*,Auto">
+        <ProgressBar IsIndeterminate="{Binding IsBusy}" IsVisible="{Binding IsBusy}"/>
+        <TextBlock Grid.Column="1" Classes="status" Margin="12,0,0,0" Text="{Binding Status}"/>
+      </Grid>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

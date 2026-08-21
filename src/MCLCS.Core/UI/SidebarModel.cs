@@ -144,7 +144,8 @@ public static class Sidebar
         new("shader",       "tab.shader",       "shader",   2),
         new("resourcepack", "tab.resourcepack", "tex",      3),
         new("modpack",      "lbl.modpack",      "pack",     4),
-        new("map",          "tab.map",          "map",      5)
+        new("map",          "tab.map",          "map",      5),
+        new("versionlist",  "tool.versionlist", "list",     6)
     };
 
     /// <summary>工具箱页副标签（规格 2.3，种子库已移除并并入存档管理器）。</summary>
@@ -176,7 +177,13 @@ public static class Sidebar
 
         // 其他
         new("afk",        "tool.afk",        "flowchart",18, "tool.group.other"),
-        new("aichat",     "tool.aichat",     "ai",       19, "tool.group.other")
+        new("aichat",     "tool.aichat",     "ai",       19, "tool.group.other"),
+
+        // 聚合入口与开发/统计
+        new("toolbox",     "tool.toolbox",     "grid",     20, "tool.group.other"),
+        new("devtools",    "tool.devtools",    "dev",      21, "tool.group.dev"),
+        new("achievement", "tool.achievement", "trophy",   22, "tool.group.resource"),
+        new("annual",      "tool.annual",      "chart",    23, "tool.group.resource")
     };
 
     /// <summary>设置页副标签（规格 2.4）。</summary>
@@ -192,8 +199,12 @@ public static class Sidebar
         new("about",      "settings.about",      "about",      7, bottom: true)
     };
 
-    /// <summary>游戏页无侧边栏（规格 2.1）。</summary>
-    public static IReadOnlyList<SidebarItem> Game { get; } = Array.Empty<SidebarItem>();
+    /// <summary>游戏页侧边栏：启动（默认）与主页快速开始。</summary>
+    public static IReadOnlyList<SidebarItem> Game { get; } = new List<SidebarItem>
+    {
+        new("play", "game.launch", "play", 0),
+        new("home", "tool.home",   "home", 1)
+    };
 
     /// <summary>取某个主标签下的副标签集合。</summary>
     public static IReadOnlyList<SidebarItem> For(MainTabKind kind) => kind switch

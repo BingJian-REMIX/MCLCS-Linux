@@ -1,0 +1,33 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MCLCS.Linux.App.ViewModels"
+             x:Class="MCLCS.Linux.App.Views.Pages.ToolboxView"
+             x:DataType="vm:ToolboxViewModel">
+  <ScrollViewer>
+    <StackPanel Margin="28,22" Spacing="16">
+      <TextBlock Text="工具箱" FontSize="18" FontWeight="Bold"/>
+      <TextBlock Text="全部实用工具的聚合入口，点按卡片直达对应工具。"
+                 Foreground="{DynamicResource SecondaryForeground}" FontSize="12" TextWrapping="Wrap"/>
+
+      <ItemsControl ItemsSource="{Binding Cards}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <WrapPanel Orientation="Horizontal" ItemWidth="180" ItemHeight="92"/>
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:ToolboxCard">
+            <Button Margin="6" Padding="12,10" HorizontalContentAlignment="Left" CornerRadius="8"
+                    Background="{DynamicResource CardBackground}" Click="Card_Click" Tag="{Binding Id}">
+              <StackPanel Spacing="4">
+                <TextBlock Text="{Binding Icon}" FontSize="22"/>
+                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="13"/>
+                <TextBlock Text="{Binding Group}" FontSize="10" Foreground="{DynamicResource SecondaryForeground}"/>
+              </StackPanel>
+            </Button>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

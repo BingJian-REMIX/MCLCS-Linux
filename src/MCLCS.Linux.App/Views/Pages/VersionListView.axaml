@@ -1,0 +1,39 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MCLCS.Linux.App.ViewModels"
+             x:Class="MCLCS.Linux.App.Views.Pages.VersionListView"
+             x:DataType="vm:VersionListViewModel">
+  <ScrollViewer>
+    <StackPanel Margin="28,22" Spacing="16">
+
+      <DockPanel>
+        <Button Classes="modal-btn accent" DockPanel.Dock="Right" Content="刷新"
+                Command="{Binding RefreshCommand}" IsEnabled="{Binding !Busy}"/>
+        <TextBlock Text="版本列表" FontSize="18" FontWeight="Bold" VerticalAlignment="Center"/>
+      </DockPanel>
+
+      <TextBlock Text="管理已安装的游戏版本，选择后一键启动。"
+                 Foreground="{DynamicResource SecondaryForeground}" FontSize="12" TextWrapping="Wrap"/>
+
+      <ListBox ItemsSource="{Binding Versions}" SelectedItem="{Binding SelectedVersion, Mode=TwoWay}"
+               Background="{DynamicResource CardBackground}" BorderThickness="0" MaxHeight="360">
+        <ListBox.ItemTemplate>
+          <DataTemplate x:DataType="vm:VersionListEntry">
+            <TextBlock Text="{Binding Display}" FontSize="13" Padding="4"/>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+
+      <DockPanel>
+        <Button Classes="modal-btn" DockPanel.Dock="Right" Content="启动所选版本"
+                Command="{Binding LaunchCommand}" IsEnabled="{Binding CanLaunch}"/>
+        <TextBlock Text="{Binding Status}" VerticalAlignment="Center" TextWrapping="Wrap"
+                   Foreground="{DynamicResource SecondaryForeground}" FontSize="12"/>
+      </DockPanel>
+
+      <Grid ColumnDefinitions="*,Auto">
+        <ProgressBar IsIndeterminate="{Binding Busy}" IsVisible="{Binding Busy}"/>
+      </Grid>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

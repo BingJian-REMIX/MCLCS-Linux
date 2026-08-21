@@ -1,0 +1,47 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MCLCS.Linux.App.ViewModels"
+             xmlns:conv="using:MCLCS.Linux.App.Converters"
+             x:Class="MCLCS.Linux.App.Views.Pages.AchievementView"
+             x:DataType="vm:AchievementViewModel">
+  <UserControl.Resources>
+    <conv:CountToVisibleConverter x:Key="CountToVisible"/>
+  </UserControl.Resources>
+  <ScrollViewer>
+    <StackPanel Margin="28,22" Spacing="16">
+
+      <DockPanel>
+        <Button Classes="modal-btn accent" DockPanel.Dock="Right" Content="刷新"
+                Command="{Binding RefreshCommand}" IsEnabled="{Binding !Busy}"/>
+        <TextBlock Text="成就展示" FontSize="18" FontWeight="Bold" VerticalAlignment="Center"/>
+      </DockPanel>
+
+      <TextBlock Text="统计各存档的成就达成情况（读取 advancements/*.json）。"
+                 Foreground="{DynamicResource SecondaryForeground}" FontSize="12" TextWrapping="Wrap"/>
+
+      <ItemsControl ItemsSource="{Binding Saves}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:AchievementStats">
+            <Border Margin="0,0,0,8" Padding="12,10" Background="{DynamicResource CardBackground}" CornerRadius="8">
+              <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Spacing="2">
+                  <TextBlock Text="{Binding SaveName}" FontWeight="SemiBold" FontSize="14"/>
+                  <TextBlock Text="{Binding Summary}" FontSize="12" Foreground="{DynamicResource SecondaryForeground}"/>
+                </StackPanel>
+                <Border Grid.Column="1" Padding="6,2" CornerRadius="4" Background="#3a2a4a"
+                        IsVisible="{Binding Purple, Converter={StaticResource CountToVisible}}" VerticalAlignment="Center">
+                  <TextBlock Text="{Binding Purple, StringFormat='紫色 {0}'}" FontSize="11" Foreground="#d7a6ff"/>
+                </Border>
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <Grid ColumnDefinitions="*,Auto">
+        <ProgressBar IsIndeterminate="{Binding Busy}" IsVisible="{Binding Busy}"/>
+        <TextBlock Grid.Column="1" Classes="status" Margin="12,0,0,0" Text="{Binding Status}"/>
+      </Grid>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
