@@ -66,16 +66,28 @@
 
 ---
 
-## 六、已知剩余缺口（后续可补）
+## 六、本轮补齐（2026-08-23）：CrashView「尝试修复 / 降级恢复」缺口
+
+此前 `CrashView` 仅能做崩溃分析（分类 / 原因 / 建议），**缺少「尝试修复」与「降级联动恢复」动作**。本轮补齐：
+
+- `CrashRepairModels.ModConflictInfo`：新增 `IsKeepSelected`（继承 `ObservableObject`），支持"保留哪个 Mod"单选。
+- `LauncherService.ApplyRepairAsync`（此前 Linux 完全未实现，仅注释占位）：移植 WPF 实现，接好 `JavaInstaller` / `LibraryRepair` / `ResourcePackRepairer` / `SaveDowngrader` / `ModrinthClient` 等全部底层能力；含冲突 Mod 禁用、缺失前置安装、内存 / Java 切换、库重下、资源包重置、§四.2 降级联动恢复（回滚备份 / 改用他法 / 安装原版本）。
+- `CrashViewModel`：选中文档即 `CrashRepairEngine.BuildPlan` 生成方案，暴露 `CanRepair` / 修复面板属性 / `TryRepairCommand` / `DowngradeRecoveryCommand`。
+- `CrashView.axaml`：新增「自动修复方案」面板（标题 / 说明 / 步骤 / 冲突 Mod 单选 / 缺失前置列表 / 非破坏性提示 + "尝试自动修复"）与「降级联动恢复」面板（3 个恢复按钮）。
+
+**验证**：新增条件编译截图工具 `src/MCLCS.Linux.App/Screenshot/ScreenshotCapture.cs`（`-p:DefineConstants=SCREENSHOT`），Xvfb 下遍历四个主标签全部侧栏页自动渲染 PNG，共 **41 页全截图**（见 `/workspace/screenshots/`），每页颜色数 1535–4235，确认无空白页。正常（无 `SCREENSHOT`）构建与测试不受影响，仍 **35/35 通过**。
+
+---
+
+## 七、已知剩余缺口（后续可补）
 
 | 位置 | 缺口 | 备注 |
 |------|------|------|
-| `CrashView` | "尝试修复 / 降级恢复" 真缺口 | 上一轮对齐报告标记的保留项，建议后续按 WPF 实现补全 |
 | 对齐报告其余项 | 待全面复核 | 建议在功能冻结前跑一次全量对齐 diff |
 
 ---
 
-## 七、提交与推送
+## 八、提交与推送
 
 - 所有改动**双推** `cnb` + `github`（同名仓库，`main` 分支）。
 - 构建验证：`dotnet build .../MCLCS.Linux.App.csproj -c Debug` → Build succeeded（4 warning，0 error）。

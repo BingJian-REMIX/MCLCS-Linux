@@ -113,5 +113,9 @@ public class App : Application
         }
 
         base.OnFrameworkInitializationCompleted();
+
+#if SCREENSHOT
+        ScreenshotCapture.Run();
+#endif
     }
 }

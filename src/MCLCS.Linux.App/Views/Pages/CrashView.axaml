@@ -3,6 +3,10 @@
              xmlns:vm="clr-namespace:MCLCS.Linux.App.ViewModels"
              xmlns:conv="clr-namespace:MCLCS.Linux.App.Converters"
              x:Class="MCLCS.Linux.App.Views.Pages.CrashView">
+  <UserControl.Resources>
+    <conv:BoolToVisibleConverter x:Key="BoolToVis"/>
+    <conv:NonEmptyToVisibilityConverter x:Key="NonEmptyToVis"/>
+  </UserControl.Resources>
   <ScrollViewer Margin="18">
     <StackPanel Spacing="16" MaxWidth="900" HorizontalAlignment="Left">
 
@@ -63,6 +67,102 @@
           </ScrollViewer>
         </Border>
       </StackPanel>
+
+      <!-- 自动修复方案面板 -->
+      <Border Background="{DynamicResource CardBackground}" CornerRadius="10" Padding="16"
+              IsVisible="{Binding CanRepair, Converter={StaticResource BoolToVis}}">
+        <StackPanel Spacing="12">
+          <TextBlock Text="{Binding RepairTitle}" FontWeight="Bold" FontSize="15"
+                     Foreground="{DynamicResource PrimaryForeground}"/>
+          <TextBlock Text="{Binding RepairDescription}" TextWrapping="Wrap"
+                     Foreground="{DynamicResource SecondaryForeground}"/>
+
+          <StackPanel Spacing="6">
+            <TextBlock Text="操作步骤" FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"/>
+            <ItemsControl ItemsSource="{Binding RepairSteps}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding}" Margin="0,2" TextWrapping="Wrap"
+                             Foreground="{DynamicResource SecondaryForeground}"/>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+
+          <!-- 冲突 Mod：保留哪一个 -->
+          <StackPanel Spacing="6" IsVisible="{Binding IsConflictPlan, Converter={StaticResource BoolToVis}}">
+            <TextBlock Text="冲突 Mod：选择要保留的一个（其余将重命名为 .disabled）"
+                       FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"/>
+            <ItemsControl ItemsSource="{Binding ConflictingMods}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <RadioButton GroupName="keepmod"
+                               Content="{Binding Name}"
+                               IsChecked="{Binding IsKeepSelected, Mode=TwoWay}"
+                               Margin="0,2"/>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+
+          <!-- 缺失前置 Mod -->
+          <StackPanel Spacing="6" IsVisible="{Binding IsMissingDepPlan, Converter={StaticResource BoolToVis}}">
+            <TextBlock Text="缺失的前置依赖（将自动从 Modrinth 安装）"
+                       FontWeight="Bold" Foreground="{DynamicResource PrimaryForeground}"/>
+            <ItemsControl ItemsSource="{Binding MissingDependencies}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding}" Margin="0,2" TextWrapping="Wrap"
+                             Foreground="{DynamicResource SecondaryForeground}"/>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+
+          <TextBlock Text="{Binding NonDestructiveNote}" TextWrapping="Wrap"
+                     Foreground="{DynamicResource AccentBrush}"
+                     IsVisible="{Binding NonDestructiveNote, Converter={StaticResource NonEmptyToVis}}"/>
+
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Content="尝试自动修复" Command="{Binding TryRepairCommand}"
+                    IsEnabled="{Binding RepairInProgress, Converter={x:Static BoolConverters.Not}}"/>
+            <TextBlock Text="修复中…" VerticalAlignment="Center"
+                       Foreground="{DynamicResource SecondaryForeground}"
+                       IsVisible="{Binding RepairInProgress, Converter={StaticResource BoolToVis}}"/>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- 降级联动恢复面板 -->
+      <Border Background="{DynamicResource CardBackground}" CornerRadius="10" Padding="16"
+              IsVisible="{Binding HasDowngradeRecovery, Converter={StaticResource BoolToVis}}">
+        <StackPanel Spacing="12">
+          <TextBlock Text="降级联动恢复" FontWeight="Bold" FontSize="15"
+                     Foreground="{DynamicResource PrimaryForeground}"/>
+          <TextBlock Text="{Binding DowngradeRecoveryReason}" TextWrapping="Wrap"
+                     Foreground="{DynamicResource SecondaryForeground}"/>
+
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Content="回滚到降级前备份"
+                    Command="{Binding DowngradeRecoveryCommand}"
+                    CommandParameter="RevertBackup"
+                    IsEnabled="{Binding RepairInProgress, Converter={x:Static BoolConverters.Not}}"/>
+            <Button Content="改用其他降级方式"
+                    Command="{Binding DowngradeRecoveryCommand}"
+                    CommandParameter="RetryOther"
+                    IsEnabled="{Binding RepairInProgress, Converter={x:Static BoolConverters.Not}}"/>
+            <Button Content="安装存档原始版本"
+                    Command="{Binding DowngradeRecoveryCommand}"
+                    CommandParameter="InstallOriginal"
+                    IsEnabled="{Binding RepairInProgress, Converter={x:Static BoolConverters.Not}}"/>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <TextBlock Text="{Binding RepairStatus}" TextWrapping="Wrap"
+                 Foreground="{DynamicResource SecondaryForeground}"
+                 IsVisible="{Binding RepairStatus, Converter={StaticResource NonEmptyToVis}}"/>
+
     </StackPanel>
   </ScrollViewer>
 </UserControl>
