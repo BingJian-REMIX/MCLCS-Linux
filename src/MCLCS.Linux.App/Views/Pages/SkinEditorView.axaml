@@ -130,7 +130,6 @@
           <!-- 空状态（HTML 设计：创建新皮肤 / 导入 PNG） -->
           <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="10"
                       IsVisible="{Binding HasSkin, Converter={StaticResource InvBoolToVis}}">
-            <TextBlock Text="[皮肤]" FontSize="28" HorizontalAlignment="Center" Foreground="{DynamicResource AccentBrush}"/>
             <TextBlock Text="点击创建新皮肤或导入 PNG" Foreground="{DynamicResource SecondaryForeground}"
                        HorizontalAlignment="Center"/>
             <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">

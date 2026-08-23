@@ -370,7 +370,7 @@ public class MainViewModel : ObservableObject
 /// <summary>
 /// 四色索引贴的可绑定包装：驱动选中展开 / 折叠动画与重叠 Z 序。
 /// 几何对齐 WPF Core.UI.MainTabDefinition 的 MainTabs 规则：
-/// 选中页或游戏页（AlwaysExpanded）展开显示文字，其余折叠为色条；左压右叠放。
+/// 选中页展开显示文字（含游戏页），其余折叠为色条；左压右叠放。
 /// </summary>
 public class TabItemViewModel : ObservableObject
 {
@@ -402,7 +402,7 @@ public class TabItemViewModel : ObservableObject
         }
     }
 
-    /// <summary>是否展开显示文字：选中页或常驻展开页（游戏页）显示文字，其余折叠为 56px 色条。</summary>
+    /// <summary>是否展开显示文字：选中页（含游戏页）展开显示文字，其余折叠为 56px 色条。</summary>
     public bool IsExpanded => _isSelected || Def.AlwaysExpanded;
 
     /// <summary>语言切换时由 VM 调用，强制刷新显示名（DisplayName 依赖当前语言）。</summary>

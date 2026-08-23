@@ -87,7 +87,7 @@
 
 | 问题 | 修正 |
 |------|------|
-| 四色索引贴「选中页置顶」 | `TabItemViewModel.ZIndex` 不再因选中而置顶，改为严格按 `Order` 决定层叠（对齐 WPF `MainTabDefinition.ZIndex`）；`IsExpanded` 改为 `IsSelected \|\| Def.AlwaysExpanded`（游戏页常驻展开）。`TabMarginConverter` 改为在 VM 内计算 `Margin`，左邻展开时 -10 / 折叠时 -20，实现「重叠 + 展开动画」而非置顶。 |
+| 四色索引贴「选中页置顶」 | `TabItemViewModel.ZIndex` 不再因选中而置顶，改为严格按 `Order` 决定层叠（对齐 WPF `MainTabDefinition.ZIndex`）；`IsExpanded` 改为 `IsSelected \|\| Def.AlwaysExpanded`。游戏页 `AlwaysExpanded` 设为 false，未选中时折叠为色条且不显示「游戏」标题，与选中页一致；`TabMarginConverter` 改为在 VM 内计算 `Margin`，左邻展开时 -10 / 折叠时 -20，实现「重叠 + 展开动画」而非置顶。 |
 | 主页无侧边栏 | `Sidebar.Game` 置空（0 项），`HasSidebar=false`；`MainWindow.ShowPage` 的 `Game` 路由默认展示 `HomeView` 全宽内容。`HasSidebar` 为 false 时页头标题/分组/描述自动隐藏。 |
 | 工具箱页入口精简 | 从 `Sidebar.Toolbox` 移除 `toolbox`(聚合总览) / `achievement`(成就) / `annual`(年度报告) 三项；删除 `ToolboxView` + `AchievementView`（含 VM），保留 `AnnualReportView` 供周年入口跳转。Toolbox 现 21 项。 |
 | 年度报告仅在周年日展示 | `PlayStats` 新增 `FirstLaunchUtc`（首次启动游戏时记录）；`HomeViewModel.IsAnnualReportVisible` 仅当「今日 == 首次启动月/日」为真时在主页显示「年度报告」入口卡片，点击跳转 `AnnualReportView`。其余日不展示。 |

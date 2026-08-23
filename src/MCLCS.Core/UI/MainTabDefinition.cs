@@ -63,12 +63,9 @@ public sealed class MainTabDefinition
 
     /// <summary>
     /// 是否常驻展开（不收缩为图标态）。
-    /// 仅游戏页为 true —— 它在最左侧，左边没有可以覆盖它的标签，收起没有意义。
-    /// <para>
-    /// <b>仅影响布局</b>：宽度恒为 <see cref="MainTabs.ExpandedWidth"/> 且常显文字。
-    /// <b>不影响状态表达</b>：提亮与选中细线只由"是否为当前页"决定。
-    /// 否则游戏标签会永远亮着细线，与真正选中的标签同时高亮，无法分辨当前页。
-    /// </para>
+    /// 当前所有主标签均为 false：未选中时折叠为色条（仅显示主题色，不显示标题文字），
+    /// 选中时展开 <see cref="MainTabs.ExpandedWidth"/> 并显示标题（对齐 WPF「选中或常驻展开才展开」语义）。
+    /// 游戏页虽位于最左，同样随选中态折叠/展开，未选中时不冗余显示「游戏」标题。
     /// </summary>
     public bool AlwaysExpanded { get; }
 
@@ -118,7 +115,7 @@ public static class MainTabs
     /// <summary>四个主标签，按 Order 升序（左 → 右）。</summary>
     public static IReadOnlyList<MainTabDefinition> All { get; } = new List<MainTabDefinition>
     {
-        new(MainTabKind.Game,     "tab.game",    DefaultGameColor,     "gamepad",  0, hasSidebar: false, alwaysExpanded: true),
+        new(MainTabKind.Game,     "tab.game",    DefaultGameColor,     "gamepad",  0, hasSidebar: false, alwaysExpanded: false),
         new(MainTabKind.Download, "tab.download", DefaultDownloadColor, "download", 1, hasSidebar: true),
         new(MainTabKind.Toolbox,  "tab.toolbox",  DefaultToolboxColor,  "toolbox",  2, hasSidebar: true),
         new(MainTabKind.Settings, "tab.settings", DefaultSettingsColor, "cog",      3, hasSidebar: true)

@@ -20,8 +20,8 @@ public class CoreBridgeTests
         Assert.Equal(MainTabKind.Download, tabs[1].Kind);
         Assert.Equal(MainTabKind.Toolbox, tabs[2].Kind);
         Assert.Equal(MainTabKind.Settings, tabs[3].Kind);
-        // 游戏页常驻展开且无侧边栏
-        Assert.True(tabs[0].AlwaysExpanded);
+        // 游戏页未选中时折叠（与选中页一致，不冗余显示「游戏」），且无侧边栏
+        Assert.False(tabs[0].AlwaysExpanded);
         Assert.False(tabs[0].HasSidebar);
         // 其余三页均有侧边栏
         Assert.True(tabs[1].HasSidebar);
