@@ -38,8 +38,17 @@ public static class ScreenshotCapture
         var pages = new List<(MainTabKind kind, string id, string name)>();
         foreach (MainTabKind kind in Enum.GetValues<MainTabKind>())
         {
-            foreach (var item in Sidebar.For(kind))
-                pages.Add((kind, item.Id, $"{kind}_{item.Id}"));
+            var items = Sidebar.For(kind);
+            if (items.Count == 0)
+            {
+                // 无侧栏标签（如游戏页主页）仍需截一张默认页
+                pages.Add((kind, "", $"{kind}_default"));
+            }
+            else
+            {
+                foreach (var item in items)
+                    pages.Add((kind, item.Id, $"{kind}_{item.Id}"));
+            }
         }
 
         Console.WriteLine($"[screenshot] 计划截图 {pages.Count} 个页面");

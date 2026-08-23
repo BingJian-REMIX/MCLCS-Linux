@@ -179,11 +179,8 @@ public static class Sidebar
         new("afk",        "tool.afk",        "flowchart",18, "tool.group.other"),
         new("aichat",     "tool.aichat",     "ai",       19, "tool.group.other"),
 
-        // 聚合入口与开发/统计
-        new("toolbox",     "tool.toolbox",     "grid",     20, "tool.group.other"),
-        new("devtools",    "tool.devtools",    "dev",      21, "tool.group.dev"),
-        new("achievement", "tool.achievement", "trophy",   22, "tool.group.resource"),
-        new("annual",      "tool.annual",      "chart",    23, "tool.group.resource")
+        // 开发工具聚合入口（移除 toolbox/achievement/annual 常驻项）
+        new("devtools",    "tool.devtools",    "dev",      20, "tool.group.dev")
     };
 
     /// <summary>设置页副标签（规格 2.4）。</summary>
@@ -199,12 +196,8 @@ public static class Sidebar
         new("about",      "settings.about",      "about",      7, bottom: true)
     };
 
-    /// <summary>游戏页侧边栏：启动（默认）与主页快速开始。</summary>
-    public static IReadOnlyList<SidebarItem> Game { get; } = new List<SidebarItem>
-    {
-        new("play", "game.launch", "play", 0),
-        new("home", "tool.home",   "home", 1)
-    };
+    /// <summary>游戏页无侧边栏（规格 2.1）：默认展示主页（HomeView）全宽内容。</summary>
+    public static IReadOnlyList<SidebarItem> Game { get; } = new List<SidebarItem>();
 
     /// <summary>取某个主标签下的副标签集合。</summary>
     public static IReadOnlyList<SidebarItem> For(MainTabKind kind) => kind switch

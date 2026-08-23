@@ -198,9 +198,8 @@ public partial class MainWindow : Window
         if (PageRegion is null) return;
         UserControl page = (_vm.SelectedTab.Kind, _vm.SelectedSidebarId) switch
         {
-            (MainTabKind.Game, "home") => new HomeView(),
-            (MainTabKind.Game, "play") => new GameHomeView(),
-            (MainTabKind.Game, _) => new GameHomeView(),
+            // 游戏页无侧边栏，默认展示主页（HomeView）
+            (MainTabKind.Game, _) => new HomeView(),
             // 下载中心：六个副标签统一路由到单一 DownloadPageView（对齐 WPF 的单页 + 子标签切换）
             (MainTabKind.Download, "minecraft") => new DownloadPageView(),
             (MainTabKind.Download, "mod") => new DownloadPageView(),
@@ -229,9 +228,8 @@ public partial class MainWindow : Window
             (MainTabKind.Toolbox, "moddev") => new ModDevView(),
             (MainTabKind.Toolbox, "packmaker") => new PackMakerView(),
             (MainTabKind.Toolbox, "command") => new CommandView(),
-            (MainTabKind.Toolbox, "toolbox") => new ToolboxView(),
             (MainTabKind.Toolbox, "devtools") => new DevToolsView(),
-            (MainTabKind.Toolbox, "achievement") => new AchievementView(),
+            // 年度报告仅在周年日入口可见，保留路由供主页跳转
             (MainTabKind.Toolbox, "annual") => new AnnualReportView(),
             (MainTabKind.Settings, "appearance") => new AppearanceView(),
             (MainTabKind.Settings, "account") => new AccountsView(),

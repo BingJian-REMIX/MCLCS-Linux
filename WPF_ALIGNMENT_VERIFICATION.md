@@ -42,10 +42,12 @@
 
 | 主标签 | 项数 | 说明 |
 |--------|------|------|
-| Game | 2 | `play`(启动) / `home`(主页) |
+| Game | 0 | 游戏页**无侧栏**，默认展示主页 `HomeView` 全宽内容 |
 | Download | 7 | 含 `versionlist`(版本列表) |
-| Toolbox | 24 | 20 原工具 + `toolbox`/`devtools`/`achievement`/`annual` 4 入口 |
+| Toolbox | 21 | 20 原工具 + `devtools` 开发工具聚合入口 |
 | Settings | 8 | 通用/启动/下载/推荐/账号/AI/外观/关于 |
+
+> 已移除工具箱页的 `toolbox`(聚合总览) / `achievement`(成就) / `annual`(年度报告) 常驻入口；其中 `AchievementView`、`ToolboxView` 已删除，`AnnualReportView` 保留供主页周年日入口跳转。
 
 导航路由在 `src/MCLCS.Linux.App/MainWindow.axaml.cs` 的 `ShowPage()`（`(_vm.SelectedTab.Kind, _vm.SelectedSidebarId) switch`）。
 
@@ -53,15 +55,15 @@
 
 ## 四、本地化补充
 
-- `src/MCLCS.Core/Localization/LocaleManager.cs`（zh + en）：新增 `tool.home/home.desc`、`tool.versionlist/versionlist.desc`、`tool.toolbox/toolbox.desc`、`tool.devtools/devtools.desc`、`tool.achievement/achievement.desc`、`tool.annual/annual.desc`、`game.launch/launch.desc`。
-- `src/MCLCS.Linux.App/Localization.cs`：`DescKeyMap` 新增上述 7 个 id 的 desc 键映射，避免未登记导致测试失败（`Localization.ToolDescription` 未登记会降级为"待接入 Core 能力"）。
+- `src/MCLCS.Core/Localization/LocaleManager.cs`（zh + en）：早期新增 `tool.versionlist/versionlist.desc`、`tool.devtools/devtools.desc`；`tool.home`/`tool.toolbox`/`tool.achievement`/`tool.annual`/`game.launch` 等已随对应入口移除。
+- `src/MCLCS.Linux.App/Localization.cs`：`DescKeyMap` 现仅映射仍存于侧栏的 id（`devtools`/`versionlist` 等）。
 
 ---
 
 ## 五、测试
 
 - 测试项目：`tests/MCLCS.Linux.Tests`
-- 本轮更新断言：`Sidebar_Toolbox_HasItems_WithGroups`(24 项)、`Sidebar_Game_HasLaunchAndHome`(2 项含 play/home)、`SidebarState_SwitchOwner_SelectsFirstItem`(Game 选 play)、`MainViewModel_SelectedTab_联动_SidebarItems`(Game 不再 Empty)。
+- 后续更新的断言：`Sidebar_Toolbox_HasItems_WithGroups`(21 项，且不含 toolbox/achievement/annual)、`Sidebar_Game_HasNoSidebar`(0 项)、`SidebarState_SwitchOwner_SelectsFirstItem`(Game 选 null)、`MainViewModel_SelectedTab_联动_SidebarItems`(Game 为空)。
 - **结果：35/35 全部通过，无回归。**
 
 ---
@@ -76,6 +78,23 @@
 - `CrashView.axaml`：新增「自动修复方案」面板（标题 / 说明 / 步骤 / 冲突 Mod 单选 / 缺失前置列表 / 非破坏性提示 + "尝试自动修复"）与「降级联动恢复」面板（3 个恢复按钮）。
 
 **验证**：新增条件编译截图工具 `src/MCLCS.Linux.App/Screenshot/ScreenshotCapture.cs`（`-p:DefineConstants=SCREENSHOT`），Xvfb 下遍历四个主标签全部侧栏页自动渲染 PNG，共 **41 页全截图**（见 `/workspace/screenshots/`），每页颜色数 1535–4235，确认无空白页。正常（无 `SCREENSHOT`）构建与测试不受影响，仍 **35/35 通过**。
+
+---
+
+## 六之二、本轮 UI 修正（2026-08-23 第二轮）
+
+按用户反馈修正 6 项导航 / UI 表现问题：
+
+| 问题 | 修正 |
+|------|------|
+| 四色索引贴「选中页置顶」 | `TabItemViewModel.ZIndex` 不再因选中而置顶，改为严格按 `Order` 决定层叠（对齐 WPF `MainTabDefinition.ZIndex`）；`IsExpanded` 改为 `IsSelected \|\| Def.AlwaysExpanded`（游戏页常驻展开）。`TabMarginConverter` 改为在 VM 内计算 `Margin`，左邻展开时 -10 / 折叠时 -20，实现「重叠 + 展开动画」而非置顶。 |
+| 主页无侧边栏 | `Sidebar.Game` 置空（0 项），`HasSidebar=false`；`MainWindow.ShowPage` 的 `Game` 路由默认展示 `HomeView` 全宽内容。`HasSidebar` 为 false 时页头标题/分组/描述自动隐藏。 |
+| 工具箱页入口精简 | 从 `Sidebar.Toolbox` 移除 `toolbox`(聚合总览) / `achievement`(成就) / `annual`(年度报告) 三项；删除 `ToolboxView` + `AchievementView`（含 VM），保留 `AnnualReportView` 供周年入口跳转。Toolbox 现 21 项。 |
+| 年度报告仅在周年日展示 | `PlayStats` 新增 `FirstLaunchUtc`（首次启动游戏时记录）；`HomeViewModel.IsAnnualReportVisible` 仅当「今日 == 首次启动月/日」为真时在主页显示「年度报告」入口卡片，点击跳转 `AnnualReportView`。其余日不展示。 |
+| 皮肤编辑器按钮显示不完整 | `SkinEditorView` 中 2D 编辑 / 3D 预览 `ToggleButton` 尺寸由 64×24 / 字号 11 调整为 78×28 / 字号 12，避免文字截断。 |
+| 皮肤编辑器字体方框（tofu） | 将页面内 emoji（🧍 / 🖱️ / 🔲）替换为纯文本提示（如「左键：填充 / 清除」「右键：取色」），消除字体不支持导致的方框。 |
+
+**验证**：构建 Build succeeded（0 error）；测试 35/35 通过；Xvfb 全截图更新为 **37 页**（`/workspace/screenshots/`，含 `shot_Game_default.png` 主页无侧栏页）。
 
 ---
 

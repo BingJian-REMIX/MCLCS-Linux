@@ -53,6 +53,20 @@
         </Grid>
       </StackPanel>
 
+      <!-- 年度报告入口：仅在首次启动周年日展示 -->
+      <Border Padding="16" Background="{DynamicResource CardBackground}" CornerRadius="10"
+              IsVisible="{Binding IsAnnualReportVisible}">
+        <StackPanel Spacing="8">
+          <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+            <TextBlock Text="[年报]" FontSize="13" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center"/>
+            <TextBlock Text="年度报告" FontWeight="SemiBold" FontSize="15"/>
+          </StackPanel>
+          <TextBlock Text="{Binding AnnualReportHint}" FontSize="12" Foreground="{DynamicResource SecondaryForeground}"/>
+          <Button Classes="modal-btn accent" Content="查看年度报告" Click="OpenAnnualReport_Click"
+                  HorizontalAlignment="Left" Padding="14,6"/>
+        </StackPanel>
+      </Border>
+
       <!-- 智能推荐 -->
       <StackPanel Spacing="8">
         <TextBlock Text="为你推荐" FontWeight="SemiBold" FontSize="15"/>

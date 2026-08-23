@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia;
 using MCLCS.Core.Launcher;
 using MCLCS.Core.Localization;
 using MCLCS.Core.Mvvm;
@@ -141,6 +142,7 @@ public class MainViewModel : ObservableObject
         for (var i = 0; i < all.Count; i++)
             items.Add(new TabItemViewModel(all[i], i, all.Count));
         TabItems = items;
+        Instance = this;
         _selectedTab = MainTabs.Get(MainTabKind.Game);
         _selectedSidebarId = Sidebar.For(_selectedTab.Kind).FirstOrDefault()?.Id ?? "";
         SyncTabSelection();
@@ -376,8 +378,8 @@ public class TabItemViewModel : ObservableObject
     public MainTabKind Kind => Def.Kind;
     /// <summary>本地化后的显示名（Def.Title 是 l10n key）。</summary>
     public string DisplayName => Localization.Get(Def.Title);
-    /// <summary>是否展开显示文字：仅选中时展开（用户反馈：四色索引贴未选中时不显文字，含游戏页）。</summary>
-    public bool AlwaysExpanded => false;
+    /// <summary>是否常驻展开：由 Core.MainTabDefinition 决定（游戏页为 true）。</summary>
+    public bool AlwaysExpanded => Def.AlwaysExpanded;
 
     /// <summary>在四色序列中的次序（0=游戏）。决定重叠方向与默认 Z 序。</summary>
     public int Order { get; }
@@ -392,19 +394,34 @@ public class TabItemViewModel : ObservableObject
             if (SetField(ref _isSelected, value))
             {
                 OnPropertyChanged(nameof(IsExpanded));
-                OnPropertyChanged(nameof(ZIndex));
+                OnPropertyChanged(nameof(Margin));
+                // 右邻项的 Margin 依赖本项 IsExpanded，必须联动刷新
+                var next = MainViewModel.Instance?.TabItems.FirstOrDefault(t => t.Order == Order + 1);
+                next?.OnPropertyChanged(nameof(Margin));
             }
         }
     }
 
-    /// <summary>是否展开显示文字：仅选中时展开（其余折叠为 56px 色条，不显示文字）。</summary>
-    public bool IsExpanded => _isSelected;
+    /// <summary>是否展开显示文字：选中页或常驻展开页（游戏页）显示文字，其余折叠为 56px 色条。</summary>
+    public bool IsExpanded => _isSelected || Def.AlwaysExpanded;
 
     /// <summary>语言切换时由 VM 调用，强制刷新显示名（DisplayName 依赖当前语言）。</summary>
     public void RaiseDisplayNameChanged() => OnPropertyChanged(nameof(DisplayName));
 
-    /// <summary>Z 序：选中页置顶（100），其余按「左压右」由 Order 决定（Order 越小越高）。</summary>
-    public int ZIndex => _isSelected ? 100 : (TotalTabs - Order);
+    /// <summary>Z 序：严格按「左压右」由 Order 决定（Order 越小越高），选中页不置顶。</summary>
+    public int ZIndex => Def.ZIndex;
+
+    /// <summary>与左侧邻居的重叠外边距：左邻展开时 10px，否则 20px（对齐 WPF NeighborExpanded）。</summary>
+    public Thickness Margin
+    {
+        get
+        {
+            if (Order == 0) return new Thickness(0);
+            var prev = MainViewModel.Instance?.TabItems.FirstOrDefault(t => t.Order == Order - 1);
+            var overlap = prev?.IsExpanded == true ? 10.0 : 20.0;
+            return new Thickness(-overlap, 0, 0, 0);
+        }
+    }
 
     public TabItemViewModel(MainTabDefinition def, int order, int total)
     {

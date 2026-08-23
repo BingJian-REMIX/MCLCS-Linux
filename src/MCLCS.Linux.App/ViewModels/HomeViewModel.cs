@@ -62,7 +62,14 @@ public class HomeViewModel : ObservableObject
     public PlayStats? PlayStats
     {
         get => _playStats;
-        set => SetField(ref _playStats, value);
+        set
+        {
+            if (SetField(ref _playStats, value))
+            {
+                OnPropertyChanged(nameof(IsAnnualReportVisible));
+                OnPropertyChanged(nameof(AnnualReportHint));
+            }
+        }
     }
 
     public string RecentVersionText => PlayStats?.RecentVersion ?? "—";
@@ -92,6 +99,30 @@ public class HomeViewModel : ObservableObject
 
     public ICommand RefreshCommand => new RelayCommand(_ => RefreshVersions());
     public ICommand LaunchCommand => new AsyncRelayCommand(_ => LaunchAsync(), _ => CanLaunch);
+
+    /// <summary>是否在主页显示年度报告入口：仅在首次启动游戏后每年的同日展示。</summary>
+    public bool IsAnnualReportVisible
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(PlayStats?.FirstLaunchUtc)) return false;
+            if (!DateTime.TryParse(PlayStats.FirstLaunchUtc, out var firstUtc)) return false;
+            var first = firstUtc.Date;
+            var today = DateTime.UtcNow.Date;
+            return today.Month == first.Month && today.Day == first.Day;
+        }
+    }
+
+    /// <summary>年度报告入口提示文案。</summary>
+    public string AnnualReportHint
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(PlayStats?.FirstLaunchUtc)) return "";
+            if (!DateTime.TryParse(PlayStats.FirstLaunchUtc, out var firstUtc)) return "";
+            return $"今天是首次启动 {firstUtc.Year} 周年纪念日，点击查看年度报告";
+        }
+    }
 
     public HomeViewModel()
     {
@@ -193,6 +224,12 @@ public class HomeViewModel : ObservableObject
             }
 
             var result = await GameLauncher.LaunchAsync(profile.GameRoot, id, java, opts, null);
+            if (!result.Crashed && result.ExitCode == 0)
+            {
+                PlaytimeTracker.RecordLaunch(_gameRoot, id);
+                OnPropertyChanged(nameof(IsAnnualReportVisible));
+                OnPropertyChanged(nameof(AnnualReportHint));
+            }
             Status = result.Crashed
                 ? $"游戏已退出（崩溃，退出码 {result.ExitCode}）"
                 : $"游戏已退出（退出码 {result.ExitCode}）";

@@ -91,11 +91,11 @@
       <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto,*,Auto,Auto" Margin="0,0,0,6">
         <!-- IsChecked 绑 VM（VM 是 SoT，避免字面值在 layout pass 反向覆盖）。
              Converter 复用 InvBoolToVis（其本质就是反转 bool，IsVisible / IsChecked 都用）。 -->
-        <ToggleButton x:Name="Mode2D" Grid.Column="0" Content="2D 编辑" Width="64" Height="24"
-                      FontSize="11" IsChecked="{Binding IsEditing2D, Mode=TwoWay}" Click="Mode_Changed"/>
-        <ToggleButton x:Name="Mode3D" Grid.Column="1" Content="3D 预览" Width="64" Height="24"
-                      FontSize="11" IsChecked="{Binding IsEditing2D, Mode=TwoWay, Converter={StaticResource InvBool}}"
-                      Click="Mode_Changed" Margin="4,0,0,0"/>
+        <ToggleButton x:Name="Mode2D" Grid.Column="0" Content="2D 编辑" Width="78" Height="28"
+                      FontSize="12" IsChecked="{Binding IsEditing2D, Mode=TwoWay}" Click="Mode_Changed"/>
+        <ToggleButton x:Name="Mode3D" Grid.Column="1" Content="3D 预览" Width="78" Height="28"
+                      FontSize="12" IsChecked="{Binding IsEditing2D, Mode=TwoWay, Converter={StaticResource InvBool}}"
+                      Click="Mode_Changed" Margin="6,0,0,0"/>
         <TextBlock Grid.Column="2" Text="{Binding FaceTitle}" VerticalAlignment="Center" Margin="12,0,0,0"
                    Foreground="{DynamicResource AccentBrush}" FontWeight="SemiBold"/>
         <TextBlock Grid.Column="3" Text="缩放" VerticalAlignment="Center" Margin="12,0,4,0"
@@ -130,7 +130,7 @@
           <!-- 空状态（HTML 设计：创建新皮肤 / 导入 PNG） -->
           <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="10"
                       IsVisible="{Binding HasSkin, Converter={StaticResource InvBoolToVis}}">
-            <TextBlock Text="🧍" FontSize="44" HorizontalAlignment="Center"/>
+            <TextBlock Text="[皮肤]" FontSize="28" HorizontalAlignment="Center" Foreground="{DynamicResource AccentBrush}"/>
             <TextBlock Text="点击创建新皮肤或导入 PNG" Foreground="{DynamicResource SecondaryForeground}"
                        HorizontalAlignment="Center"/>
             <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
@@ -144,8 +144,8 @@
           <!-- 交互提示（HTML 设计） -->
           <StackPanel Orientation="Horizontal" Spacing="16" HorizontalAlignment="Center" VerticalAlignment="Bottom"
                       Margin="0,0,0,8" Opacity="0.8">
-            <TextBlock Text="🖱️ 单击填充/清除" FontSize="11" Foreground="{DynamicResource SecondaryForeground}"/>
-            <TextBlock Text="🔲 右键选择颜色" FontSize="11" Foreground="{DynamicResource SecondaryForeground}"/>
+            <TextBlock Text="左键：填充 / 清除" FontSize="11" Foreground="{DynamicResource SecondaryForeground}"/>
+            <TextBlock Text="右键：取色" FontSize="11" Foreground="{DynamicResource SecondaryForeground}"/>
           </StackPanel>
         </Grid>
       </Border>

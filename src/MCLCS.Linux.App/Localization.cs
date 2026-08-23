@@ -48,14 +48,9 @@ public static class Localization
         ["shortcut"] = "tool.shortcut.desc",
         ["afk"] = "tool.afk.desc",
         ["aichat"] = "tool.aichat.desc",
-        // 新增聚合 / 开发 / 统计页（补齐 WPF 缺失功能页）
-        ["toolbox"] = "tool.toolbox.desc",
+        // 新增入口
         ["devtools"] = "tool.devtools.desc",
-        ["achievement"] = "tool.achievement.desc",
-        ["annual"] = "tool.annual.desc",
         ["versionlist"] = "tool.versionlist.desc",
-        ["home"] = "tool.home.desc",
-        ["play"] = "game.launch.desc",
         // 设置页
         ["general"] = "settings.general.desc",
         ["launch"] = "settings.launch.desc",

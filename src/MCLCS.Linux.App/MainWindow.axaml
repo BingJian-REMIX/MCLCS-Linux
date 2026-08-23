@@ -73,7 +73,7 @@
         <ItemsControl.ItemContainerTheme>
           <ControlTheme TargetType="ContentPresenter">
             <Setter Property="Panel.ZIndex" Value="{Binding ZIndex}"/>
-            <Setter Property="Margin" Value="{Binding Order, Converter={StaticResource TabMargin}}"/>
+            <Setter Property="Margin" Value="{Binding Margin}"/>
           </ControlTheme>
         </ItemsControl.ItemContainerTheme>
         <ItemsControl.ItemsPanel>

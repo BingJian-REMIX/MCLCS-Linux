@@ -62,13 +62,14 @@ public class AppRuntimeTests
     public void MainViewModel_SelectedTab_联动_SidebarItems()
     {
         var vm = new MainViewModel();
-        // 默认主页为游戏页（用户要求），游戏页含「启动 / 主页」两个副标签
+        // 默认主页为游戏页（用户要求），游戏页无侧边栏
         Assert.Equal(MainTabKind.Game, vm.SelectedTab.Kind);
         Assert.Equal(Sidebar.Game.Count, vm.SidebarItems.Count);
+        Assert.Empty(vm.SidebarItems);
         // 切换到 Download（副标签集合与 Core 一致，含新增 versionlist）
         vm.SelectedTab = MainTabs.Get(MainTabKind.Download);
         Assert.Equal(Sidebar.Download.Count, vm.SidebarItems.Count);
-        // 切换到 Toolbox（副标签集合与 Core 一致）
+        // 切换到 Toolbox（副标签集合与 Core 一致，已移除 toolbox/achievement/annual）
         vm.SelectedTab = MainTabs.Get(MainTabKind.Toolbox);
         Assert.Equal(Sidebar.Toolbox.Count, vm.SidebarItems.Count);
     }
