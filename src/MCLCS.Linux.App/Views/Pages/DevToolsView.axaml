@@ -30,7 +30,7 @@
                     <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontFamily="Consolas"/>
                     <TextBlock Text="{Binding Category}" FontSize="11" Foreground="{DynamicResource SecondaryForeground}"/>
                   </StackPanel>
-                  <TextBlock Text="{Binding Syntax}" FontFamily="Consolas" FontSize="12" Foreground="#9cdcfe"/>
+                  <TextBlock Text="{Binding Syntax}" FontFamily="Consolas" FontSize="12" Foreground="{DynamicResource CodeForeground}"/>
                   <TextBlock Text="{Binding Description}" FontSize="11" Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"/>
                 </StackPanel>
               </Border>

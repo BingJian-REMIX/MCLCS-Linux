@@ -14,6 +14,8 @@ using MCLCS.Core.Profiles;
 using MCLCS.Core.Recommend;
 using MCLCS.Core.Statistics;
 using MCLCS.Core.Utils;
+using MCLCS.Linux.App;
+using MCLCS.Linux.App.Views.Pages;
 
 namespace MCLCS.Linux.App.ViewModels;
 
@@ -99,6 +101,7 @@ public class HomeViewModel : ObservableObject
 
     public ICommand RefreshCommand => new RelayCommand(_ => RefreshVersions());
     public ICommand LaunchCommand => new AsyncRelayCommand(_ => LaunchAsync(), _ => CanLaunch);
+    public ICommand OpenVersionSettingsCommand => new AsyncRelayCommand(_ => OpenVersionSettingsAsync());
 
     /// <summary>是否在主页显示年度报告入口：仅在首次启动游戏后每年的同日展示。</summary>
     public bool IsAnnualReportVisible
@@ -166,6 +169,27 @@ public class HomeViewModel : ObservableObject
             ? $"共发现 {Versions.Count} 个已安装版本"
             : "暂无已安装版本，请前往「下载 → 原版」安装";
         if (SelectedVersion is null) SelectedVersion = Versions.FirstOrDefault();
+    }
+
+    /// <summary>打开「版本设置」对话框（版本隔离开关 + 成就展示），针对当前选中版本。</summary>
+    private async Task OpenVersionSettingsAsync()
+    {
+        var sel = SelectedVersion;
+        if (sel is null)
+        {
+            Status = "请先选择一个版本";
+            return;
+        }
+
+        var vm = new VersionSettingsViewModel(sel.Id, sel.Type, _gameRoot);
+        var view = new VersionSettingsView { DataContext = vm };
+        await DialogService.Instance.ShowAsync(new DialogOptions
+        {
+            Title = $"版本设置 · {sel.Id}",
+            Content = view,
+            Buttons = new[] { new DialogButton("关闭", isCancel: true) },
+            Width = 560,
+        });
     }
 
     private void LoadPlayStats() => PlayStats = PlaytimeTracker.Load(_gameRoot);

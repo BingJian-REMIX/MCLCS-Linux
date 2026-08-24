@@ -37,11 +37,11 @@
           <Run Text=" × "/>
           <Run Text="{Binding Validation.Height}"/>
         </TextBlock>
-        <TextBlock Text="旧版 64×32 皮肤（需转换）" FontSize="11" Foreground="#E67E22"
+        <TextBlock Text="旧版 64×32 皮肤（需转换）" FontSize="11" Foreground="{DynamicResource WarningForeground}"
                    IsVisible="{Binding Validation.IsLegacy}"/>
         <TextBlock Text="{Binding Validation.Error}" FontSize="11" Foreground="{DynamicResource DangerBrush}" TextWrapping="Wrap"
                    IsVisible="{Binding Validation.Error, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-        <TextBlock Text="✓ 校验通过" FontSize="11" Foreground="#27AE60"
+        <TextBlock Text="✓ 校验通过" FontSize="11" Foreground="{DynamicResource SuccessForeground}"
                    IsVisible="{Binding Validation.Ok, Converter={StaticResource BoolToVis}}"/>
       </StackPanel>
     </StackPanel>

@@ -218,6 +218,10 @@
         <SolidColorBrush x:Key="SecondaryForeground" Color="#C8CDD6"/>
         <SolidColorBrush x:Key="StatusForeground" Color="#C8CDD6"/>
 
+        <SolidColorBrush x:Key="CodeForeground" Color="#9cdcfe"/>
+        <SolidColorBrush x:Key="WarningForeground" Color="#E67E22"/>
+        <SolidColorBrush x:Key="SuccessForeground" Color="#27AE60"/>
+
         <SolidColorBrush x:Key="AccentBrush" Color="#3B82F6"/>
         <SolidColorBrush x:Key="DangerBrush" Color="#E74C3C"/>
 

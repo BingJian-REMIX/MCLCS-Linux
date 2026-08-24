@@ -1,0 +1,56 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MCLCS.Linux.App.ViewModels"
+             x:Class="MCLCS.Linux.App.Views.Pages.VersionSettingsView"
+             x:DataType="vm:VersionSettingsViewModel">
+  <ScrollViewer MaxHeight="520">
+    <StackPanel Spacing="14" Width="500">
+
+      <!-- 版本信息 -->
+      <StackPanel Spacing="2">
+        <TextBlock Text="版本" FontSize="11" Foreground="{DynamicResource SecondaryForeground}"/>
+        <TextBlock Text="{Binding VersionId}" FontWeight="Bold" FontSize="16"/>
+        <TextBlock Text="{Binding VersionType, StringFormat='类型：{0}'}"
+                   FontSize="11" Foreground="{DynamicResource SecondaryForeground}"
+                   IsVisible="{Binding VersionType, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+      </StackPanel>
+
+      <!-- 版本隔离 -->
+      <Border Padding="12" Background="{DynamicResource CardBackground}" CornerRadius="8">
+        <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+          <StackPanel Grid.Column="0" Spacing="4" Margin="0,0,12,0">
+            <TextBlock Text="版本隔离" FontWeight="SemiBold" FontSize="14"/>
+            <TextBlock Text="{Binding Status}" FontSize="11"
+                       Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"/>
+            <TextBlock Text="隔离后 mods / config / saves 等仅本版本独立，互不干扰（整合包并存前提）。"
+                       FontSize="11" Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"
+                       IsVisible="{Binding IsIsolated}"/>
+          </StackPanel>
+          <ToggleSwitch Grid.Column="1" IsChecked="{Binding IsIsolated, Mode=TwoWay}"
+                        VerticalAlignment="Center" OffContent="" OnContent=""/>
+        </Grid>
+      </Border>
+
+      <!-- 成就 -->
+      <StackPanel Spacing="6">
+        <TextBlock Text="成就" FontWeight="SemiBold" FontSize="14"/>
+        <TextBlock Text="{Binding AchievementSummary}" FontSize="11"
+                   Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"/>
+        <ItemsControl ItemsSource="{Binding Achievements}" MaxHeight="240">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:AchievementStats">
+              <Border Margin="0,0,0,6" Padding="10,6" Background="{DynamicResource CardBackground}" CornerRadius="6">
+                <Grid ColumnDefinitions="*,Auto">
+                  <TextBlock Grid.Column="0" Text="{Binding SaveName}" FontWeight="SemiBold" FontSize="13"/>
+                  <TextBlock Grid.Column="1" Text="{Binding Summary}" FontSize="11"
+                             Foreground="{DynamicResource SecondaryForeground}" Margin="12,0,0,0"/>
+                </Grid>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

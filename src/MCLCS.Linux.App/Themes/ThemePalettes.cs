@@ -30,6 +30,11 @@ public static class ThemePalettes
         { "SecondaryForeground", new SolidColorBrush(Color.Parse("#C8CDD6")) },
         { "StatusForeground", new SolidColorBrush(Color.Parse("#C8CDD6")) },
 
+        // 语义化文字色：统一随主题翻转，避免页面硬编码 hex 导致亮/暗下亮度异常
+        { "CodeForeground", new SolidColorBrush(Color.Parse("#9cdcfe")) },       // 代码 / 高亮提示（暗底浅蓝）
+        { "WarningForeground", new SolidColorBrush(Color.Parse("#E67E22")) },    // 警告（橙）
+        { "SuccessForeground", new SolidColorBrush(Color.Parse("#27AE60")) },    // 成功（绿）
+
         { "AccentBrush", new SolidColorBrush(Color.Parse("#3B82F6")) },
         { "DangerBrush", new SolidColorBrush(Color.Parse("#E74C3C")) },
 
@@ -59,6 +64,11 @@ public static class ThemePalettes
         { "PrimaryForeground", new SolidColorBrush(Color.Parse("#1A1D24")) },
         { "SecondaryForeground", new SolidColorBrush(Color.Parse("#5B6472")) },
         { "StatusForeground", new SolidColorBrush(Color.Parse("#5B6472")) },
+
+        // 语义化文字色：与暗色同一套语义，亮底改用深一档保证对比度（统一亮暗亮度）
+        { "CodeForeground", new SolidColorBrush(Color.Parse("#0B5394")) },       // 代码 / 高亮提示（亮底深蓝）
+        { "WarningForeground", new SolidColorBrush(Color.Parse("#B45309")) },    // 警告（深橙）
+        { "SuccessForeground", new SolidColorBrush(Color.Parse("#15803D")) },    // 成功（深绿）
 
         { "AccentBrush", new SolidColorBrush(Color.Parse("#2563EB")) },
         { "DangerBrush", new SolidColorBrush(Color.Parse("#DC2626")) },

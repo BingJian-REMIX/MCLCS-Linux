@@ -4,6 +4,42 @@
              xmlns:core="using:MCLCS.Core.Recommend"
              x:Class="MCLCS.Linux.App.Views.Pages.HomeView"
              x:DataType="vm:HomeViewModel">
+  <UserControl.Resources>
+    <ResourceDictionary>
+      <!-- 按钮式版本列表：WrapPanel 药丸，选中项高亮主题色 -->
+      <ControlTheme x:Key="VersionPills" TargetType="ListBox">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+        <Setter Property="ItemsPanel">
+          <ItemsPanelTemplate>
+            <WrapPanel Orientation="Horizontal"/>
+          </ItemsPanelTemplate>
+        </Setter>
+        <Setter Property="ItemTemplate">
+          <DataTemplate>
+            <Border CornerRadius="6" Padding="10,5" Background="Transparent">
+              <TextBlock Text="{Binding Display}" FontSize="13"/>
+            </Border>
+          </DataTemplate>
+        </Setter>
+        <Style Selector="^ ListBoxItem">
+          <Setter Property="Background" Value="{DynamicResource ControlBackground}"/>
+          <Setter Property="Margin" Value="0,0,6,6"/>
+          <Setter Property="Padding" Value="0"/>
+        </Style>
+        <Style Selector="^ ListBoxItem:pointerover">
+          <Setter Property="Background" Value="{DynamicResource ControlHoverBackground}"/>
+        </Style>
+        <Style Selector="^ ListBoxItem:selected">
+          <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+        </Style>
+        <Style Selector="^ ListBoxItem:selected TextBlock">
+          <Setter Property="Foreground" Value="White"/>
+        </Style>
+      </ControlTheme>
+    </ResourceDictionary>
+  </UserControl.Resources>
   <ScrollViewer>
     <StackPanel Margin="28,22" Spacing="18">
 
@@ -24,6 +60,15 @@
             </ComboBox>
             <Button Grid.Column="1" Margin="0,0,10,0" Classes="modal-btn" Content="刷新" Command="{Binding RefreshCommand}" IsEnabled="{Binding !Busy}"/>
             <Button Grid.Column="2" Classes="modal-btn accent" Content="启动" Command="{Binding LaunchCommand}" IsEnabled="{Binding CanLaunch}"/>
+          </Grid>
+
+          <!-- 按钮式版本列表（下拉栏下方）+ 版本设置（右旁） -->
+          <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,0">
+            <ListBox Grid.Column="0" Classes="VersionPills"
+                     ItemsSource="{Binding Versions}" SelectedItem="{Binding SelectedVersion, Mode=TwoWay}"
+                     MaxHeight="132" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+            <Button Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Top" Classes="modal-btn"
+                    Content="⚙ 版本设置" Command="{Binding OpenVersionSettingsCommand}"/>
           </Grid>
         </StackPanel>
       </Border>
@@ -81,7 +126,7 @@
                     <TextBlock Text="{Binding CategoryLabel}" FontSize="11" Foreground="{DynamicResource SecondaryForeground}"/>
                   </StackPanel>
                   <TextBlock Text="{Binding Description}" FontSize="12" Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"/>
-                  <TextBlock Text="{Binding Reason}" FontSize="11" Foreground="#9cdcfe" TextWrapping="Wrap"/>
+                  <TextBlock Text="{Binding Reason}" FontSize="11" Foreground="{DynamicResource CodeForeground}" TextWrapping="Wrap"/>
                 </StackPanel>
               </Border>
             </DataTemplate>

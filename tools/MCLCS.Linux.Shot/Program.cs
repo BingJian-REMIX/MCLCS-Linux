@@ -20,6 +20,7 @@ using MCLCS.Core.Theme;
 using MCLCS.Core.Toolbox;
 using MCLCS.Core.Save;
 using MCLCS.Core.UI;
+using MCLCS.Core.Utils;
 using SkiaSharp;
 
 namespace MCLCS.Linux.Shot;
@@ -92,6 +93,7 @@ internal static class Program
             .SetupWithoutStarting();
 
         MainViewModel.Instance = new MainViewModel();
+        EnsureShotVersion();   // 为版本设置对话框准备一个带成就的演示版本
         var failures = 0;
 
         // ---- 真实 MainWindow：完整壳层（侧栏 + 主标签 + 状态栏），暗 / 亮双轮全量 ----
@@ -161,6 +163,10 @@ internal static class Program
                     Capture(mw, path);
                     Console.WriteLine($"[ok]   {theme,-5} {name,-16} -> {path}  " +
                         (kind == MainTabKind.Download ? $"cards={DownloadPageViewModel.Instance.Cards.Count}" : ""));
+
+                    // 游戏页捕获后，额外抓一张「版本设置」对话框（含版本隔离开关 + 成就）
+                    if (name == "home")
+                        CaptureVersionSettings(mw, outDir, suffix);
                 }
                 catch (Exception ex)
                 {
@@ -251,6 +257,55 @@ internal static class Program
             if (c is Control { DataContext: SkinViewModel svm }) return svm;
         }
         return null;
+    }
+
+    /// <summary>为截图准备一个演示版本（含成就数据），使游戏页版本列表与版本设置对话框有内容可渲染。</summary>
+    private static void EnsureShotVersion()
+    {
+        try
+        {
+            var root = GameConstants.DefaultGameRoot;
+            var vdir = Path.Combine(root, "versions", "ShotDemo");
+            Directory.CreateDirectory(vdir);
+            File.WriteAllText(Path.Combine(vdir, "ShotDemo.json"), "{\"type\":\"release\"}");
+            var adv = Path.Combine(root, "saves", "ShotWorld", "advancements");
+            Directory.CreateDirectory(adv);
+            File.WriteAllText(Path.Combine(adv, "root.json"), "{\"done\":true,\"display\":{\"frame\":\"challenge\"}}");
+            File.WriteAllText(Path.Combine(adv, "story.json"), "{\"done\":false}");
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[warn] EnsureShotVersion failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>打开「版本设置」对话框并截图（不等待用户关闭，截完即 Complete 隐藏）。</summary>
+    private static void CaptureVersionSettings(MainWindow mw, string outDir, string suffix)
+    {
+        var hvm = mw.GetVisualDescendants().OfType<HomeView>().FirstOrDefault()?.DataContext as HomeViewModel;
+        var sel = hvm?.SelectedVersion;
+        if (sel is null) return;
+
+        var vm = new VersionSettingsViewModel(sel.Id, sel.Type, GameConstants.DefaultGameRoot);
+        var view = new VersionSettingsView { DataContext = vm };
+        _ = DialogService.Instance.ShowAsync(new DialogOptions
+        {
+            Title = $"版本设置 · {sel.Id}",
+            Content = view,
+            Buttons = new[] { new DialogButton("关闭", isCancel: true) },
+            Width = 560,
+        });
+
+        Dispatcher.UIThread.RunJobs();
+        Thread.Sleep(300);
+        Dispatcher.UIThread.RunJobs();
+
+        var path = Path.Combine(outDir, $"version-settings{suffix}.png");
+        Capture(mw, path);
+        Console.WriteLine($"[ok]   version-settings{suffix} -> {path}");
+
+        DialogService.Instance.Complete(null);
+        Dispatcher.UIThread.RunJobs();
     }
 
     /// <summary>阻塞等待网络结果落地：Thread.Sleep 让异步 I/O 在 ThreadPool 完成，
