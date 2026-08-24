@@ -16,13 +16,6 @@
             <WrapPanel Orientation="Horizontal"/>
           </ItemsPanelTemplate>
         </Setter>
-        <Setter Property="ItemTemplate">
-          <DataTemplate>
-            <Border CornerRadius="6" Padding="10,5" Background="Transparent">
-              <TextBlock Text="{Binding Display}" FontSize="13"/>
-            </Border>
-          </DataTemplate>
-        </Setter>
         <Style Selector="^ ListBoxItem">
           <Setter Property="Background" Value="{DynamicResource ControlBackground}"/>
           <Setter Property="Margin" Value="0,0,6,6"/>
@@ -66,7 +59,16 @@
           <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,0">
             <ListBox Grid.Column="0" Classes="VersionPills"
                      ItemsSource="{Binding Versions}" SelectedItem="{Binding SelectedVersion, Mode=TwoWay}"
-                     MaxHeight="132" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+                     MaxHeight="132" ScrollViewer.VerticalScrollBarVisibility="Auto"
+                     HorizontalAlignment="Left">
+              <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:VersionListEntry">
+                  <Border CornerRadius="6" Padding="10,5" Background="Transparent" MaxWidth="180" HorizontalAlignment="Left">
+                    <TextBlock Text="{Binding Display}" FontSize="13" TextTrimming="CharacterEllipsis"/>
+                  </Border>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
             <Button Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Top" Classes="modal-btn"
                     Content="⚙ 版本设置" Command="{Binding OpenVersionSettingsCommand}"/>
           </Grid>

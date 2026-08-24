@@ -14,6 +14,20 @@
             <Setter Property="Foreground" Value="{DynamicResource PrimaryForeground}"/>
         </Style>
 
+        <!-- 复选/单选/开关：内容文字同步主题主前景，避免 Fluent 默认色在工具页渐隐背景上亮度异常 -->
+        <Style Selector="CheckBox">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryForeground}"/>
+        </Style>
+        <Style Selector="RadioButton">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryForeground}"/>
+        </Style>
+        <Style Selector="ToggleSwitch">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryForeground}"/>
+        </Style>
+        <Style Selector="ListBoxItem">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryForeground}"/>
+        </Style>
+
         <Style Selector="Button">
             <Setter Property="CornerRadius" Value="8"/>
             <Setter Property="BorderBrush" Value="{DynamicResource ControlBorder}"/>
