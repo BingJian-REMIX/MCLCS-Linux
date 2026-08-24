@@ -70,7 +70,7 @@
               </ListBox.ItemTemplate>
             </ListBox>
             <Button Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Top" Classes="modal-btn"
-                    Content="⚙ 版本设置" Command="{Binding OpenVersionSettingsCommand}"/>
+                    Content="版本列表" Command="{Binding OpenVersionSettingsCommand}"/>
           </Grid>
         </StackPanel>
       </Border>
