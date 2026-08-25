@@ -217,7 +217,6 @@
               Background="{Binding SelectedTab.Kind, Converter={StaticResource TabTint}}">
         <Border.Transitions>
           <Transitions>
-            <DoubleTransition Property="Opacity" Duration="0:0:0.2"/>
             <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2"/>
           </Transitions>
         </Border.Transitions>

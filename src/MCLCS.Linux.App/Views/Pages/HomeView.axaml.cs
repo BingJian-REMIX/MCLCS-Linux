@@ -19,4 +19,11 @@ public partial class HomeView : UserControl
         if (this.FindAncestorOfType<MainWindow>() is { } win)
             win.NavigateTo(MainTabKind.Toolbox, "annual");
     }
+
+    /// <summary>「版本列表」入口：跳转到独立的版本列表页（VersionListView，挂在下载标签下）。</summary>
+    private void OpenVersionList_Click(object? sender, RoutedEventArgs e)
+    {
+        if (this.FindAncestorOfType<MainWindow>() is { } win)
+            win.NavigateTo(MainTabKind.Download, "versionlist");
+    }
 }

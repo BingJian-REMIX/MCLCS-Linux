@@ -117,17 +117,17 @@ public partial class MainWindow : Window
         ShowPage();
     }
 
-    /// <summary>切页展开动画：内容宿主淡入 + 上移（对齐设计稿 @keyframes pageIn：opacity 0→1 + translateY(18px)→0，200ms ease）。
-    /// 先把内容落到隐藏态，再于下一渲染帧恢复，触发 0→1 / 18px→0 过渡。</summary>
+    /// <summary>切页展开动画：内容上移淡入（对齐设计稿 @keyframes pageIn：opacity 0→1 + translateY(18px)→0，200ms ease）。
+    /// 注意：Opacity 过渡会在导航后偶发卡在半透明（headless / 连续切页时尤甚），导致整页文字被压暗。
+    /// 因此这里不再用 Opacity 过渡，始终保证内容 <c>Opacity=1</c>（可读性优先），仅保留位移滑入效果。</summary>
     private void PlayContentEnter()
     {
         if (ContentHost is null) return;
-        ContentHost.Opacity = 0;
+        ContentHost.Opacity = 1;
         ContentHost.RenderTransform = TransformOperations.Parse("translateY(18px)");
         Dispatcher.UIThread.Post(() =>
         {
             if (ContentHost is null) return;
-            ContentHost.Opacity = 1;
             ContentHost.RenderTransform = TransformOperations.Parse("translateY(0px)");
         }, DispatcherPriority.Render);
     }
