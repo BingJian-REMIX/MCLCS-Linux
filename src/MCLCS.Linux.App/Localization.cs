@@ -50,7 +50,6 @@ public static class Localization
         ["aichat"] = "tool.aichat.desc",
         // 新增入口
         ["devtools"] = "tool.devtools.desc",
-        ["versionlist"] = "tool.versionlist.desc",
         // 设置页
         ["general"] = "settings.general.desc",
         ["launch"] = "settings.launch.desc",
