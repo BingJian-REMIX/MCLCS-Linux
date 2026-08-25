@@ -13,7 +13,7 @@ namespace MCLCS.Linux.App.Converters;
 public class TabWidthConverter : IValueConverter
 {
     public object? Convert(object? value, Type? targetType, object? parameter, CultureInfo? culture)
-        => value is true ? 130.0 : 56.0;
+        => value is true ? 142.0 : 60.0;
 
     public object? ConvertBack(object? value, Type? targetType, object? parameter, CultureInfo? culture)
         => null;
@@ -75,8 +75,8 @@ public class TabCornerConverter : IValueConverter
     public object? Convert(object? value, Type? targetType, object? parameter, CultureInfo? culture)
     {
         if (value is not TabItemViewModel t) return new CornerRadius(0);
-        if (t.Order == 0) return new CornerRadius(8, 0, 0, 8);                 // 最左：左圆右直
-        if (t.Order == t.TotalTabs - 1) return new CornerRadius(0, 8, 8, 0);  // 最右：右圆左直
+        if (t.Order == 0) return new CornerRadius(8, 8, 0, 0);                 // 最左：仅顶部左圆，下边全直
+        if (t.Order == t.TotalTabs - 1) return new CornerRadius(0, 8, 0, 0);  // 最右：仅顶部右圆，下边全直
         return new CornerRadius(0);                                           // 中间：全直
     }
 

@@ -69,7 +69,7 @@
 
       <!-- 四色索引贴主标签：重叠 + 展开动画（对齐 WPF MainTabs 几何：选中/游戏页展开 132 显文字，其余折叠 56 色条；左压右叠放；200ms 过渡）-->
       <ItemsControl Grid.Column="2" ItemsSource="{Binding TabItems}"
-                    HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0">
+                    HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,8,8,0">
         <ItemsControl.ItemContainerTheme>
           <ControlTheme TargetType="ContentPresenter">
             <Setter Property="Panel.ZIndex" Value="{Binding ZIndex}"/>
@@ -86,7 +86,7 @@
             <Button Tag="{Binding Kind}" Click="Tab_Click"
                     PointerEntered="Tab_PointerEntered" PointerExited="Tab_PointerExited"
                     Width="{Binding IsExpanded, Converter={StaticResource TabWidth}}"
-                    Height="34" Margin="0" Padding="0" BorderThickness="0"
+                    Height="40" Margin="0" Padding="0" BorderThickness="0"
                     CornerRadius="{Binding, Converter={StaticResource TabCorner}}"
                     Cursor="Hand">
               <Button.Background>
@@ -103,7 +103,7 @@
               </Button.Transitions>
               <Grid>
                 <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center"
-                           HorizontalAlignment="Center" FontWeight="SemiBold" FontSize="13"
+                           HorizontalAlignment="Center" FontWeight="SemiBold" FontSize="14"
                            Foreground="White" IsVisible="{Binding IsExpanded}"/>
                 <Rectangle Height="3" VerticalAlignment="Bottom" HorizontalAlignment="Stretch"
                            Fill="{Binding Kind, Converter={StaticResource TabUnderline}}"
