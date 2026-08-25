@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
@@ -171,7 +172,7 @@ public class HomeViewModel : ObservableObject
         if (SelectedVersion is null) SelectedVersion = Versions.FirstOrDefault();
     }
 
-    /// <summary>打开「版本设置」对话框（版本隔离开关 + 成就展示），针对当前选中版本。</summary>
+    /// <summary>打开「版本设置」对话框（8 大模块：隔离/加载器/Java/分辨率/Mod 管理/锁定等），针对当前选中版本。</summary>
     private async Task OpenVersionSettingsAsync()
     {
         var sel = SelectedVersion;
@@ -181,15 +182,7 @@ public class HomeViewModel : ObservableObject
             return;
         }
 
-        var vm = new VersionSettingsViewModel(sel.Id, sel.Type, _gameRoot);
-        var view = new VersionSettingsView { DataContext = vm };
-        await DialogService.Instance.ShowAsync(new DialogOptions
-        {
-            Title = $"版本设置 · {sel.Id}",
-            Content = view,
-            Buttons = new[] { new DialogButton("关闭", isCancel: true) },
-            Width = 560,
-        });
+        await VersionSettingsDialog.OpenAsync(_gameRoot, sel.Id, sel.Type, RefreshVersions);
     }
 
     private void LoadPlayStats() => PlayStats = PlaytimeTracker.Load(_gameRoot);
@@ -217,10 +210,15 @@ public class HomeViewModel : ObservableObject
         if (string.IsNullOrWhiteSpace(id)) { Status = "请先选择一个版本"; return; }
 
         var profile = ProfileStore.Load(_gameRoot);
-        var java = await ResolveJavaAsync(profile.JavaPath);
+
+        // 每版本覆盖层：从 versions/<id>/profile.json 读取，未设置则回落全局
+        var vp = VersionProfileStore.Load(_gameRoot, id);
+        var effectiveDir = VersionProfileStore.EffectiveGameDir(_gameRoot, id, vp);
+
+        var java = await ResolveJavaAsync(vp.JavaPath ?? profile.JavaPath);
         if (java is null)
         {
-            Status = "未检测到 Java，请在「设置 → 启动」中配置 Java 路径";
+            Status = "未检测到 Java，请在「设置 → 启动」或该版本设置中配置 Java 路径";
             return;
         }
 
@@ -228,7 +226,25 @@ public class HomeViewModel : ObservableObject
         try
         {
             Status = $"正在启动 {id} …";
-            var opts = new LaunchOptions { MaxMemoryMb = profile.MaxMemoryMb > 0 ? profile.MaxMemoryMb : 2048 };
+
+            var extraJvm = new List<string>(profile.ExtraJvmArgs);
+            extraJvm.AddRange(vp.ExtraJvmArgs);
+
+            (int W, int H)? resolution = null;
+            if (vp.ResolutionWidth is > 0 && vp.ResolutionHeight is > 0)
+                resolution = (vp.ResolutionWidth.Value, vp.ResolutionHeight.Value);
+            else if (profile.ResolutionWidth is > 0 && profile.ResolutionHeight is > 0)
+                resolution = (profile.ResolutionWidth.Value, profile.ResolutionHeight.Value);
+
+            var opts = new LaunchOptions
+            {
+                MaxMemoryMb = vp.MaxMemoryMb ?? (profile.MaxMemoryMb > 0 ? profile.MaxMemoryMb : 2048),
+                MinMemoryMb = vp.MinMemoryMb ?? profile.MinMemoryMb,
+                ExtraJvmArgs = extraJvm,
+                Resolution = resolution,
+                Fullscreen = vp.Fullscreen,
+                GameDir = effectiveDir
+            };
 
             var account = AccountStore.GetLastUsed(_gameRoot);
             if (account is { } a && !string.IsNullOrEmpty(a.Uuid))

@@ -1,97 +1,398 @@
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
+using System.Threading.Tasks;
 using System.Windows.Input;
-using MCLCS.Core.Mvvm;
+using MCLCS.Core.Download;
 using MCLCS.Core.Models;
+using MCLCS.Core.Mods;
+using MCLCS.Core.Mvvm;
 using MCLCS.Core.Profiles;
 using MCLCS.Core.Utils;
+using MCLCS.Linux.App;
+using MCLCS.Linux.App.Services;
 
 namespace MCLCS.Linux.App.ViewModels;
 
-/// <summary>
-/// 版本设置（对话框主体 ViewModel）：展示当前版本的工作目录、版本隔离开关，
-/// 并按该版本的工作目录扫描成就。版本隔离直连已有的 <see cref="VersionIsolation"/>（Core）。
-/// </summary>
+/// <summary>版本设置（对话框主体 ViewModel）：覆盖 8 大模块，并真实接入加载器安装与 Modrinth 模组管理。</summary>
 public class VersionSettingsViewModel : ObservableObject
 {
     private readonly string _gameRoot;
     private readonly string _versionId;
+    private readonly string _versionType;
+    private readonly HttpClient _http = new() { Timeout = System.Threading.Timeout.InfiniteTimeSpan };
+    private readonly IDownloader _downloader;
+    private readonly ILogger _logger;
 
     public string VersionId => _versionId;
-    public string VersionType { get; }
+    public string VersionType => _versionType;
+    public string BaseMcVersion => VersionProfileStore.BaseMcVersion(_gameRoot, _versionId);
 
-    /// <summary>该版本运行时的游戏工作目录（隔离 → versions/&lt;id&gt;，否则 → 共享根）。</summary>
-    public string GameDir => VersionIsolation.GameDirFor(_gameRoot, _versionId);
+    public event Action? VersionsChanged;
 
-    private bool _isIsolated;
-    /// <summary>是否启用版本隔离。切换即调用 VersionIsolation.Enable/Disable 并重扫成就。</summary>
-    public bool IsIsolated
+    // ---- ① 基础信息 ----
+    private string _displayName = "";
+    public string DisplayName { get => _displayName; set => SetField(ref _displayName, value); }
+
+    // ---- ④ 隔离 / 游戏目录 ----
+    public IsolationMode Isolation { get; set; } = IsolationMode.Auto;
+    private string? _customGameDir;
+    public string? CustomGameDir
     {
-        get => _isIsolated;
+        get => _customGameDir;
+        set { if (SetField(ref _customGameDir, value)) OnPropertyChanged(nameof(EffectiveGameDirDisplay)); }
+    }
+
+    public string EffectiveGameDirDisplay =>
+        VersionProfileStore.EffectiveGameDir(_gameRoot, _versionId,
+            new VersionProfile { Isolation = Isolation, CustomGameDir = CustomGameDir });
+
+    // ---- ③ 模组加载器 ----
+    public ModLoaderKind DetectedLoader { get; }
+    public string DetectedLoaderText =>
+        DetectedLoader switch
+        {
+            ModLoaderKind.Fabric => "Fabric",
+            ModLoaderKind.Forge => "Forge",
+            ModLoaderKind.Quilt => "Quilt",
+            ModLoaderKind.NeoForge => "NeoForge",
+            _ => "原版（未安装加载器）"
+        };
+    public bool IsVanilla => DetectedLoader == ModLoaderKind.None;
+
+    // ---- ⑤ Java 与性能 ----
+    private string? _javaPath;
+    public string? JavaPath { get => _javaPath; set => SetField(ref _javaPath, value); }
+    private double? _maxMemoryMb;
+    public double? MaxMemoryMb { get => _maxMemoryMb; set => SetField(ref _maxMemoryMb, value); }
+    private double? _minMemoryMb;
+    public double? MinMemoryMb { get => _minMemoryMb; set => SetField(ref _minMemoryMb, value); }
+    private string _extraJvmArgsText = "";
+    public string ExtraJvmArgsText { get => _extraJvmArgsText; set => SetField(ref _extraJvmArgsText, value); }
+
+    // ---- ⑥ 分辨率与窗口 ----
+    private double? _resolutionWidth;
+    public double? ResolutionWidth { get => _resolutionWidth; set => SetField(ref _resolutionWidth, value); }
+    private double? _resolutionHeight;
+    public double? ResolutionHeight { get => _resolutionHeight; set => SetField(ref _resolutionHeight, value); }
+    private bool _fullscreen;
+    public bool Fullscreen { get => _fullscreen; set => SetField(ref _fullscreen, value); }
+
+    // ---- ④ 隔离模式（ComboBox 绑定用字符串值） ----
+    public string IsolationValue
+    {
+        get => Isolation.ToString();
         set
         {
-            if (SetField(ref _isIsolated, value))
-            {
-                if (_initialized)
-                {
-                    if (value) VersionIsolation.Enable(_gameRoot, _versionId, "版本设置手动开启");
-                    else VersionIsolation.Disable(_gameRoot, _versionId);
-                    RefreshAchievements();
-                    OnPropertyChanged(nameof(GameDir));
-                }
-            }
+            if (Enum.TryParse<IsolationMode>(value, out var m)) Isolation = m;
+            OnPropertyChanged(nameof(EffectiveGameDirDisplay));
+            OnPropertyChanged(nameof(IsCustomDir));
         }
     }
+    /// <summary>是否处于「自定义目录」隔离模式（控制自定义目录输入框可见性）。</summary>
+    public bool IsCustomDir => Isolation == IsolationMode.Custom;
 
-    private IReadOnlyList<AchievementStats> _achievements = new List<AchievementStats>();
-    public IReadOnlyList<AchievementStats> Achievements
+    // ---- ⑦ Mod 分页（ComboBox 绑定用字符串值） ----
+    public string ModTabValue
     {
-        get => _achievements;
-        private set => SetField(ref _achievements, value);
+        get => ModTab.ToString();
+        set { if (Enum.TryParse<ModTabKind>(value, out var t)) { ModTab = t; OnPropertyChanged(nameof(IsModsTab)); } }
     }
+    /// <summary>当前是否在 Mods 分页（控制「检查更新」按钮可见性）。</summary>
+    public bool IsModsTab => ModTab == ModTabKind.Mods;
 
-    public int TotalCompleted => Achievements.Sum(a => a.Completed);
-    public int TotalAchievements => Achievements.Sum(a => a.Total);
-    public int TotalPurple => Achievements.Sum(a => a.Purple);
-    public bool HasAchievements => Achievements.Count > 0;
-    public string AchievementSummary =>
-        HasAchievements ? $"共 {Achievements.Count} 个存档 · 达成 {TotalCompleted}/{TotalAchievements}" +
-                          (TotalPurple > 0 ? $"（{TotalPurple} 紫色挑战）" : "")
-                        : "该版本工作目录下暂无成就数据（saves/&lt;存档&gt;/advancements）";
+    // ---- ⑧ 版本锁定 ----
+    private bool _locked;
+    public bool Locked { get => _locked; set => SetField(ref _locked, value); }
 
+    // ---- 模组管理 ⑦ ----
+    public enum ModTabKind { Mods, ResourcePacks, Shaders }
+    private ModTabKind _modTab = ModTabKind.Mods;
+    public ModTabKind ModTab { get => _modTab; set { if (SetField(ref _modTab, value)) RefreshInstalled(); } }
+
+    public ObservableCollection<InstalledItemViewModel> InstalledItems { get; } = new();
+    public ObservableCollection<ModSearchHit> SearchResults { get; } = new();
+
+    private string _searchQuery = "";
+    public string SearchQuery { get => _searchQuery; set => SetField(ref _searchQuery, value); }
+    private bool _busy;
+    public bool Busy { get => _busy; set => SetField(ref _busy, value); }
     private string _status = "";
-    public string Status
-    {
-        get => _status;
-        set => SetField(ref _status, value);
-    }
-
-    private bool _initialized;
+    public string Status { get => _status; set => SetField(ref _status, value); }
 
     public VersionSettingsViewModel(string versionId, string versionType, string gameRoot)
     {
         _versionId = versionId;
+        _versionType = versionType;
         _gameRoot = gameRoot;
-        VersionType = versionType;
+        _downloader = new HttpDownloader(_http, 8, null);
+        _logger = new VmLogger(s => Status = s);
 
-        // 初始状态直接赋值，不触发开关逻辑
-        _isIsolated = VersionIsolation.IsIsolated(_gameRoot, _versionId);
-        RefreshAchievements();
-        _initialized = true;
+        var p = VersionProfileStore.Load(gameRoot, versionId);
+        _displayName = p.DisplayName;
+        Isolation = p.Isolation;
+        _customGameDir = p.CustomGameDir;
+        _javaPath = p.JavaPath;
+        _maxMemoryMb = p.MaxMemoryMb;
+        _minMemoryMb = p.MinMemoryMb;
+        _extraJvmArgsText = string.Join("\n", p.ExtraJvmArgs);
+        _resolutionWidth = p.ResolutionWidth;
+        _resolutionHeight = p.ResolutionHeight;
+        _fullscreen = p.Fullscreen;
+        _locked = p.Locked;
+
+        DetectedLoader = VersionProfileStore.DetectLoader(gameRoot, versionId);
+        RefreshInstalled();
     }
 
-    private void RefreshAchievements()
+    private string EffectiveDir =>
+        VersionProfileStore.EffectiveGameDir(_gameRoot, _versionId,
+            new VersionProfile { Isolation = Isolation, CustomGameDir = CustomGameDir });
+
+    // ---- 持久化 ----
+    public void Save()
     {
-        Achievements = AchievementScanner.Scan(GameDir);
-        OnPropertyChanged(nameof(TotalCompleted));
-        OnPropertyChanged(nameof(TotalAchievements));
-        OnPropertyChanged(nameof(TotalPurple));
-        OnPropertyChanged(nameof(HasAchievements));
-        OnPropertyChanged(nameof(AchievementSummary));
-        Status = IsIsolated
-            ? $"已隔离：工作目录 {GameDir}"
-            : $"未隔离：工作目录 {GameDir}（与默认 .minecraft 共享）";
+        var p = new VersionProfile
+        {
+            DisplayName = DisplayName.Trim(),
+            Isolation = Isolation,
+            CustomGameDir = CustomGameDir?.Trim(),
+            JavaPath = JavaPath?.Trim(),
+            MaxMemoryMb = (int?)MaxMemoryMb,
+            MinMemoryMb = (int?)MinMemoryMb,
+            ExtraJvmArgs = ExtraJvmArgsText.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList(),
+            ResolutionWidth = (int?)ResolutionWidth,
+            ResolutionHeight = (int?)ResolutionHeight,
+            Fullscreen = Fullscreen,
+            Locked = Locked
+        };
+        VersionProfileStore.Save(_gameRoot, _versionId, p);
+        VersionProfileStore.ApplyIsolation(_gameRoot, _versionId, p);
+        Status = "已保存版本设置";
     }
+
+    // ---- ③ 安装加载器 ----
+    public ICommand InstallLoaderCommand => new AsyncRelayCommand(InstallLoaderAsync);
+    private async Task InstallLoaderAsync(object? loader)
+    {
+        var name = loader as string;
+        if (string.IsNullOrWhiteSpace(name)) return;
+        Busy = true; Status = $"正在安装 {name}（基于 {BaseMcVersion}）…";
+        try
+        {
+            var newId = await LauncherService.Instance.InstallVersionAsync(BaseMcVersion, name!, null, default);
+            if (!string.IsNullOrEmpty(newId))
+            {
+                Status = $"{name} 安装完成：新实例 {newId}（请在版本列表切换到它）";
+                VersionsChanged?.Invoke();
+            }
+            else
+            {
+                Status = $"{name} 安装失败";
+            }
+        }
+        catch (Exception ex)
+        {
+            Status = $"安装 {name} 失败：{ex.Message}";
+        }
+        finally { Busy = false; }
+    }
+
+    // ---- ⑦ 文件夹 ----
+    public ICommand OpenFolderCommand => new RelayCommand(OpenFolder);
+    private void OpenFolder(object? kind)
+    {
+        var dir = EffectiveDir;
+        var target = kind switch
+        {
+            "mods" => Path.Combine(dir, "mods"),
+            "resourcepacks" => Path.Combine(dir, "resourcepacks"),
+            "shaderpacks" => Path.Combine(dir, "shaderpacks"),
+            "saves" => Path.Combine(dir, "saves"),
+            _ => dir
+        };
+        Directory.CreateDirectory(target);
+        try { Process.Start(new ProcessStartInfo { FileName = target, UseShellExecute = true }); }
+        catch { Status = $"无法打开文件夹：{target}"; }
+    }
+
+    // ---- ⑦ 已装列表 ----
+    public ICommand RefreshModsCommand => new RelayCommand(_ => RefreshInstalled());
+    private void RefreshInstalled()
+    {
+        InstalledItems.Clear();
+        var dir = EffectiveDir;
+        switch (ModTab)
+        {
+            case ModTabKind.Mods:
+                var mgr = new ModManager(dir, _http, _downloader);
+                foreach (var m in mgr.ListInstalledMods())
+                    InstalledItems.Add(new InstalledItemViewModel
+                    {
+                        FileName = m.FileName,
+                        DisplayName = string.IsNullOrEmpty(m.Name) ? m.FileName : m.Name,
+                        Subtitle = $"v{m.InstalledVersion} · {m.Loader}",
+                        Kind = "mod"
+                    });
+                break;
+            case ModTabKind.ResourcePacks:
+                AddFolderItems(Path.Combine(dir, "resourcepacks"), "resourcepack");
+                break;
+            case ModTabKind.Shaders:
+                AddFolderItems(Path.Combine(dir, "shaderpacks"), "shaderpack");
+                break;
+        }
+    }
+    private void AddFolderItems(string dir, string kind)
+    {
+        if (!Directory.Exists(dir)) return;
+        foreach (var f in Directory.EnumerateFileSystemEntries(dir).OrderBy(Path.GetFileName))
+            InstalledItems.Add(new InstalledItemViewModel
+            {
+                FileName = Path.GetFileName(f),
+                DisplayName = Path.GetFileName(f),
+                Subtitle = Directory.Exists(f) ? "文件夹" : "压缩包",
+                Kind = kind
+            });
+    }
+
+    public ICommand RemoveItemCommand => new RelayCommand(RemoveItem);
+    private void RemoveItem(object? fileName)
+    {
+        var name = fileName as string;
+        if (string.IsNullOrEmpty(name)) return;
+        var dir = EffectiveDir;
+        var target = ModTab switch
+        {
+            ModTabKind.Mods => Path.Combine(dir, "mods", name),
+            ModTabKind.ResourcePacks => Path.Combine(dir, "resourcepacks", name),
+            ModTabKind.Shaders => Path.Combine(dir, "shaderpacks", name),
+            _ => Path.Combine(dir, name)
+        };
+        try { if (File.Exists(target)) File.Delete(target); else if (Directory.Exists(target)) Directory.Delete(target, true); }
+        catch (Exception ex) { Status = $"删除失败：{ex.Message}"; }
+        RefreshInstalled();
+    }
+
+    // ---- ⑦ 搜索 + 添加（Modrinth） ----
+    public ICommand SearchModsCommand => new AsyncRelayCommand(_ => SearchModsAsync());
+    private async Task SearchModsAsync()
+    {
+        if (string.IsNullOrWhiteSpace(SearchQuery)) return;
+        Busy = true; Status = "正在搜索 Modrinth…";
+        SearchResults.Clear();
+        try
+        {
+            var type = ModTab switch
+            {
+                ModTabKind.ResourcePacks => ModrinthProjectType.ResourcePack,
+                ModTabKind.Shaders => ModrinthProjectType.Shader,
+                _ => ModrinthProjectType.Mod
+            };
+            var loader = DetectedLoader switch
+            {
+                ModLoaderKind.Fabric => LoaderType.Fabric,
+                ModLoaderKind.Forge => LoaderType.Forge,
+                ModLoaderKind.Quilt => LoaderType.Quilt,
+                ModLoaderKind.NeoForge => LoaderType.NeoForge,
+                _ => LoaderType.Any
+            };
+            var client = new ModrinthClient(_http);
+            var result = await client.SearchAsync(SearchQuery, BaseMcVersion, loader, type, limit: 25);
+            foreach (var h in result.Hits)
+                SearchResults.Add(new ModSearchHit { ProjectId = h.ProjectId, Title = h.Title, Slug = h.Slug, IconUrl = h.IconUrl });
+            Status = SearchResults.Count > 0 ? $"找到 {SearchResults.Count} 个结果" : "无匹配结果";
+        }
+        catch (Exception ex) { Status = $"搜索失败：{ex.Message}"; }
+        finally { Busy = false; }
+    }
+
+    public ICommand AddModCommand => new AsyncRelayCommand(AddModAsync);
+    private async Task AddModAsync(object? param)
+    {
+        if (param is not ModSearchHit hit) return;
+        Busy = true; Status = $"正在添加 {hit.Title}…";
+        try
+        {
+            var client = new ModrinthClient(_http);
+            var versions = await client.GetVersionsAsync(hit.ProjectId, default);
+            if (versions.Count == 0) { Status = "无可用版本"; return; }
+
+            var loader = DetectedLoader switch
+            {
+                ModLoaderKind.Fabric => LoaderType.Fabric,
+                ModLoaderKind.Forge => LoaderType.Forge,
+                ModLoaderKind.Quilt => LoaderType.Quilt,
+                ModLoaderKind.NeoForge => LoaderType.NeoForge,
+                _ => LoaderType.Any
+            };
+            // 优先选与基版本完全匹配的文件
+            ModrinthFile? file = null;
+            foreach (var v in versions)
+            {
+                var f = client.SelectBestFile(v, BaseMcVersion, loader);
+                if (f is not null) { file = f; break; }
+            }
+            file ??= client.SelectBestFile(versions[0], null, LoaderType.Any);
+            if (file is null) { Status = "未找到可下载文件"; return; }
+
+            var sub = ModTab switch
+            {
+                ModTabKind.ResourcePacks => "resourcepacks",
+                ModTabKind.Shaders => "shaderpacks",
+                _ => "mods"
+            };
+            var destDir = Path.Combine(EffectiveDir, sub);
+            Directory.CreateDirectory(destDir);
+            var dest = Path.Combine(destDir, file.FileName);
+            await _downloader.DownloadAsync(new DownloadItem(new[] { file.Url }, dest, file.Hashes.Sha1), null, default);
+            Status = $"已添加：{file.FileName}";
+            RefreshInstalled();
+        }
+        catch (Exception ex) { Status = $"添加失败：{ex.Message}"; }
+        finally { Busy = false; }
+    }
+
+    public ICommand CheckUpdatesCommand => new AsyncRelayCommand(_ => CheckUpdatesAsync());
+    private async Task CheckUpdatesAsync()
+    {
+        if (ModTab != ModTabKind.Mods) { Status = "仅 Mods 支持更新检查"; return; }
+        Busy = true; Status = "正在检查更新…";
+        try
+        {
+            var mgr = new ModManager(EffectiveDir, _http, _downloader);
+            var mods = await mgr.CheckForUpdatesAsync(default);
+            var updates = mods.Count(m => m.HasUpdate);
+            Status = updates > 0 ? $"{updates} 个 Mod 有可用更新" : "所有 Mod 均为最新";
+        }
+        catch (Exception ex) { Status = $"检查失败：{ex.Message}"; }
+        finally { Busy = false; }
+    }
+
+    private class VmLogger : ILogger
+    {
+        private readonly Action<string> _log;
+        public VmLogger(Action<string> log) => _log = log;
+        public void Log(string message) => _log(message);
+    }
+}
+
+/// <summary>已安装项（Mod / 资源包 / 光影）的展示模型。</summary>
+public class InstalledItemViewModel : ObservableObject
+{
+    public string FileName { get; set; } = "";
+    public string DisplayName { get; set; } = "";
+    public string Subtitle { get; set; } = "";
+    public string Kind { get; set; } = "";
+}
+
+/// <summary>Modrinth 搜索命中项的展示模型。</summary>
+public class ModSearchHit : ObservableObject
+{
+    public string ProjectId { get; set; } = "";
+    public string Title { get; set; } = "";
+    public string Slug { get; set; } = "";
+    public string IconUrl { get; set; } = "";
 }

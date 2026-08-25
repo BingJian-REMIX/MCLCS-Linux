@@ -19,7 +19,17 @@
                Background="{DynamicResource CardBackground}" BorderThickness="0" MaxHeight="360">
         <ListBox.ItemTemplate>
           <DataTemplate x:DataType="vm:VersionListEntry">
-            <TextBlock Text="{Binding Display}" FontSize="13" Padding="4"/>
+            <Grid ColumnDefinitions="*,Auto" Margin="2">
+              <TextBlock Grid.Column="0" Text="{Binding Display}" FontSize="13" VerticalAlignment="Center"/>
+              <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                <Button Classes="modal-btn" Content="设置" FontSize="12" Padding="8,2"
+                        Command="{Binding DataContext.OpenSettingsCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                        CommandParameter="{Binding}"/>
+                <Button Classes="modal-btn accent" Content="启动" FontSize="12" Padding="8,2"
+                        Command="{Binding DataContext.LaunchCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                        CommandParameter="{Binding}"/>
+              </StackPanel>
+            </Grid>
           </DataTemplate>
         </ListBox.ItemTemplate>
       </ListBox>

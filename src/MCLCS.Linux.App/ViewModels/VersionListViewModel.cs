@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
@@ -10,6 +11,7 @@ using MCLCS.Core.Models;
 using MCLCS.Core.Mvvm;
 using MCLCS.Core.Profiles;
 using MCLCS.Core.Utils;
+using MCLCS.Linux.App;
 
 namespace MCLCS.Linux.App.ViewModels;
 
@@ -60,7 +62,20 @@ public class VersionListViewModel : ObservableObject
     public bool CanLaunch => !Busy && SelectedVersion is not null;
 
     public ICommand RefreshCommand => new RelayCommand(_ => Refresh());
-    public ICommand LaunchCommand => new AsyncRelayCommand(_ => LaunchAsync(), _ => CanLaunch);
+    public ICommand LaunchCommand => new AsyncRelayCommand(o => LaunchEntryAsync(o as VersionListEntry), _ => CanLaunch);
+    public ICommand OpenSettingsCommand => new AsyncRelayCommand(o => OpenSettingsAsync(o as VersionListEntry));
+
+    private async Task LaunchEntryAsync(VersionListEntry? entry)
+    {
+        if (entry is not null) SelectedVersion = entry;
+        await LaunchAsync();
+    }
+
+    private async Task OpenSettingsAsync(VersionListEntry? entry)
+    {
+        if (entry is null) return;
+        await VersionSettingsDialog.OpenAsync(_gameRoot, entry.Id, entry.Type, Refresh);
+    }
 
     public VersionListViewModel()
     {
@@ -110,10 +125,15 @@ public class VersionListViewModel : ObservableObject
         if (string.IsNullOrWhiteSpace(id)) { Status = "请先选择一个版本"; return; }
 
         var profile = ProfileStore.Load(_gameRoot);
-        var java = await ResolveJavaAsync(profile.JavaPath);
+
+        // 每版本覆盖层：从 versions/<id>/profile.json 读取，未设置则回落全局
+        var vp = VersionProfileStore.Load(_gameRoot, id);
+        var effectiveDir = VersionProfileStore.EffectiveGameDir(_gameRoot, id, vp);
+
+        var java = await ResolveJavaAsync(vp.JavaPath ?? profile.JavaPath);
         if (java is null)
         {
-            Status = "未检测到 Java，请在「设置 → 启动」中配置 Java 路径";
+            Status = "未检测到 Java，请在「设置 → 启动」或该版本设置中配置 Java 路径";
             return;
         }
 
@@ -121,7 +141,25 @@ public class VersionListViewModel : ObservableObject
         try
         {
             Status = $"正在启动 {id} …";
-            var opts = new LaunchOptions { MaxMemoryMb = profile.MaxMemoryMb > 0 ? profile.MaxMemoryMb : 2048 };
+
+            var extraJvm = new List<string>(profile.ExtraJvmArgs);
+            extraJvm.AddRange(vp.ExtraJvmArgs);
+
+            (int W, int H)? resolution = null;
+            if (vp.ResolutionWidth is > 0 && vp.ResolutionHeight is > 0)
+                resolution = (vp.ResolutionWidth.Value, vp.ResolutionHeight.Value);
+            else if (profile.ResolutionWidth is > 0 && profile.ResolutionHeight is > 0)
+                resolution = (profile.ResolutionWidth.Value, profile.ResolutionHeight.Value);
+
+            var opts = new LaunchOptions
+            {
+                MaxMemoryMb = vp.MaxMemoryMb ?? (profile.MaxMemoryMb > 0 ? profile.MaxMemoryMb : 2048),
+                MinMemoryMb = vp.MinMemoryMb ?? profile.MinMemoryMb,
+                ExtraJvmArgs = extraJvm,
+                Resolution = resolution,
+                Fullscreen = vp.Fullscreen,
+                GameDir = effectiveDir
+            };
 
             var account = AccountStore.GetLastUsed(_gameRoot);
             if (account is { } a && !string.IsNullOrEmpty(a.Uuid))

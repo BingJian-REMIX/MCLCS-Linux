@@ -18,6 +18,10 @@ public class LaunchOptions
     public List<string> ExtraJvmArgs { get; set; } = new();
     /// <summary>直接连入的服务器地址（host:port）。非空时追加 --server --port 到游戏参数。</summary>
     public string? ServerAddress { get; set; }
+    /// <summary>强制指定的游戏工作目录（每版本覆盖）。为 null 时由 VersionIsolation 按隔离标记决定。</summary>
+    public string? GameDir { get; set; }
+    /// <summary>是否以全屏启动（注入 --fullscreen 游戏参数）。</summary>
+    public bool Fullscreen { get; set; }
 }
 
 /// <summary>解析后的启动参数。</summary>
