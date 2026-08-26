@@ -6,93 +6,68 @@
              x:DataType="vm:AiAssistViewModel">
   <UserControl.Resources>
     <conv:BoolToVisibleConverter x:Key="BoolToVis"/>
+    <conv:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
   </UserControl.Resources>
 
-  <Grid Margin="18" ColumnDefinitions="140,*">
+  <DockPanel Margin="18" LastChildFill="True">
 
-    <!-- ===== 左侧功能列表 ===== -->
-    <ListBox Grid.Column="0" ItemsSource="{Binding Functions}"
-             SelectedItem="{Binding SelectedFunction}"
-             Background="{DynamicResource ControlBackground}"
-             BorderBrush="{DynamicResource ControlBorder}"
-             BorderThickness="1" CornerRadius="8">
-      <ListBox.ItemTemplate>
-        <DataTemplate>
-          <Grid Height="40" ColumnDefinitions="28,*">
-            <TextBlock Grid.Column="0" Text="{Binding Emoji}" FontSize="14"
-                       VerticalAlignment="Center" HorizontalAlignment="Center"/>
-            <TextBlock Grid.Column="1" Text="{Binding Label}" FontSize="12"
-                       VerticalAlignment="Center" Margin="4,0,0,0"
-                       Foreground="{DynamicResource PrimaryForeground}"/>
-          </Grid>
-        </DataTemplate>
-      </ListBox.ItemTemplate>
-    </ListBox>
+    <!-- 标题 -->
+    <TextBlock DockPanel.Dock="Top" Text="AI 助手" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
 
-    <!-- ===== 右侧内容区（按功能切换） ===== -->
-    <ScrollViewer Grid.Column="1" Margin="12,0,0,0" VerticalScrollBarVisibility="Auto">
-      <StackPanel Spacing="12" MaxWidth="900" HorizontalAlignment="Left">
-
-        <!-- 崩溃解读 -->
-        <StackPanel Spacing="8" IsVisible="{Binding ShowCrash, Converter={StaticResource BoolToVis}}">
-          <TextBlock Text="崩溃解读" FontWeight="Bold" FontSize="15"/>
-          <TextBox Text="{Binding CrashText}" MinHeight="180" AcceptsReturn="True" TextWrapping="Wrap"
-                   Watermark="在此粘贴 crash-report 内容…" FontFamily="Consolas, monospace"
-                   Background="{DynamicResource InputBackground}"
-                   BorderBrush="{DynamicResource InputBorder}"/>
-          <Button Classes="modal-btn accent" Content="解读" Command="{Binding InterpretCommand}"
-                  IsEnabled="{Binding !IsBusy}" Width="80" HorizontalAlignment="Left"/>
-          <Border Background="{DynamicResource ControlBackground}" CornerRadius="6" Padding="10">
-            <TextBlock Text="{Binding Interpretation}" TextWrapping="Wrap"
-                       Foreground="{DynamicResource PrimaryForeground}"/>
-          </Border>
-        </StackPanel>
-
-        <!-- 推荐理由 -->
-        <StackPanel Spacing="8" IsVisible="{Binding ShowRecommend, Converter={StaticResource BoolToVis}}">
-          <TextBlock Text="配装推荐 / 推荐理由" FontWeight="Bold" FontSize="15"/>
-          <TextBox Text="{Binding RecommendInput}" MinHeight="100" AcceptsReturn="True" TextWrapping="Wrap"
-                   Watermark="描述你的玩法偏好，AI 会推荐适合的 Mod"
-                   Background="{DynamicResource InputBackground}"
-                   BorderBrush="{DynamicResource InputBorder}"/>
-          <Button Classes="modal-btn accent" Content="推荐" Command="{Binding RecommendCommand}"
-                  IsEnabled="{Binding !IsBusy}" Width="80" HorizontalAlignment="Left"/>
-          <Border Background="{DynamicResource ControlBackground}" CornerRadius="6" Padding="10">
-            <TextBlock Text="{Binding RecommendOutput}" TextWrapping="Wrap"
-                       Foreground="{DynamicResource PrimaryForeground}"/>
-          </Border>
-        </StackPanel>
-
-        <!-- Mod 翻译 -->
-        <StackPanel Spacing="8" IsVisible="{Binding ShowTranslate, Converter={StaticResource BoolToVis}}">
-          <TextBlock Text="Mod 描述翻译" FontWeight="Bold" FontSize="15"/>
-          <TextBox Text="{Binding ModText}" MinHeight="180" AcceptsReturn="True" TextWrapping="Wrap"
-                   Watermark="在此粘贴 Mod 的英文描述…"
-                   Background="{DynamicResource InputBackground}"
-                   BorderBrush="{DynamicResource InputBorder}"/>
-          <Button Classes="modal-btn accent" Content="翻译" Command="{Binding TranslateCommand}"
-                  IsEnabled="{Binding !IsBusy}" Width="80" HorizontalAlignment="Left"/>
-          <Border Background="{DynamicResource ControlBackground}" CornerRadius="6" Padding="10">
-            <TextBlock Text="{Binding Translated}" TextWrapping="Wrap"
-                       Foreground="{DynamicResource PrimaryForeground}"/>
-          </Border>
-        </StackPanel>
-
-        <!-- 年度总结 -->
-        <StackPanel Spacing="8" IsVisible="{Binding ShowSummary, Converter={StaticResource BoolToVis}}">
-          <TextBlock Text="年度总结" FontWeight="Bold" FontSize="15"/>
-          <TextBlock Text="根据你的游玩记录，AI 生成一段年度总结。"
-                     Foreground="{DynamicResource SecondaryForeground}"/>
-          <Button Classes="modal-btn accent" Content="生成总结" Command="{Binding SummaryCommand}"
-                  IsEnabled="{Binding !IsBusy}" Width="100" HorizontalAlignment="Left"/>
-          <Border Background="{DynamicResource ControlBackground}" CornerRadius="6" Padding="10">
-            <TextBlock Text="{Binding AnnualSummary}" TextWrapping="Wrap"
-                       Foreground="{DynamicResource PrimaryForeground}"/>
-          </Border>
-        </StackPanel>
-
-        <TextBlock Text="{Binding StatusMessage}" Classes="status" Margin="0,4,0,0"/>
+    <!-- 底部：快捷操作 + 输入 + 发送 -->
+    <StackPanel DockPanel.Dock="Bottom" Spacing="8" Margin="0,8,0,0">
+      <StackPanel Orientation="Horizontal" Spacing="6">
+        <Button Classes="modal-btn" Content="崩溃分析" Command="{Binding CrashCommand}" IsEnabled="{Binding !IsBusy}"/>
+        <Button Classes="modal-btn" Content="Mod 翻译" Command="{Binding TranslateCommand}" IsEnabled="{Binding !IsBusy}"/>
+        <Button Classes="modal-btn" Content="配装推荐" Command="{Binding RecommendCommand}" IsEnabled="{Binding !IsBusy}"/>
+        <Button Classes="modal-btn" Content="年度总结" Command="{Binding SummaryCommand}" IsEnabled="{Binding !IsBusy}"/>
       </StackPanel>
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBox Grid.Column="0" Text="{Binding InputText}" AcceptsReturn="True" Margin="0,0,8,0"
+                 MinHeight="44" MaxHeight="120" TextWrapping="Wrap" VerticalContentAlignment="Top"
+                 Watermark="输入你的问题…（可粘贴崩溃日志）"
+                 Background="{DynamicResource InputBackground}" BorderBrush="{DynamicResource InputBorder}"/>
+        <Button Grid.Column="1" Classes="modal-btn accent" Content="发送" MinWidth="72"
+                Command="{Binding SendCommand}" IsEnabled="{Binding !IsBusy}" VerticalAlignment="Bottom" Height="44"/>
+      </Grid>
+      <TextBlock Classes="status" Text="{Binding StatusMessage}"/>
+    </StackPanel>
+
+    <!-- 对话区 -->
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+      <ItemsControl ItemsSource="{Binding Messages}" Margin="0,0,4,4">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:ChatMessage">
+            <Grid Margin="0,6,0,0">
+
+              <!-- 用户气泡（右对齐）-->
+              <Border IsVisible="{Binding IsUser, Converter={StaticResource BoolToVis}}"
+                      Background="{DynamicResource AccentBrush}" CornerRadius="12,12,4,12"
+                      Padding="10,8" MaxWidth="560" HorizontalAlignment="Right">
+                <TextBlock Text="{Binding Content}" Foreground="White" TextWrapping="Wrap" FontSize="13"/>
+              </Border>
+
+              <!-- 助手气泡（左对齐 + 头像）-->
+              <StackPanel Orientation="Horizontal" Spacing="8"
+                          IsVisible="{Binding IsUser, Converter={StaticResource InvBoolToVis}}"
+                          MaxWidth="640" HorizontalAlignment="Left">
+                <Border Width="30" Height="30" CornerRadius="15"
+                        Background="{DynamicResource ControlBackground}"
+                        BorderBrush="{DynamicResource ControlBorder}" BorderThickness="1">
+                  <TextBlock Text="🤖" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <Border Background="{DynamicResource ControlBackground}" CornerRadius="12,12,12,4"
+                        Padding="10,8" BorderBrush="{DynamicResource ControlBorder}" BorderThickness="1">
+                  <TextBlock Text="{Binding Content}" Foreground="{DynamicResource PrimaryForeground}"
+                             TextWrapping="Wrap" FontSize="13"/>
+                </Border>
+              </StackPanel>
+
+            </Grid>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
     </ScrollViewer>
-  </Grid>
+
+  </DockPanel>
 </UserControl>

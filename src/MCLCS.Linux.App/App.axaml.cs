@@ -4,6 +4,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Media;
 using Avalonia.Markup.Xaml;
 using Avalonia.Styling;
+using MCLCS.Core.Ai;
 using MCLCS.Core.Download;
 using MCLCS.Core.Profiles;
 using MCLCS.Core.Theme;
@@ -55,6 +56,8 @@ public class App : Application
     public static void ApplyAppearanceFromProfile()
     {
         var profile = ProfileStore.Load(GameConstants.DefaultGameRoot);
+        // 启动期把已保存的 AI 配置载入运行时，避免聊天页/AI 功能重启后默认不启用
+        Assistant.Config = profile.Ai;
         ApplyAccentColor(profile.ThemeColor);
         ApplyFontScale(profile.FontScale);
         ApplyBackgroundImage(profile.BackgroundImagePath);

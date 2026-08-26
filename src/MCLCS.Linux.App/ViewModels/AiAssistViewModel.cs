@@ -1,146 +1,168 @@
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Linq;
 using System.Windows.Input;
 using MCLCS.Core.Ai;
+using MCLCS.Core.Launcher;
 using MCLCS.Core.Mvvm;
 using MCLCS.Core.Statistics;
+using MCLCS.Linux.App;
 
 namespace MCLCS.Linux.App.ViewModels;
 
-/// <summary>AI 助手面板的一个功能项。</summary>
-public class AiFunctionItem : ObservableObject
+/// <summary>聊天消息：role 为 user / assistant。</summary>
+public class ChatMessage : ObservableObject
 {
-    public string Id { get; init; } = "";
-    public string Label { get; init; } = "";
-    public string Emoji { get; init; } = "";
+    public string Role { get; }
+    public string Content { get; }
+    public bool IsUser => Role == "user";
 
-    private bool _isSelected;
-    public bool IsSelected { get => _isSelected; set => SetField(ref _isSelected, value); }
+    public ChatMessage(string role, string content)
+    {
+        Role = role;
+        Content = content;
+    }
 }
 
-/// <summary>AI 助手面板：左侧功能列表 + 右侧结果区域（对齐 WPF AiAssistViewModel）。</summary>
+/// <summary>AI 助手面板（工具箱 aichat）：单页聊天界面。
+/// 自由输入走 Assistant.ChatAsync；另保留崩溃解读 / Mod 翻译 / 配装推荐 / 年度总结 快捷操作，避免功能回退。</summary>
 public class AiAssistViewModel : ObservableObject
 {
-    // ---- 功能列表 ----
-    public AiFunctionItem[] Functions { get; } =
-    {
-        new() { Id = "crash", Label = "崩溃解读", Emoji = "\U0001F4A5" },
-        new() { Id = "recommend", Label = "推荐理由", Emoji = "\U0001F48E" },
-        new() { Id = "translate", Label = "Mod 翻译", Emoji = "\U0001F30D" },
-        new() { Id = "summary", Label = "年度总结", Emoji = "\U0001F4CA" },
-    };
+    public ObservableCollection<ChatMessage> Messages { get; } = new();
 
-    private AiFunctionItem _selectedFunction;
-    public AiFunctionItem SelectedFunction
-    {
-        get => _selectedFunction;
-        set
-        {
-            if (!SetField(ref _selectedFunction, value)) return;
-            foreach (var f in Functions) f.IsSelected = (f == value);
-            OnPropertyChanged(nameof(ShowCrash));
-            OnPropertyChanged(nameof(ShowRecommend));
-            OnPropertyChanged(nameof(ShowTranslate));
-            OnPropertyChanged(nameof(ShowSummary));
-        }
-    }
+    private string _inputText = "";
+    public string InputText { get => _inputText; set => SetField(ref _inputText, value); }
 
-    // 面板可见性（按选中的功能）
-    public bool ShowCrash => SelectedFunction?.Id == "crash";
-    public bool ShowRecommend => SelectedFunction?.Id == "recommend";
-    public bool ShowTranslate => SelectedFunction?.Id == "translate";
-    public bool ShowSummary => SelectedFunction?.Id == "summary";
-
-    // ---- 通用 ----
-    private string _statusMessage = "";
     private bool _isBusy;
-
-    public string StatusMessage { get => _statusMessage; set => SetField(ref _statusMessage, value); }
     public bool IsBusy { get => _isBusy; set => SetField(ref _isBusy, value); }
+
+    private string _statusMessage = "";
+    public string StatusMessage { get => _statusMessage; set => SetField(ref _statusMessage, value); }
+
     public bool AiEnabled => Assistant.Config.Enabled;
 
-    // ---- 崩溃解读 ----
-    private string _crashText = "";
-    private string _interpretation = "";
-    public string CrashText { get => _crashText; set => SetField(ref _crashText, value); }
-    public string Interpretation { get => _interpretation; set => SetField(ref _interpretation, value); }
-
-    // ---- 推荐理由 ----
-    private string _recommendInput = "";
-    private string _recommendOutput = "";
-    public string RecommendInput { get => _recommendInput; set => SetField(ref _recommendInput, value); }
-    public string RecommendOutput { get => _recommendOutput; set => SetField(ref _recommendOutput, value); }
-
-    // ---- Mod 翻译 ----
-    private string _modText = "";
-    private string _translated = "";
-    public string ModText { get => _modText; set => SetField(ref _modText, value); }
-    public string Translated { get => _translated; set => SetField(ref _translated, value); }
-
-    // ---- 年度总结 ----
-    private string _annualSummary = "";
-    public string AnnualSummary { get => _annualSummary; set => SetField(ref _annualSummary, value); }
-
-    public ICommand InterpretCommand { get; }
-    public ICommand TranslateCommand { get; }
-    public ICommand RecommendCommand { get; }
-    public ICommand SummaryCommand { get; }
+    public ICommand SendCommand => new AsyncRelayCommand(_ => SendAsync(), _ => !IsBusy);
+    public ICommand CrashCommand => new AsyncRelayCommand(_ => CrashAnalyzeAsync(), _ => !IsBusy);
+    public ICommand TranslateCommand => new AsyncRelayCommand(_ => TranslateAsync(), _ => !IsBusy);
+    public ICommand RecommendCommand => new AsyncRelayCommand(_ => RecommendAsync(), _ => !IsBusy);
+    public ICommand SummaryCommand => new AsyncRelayCommand(_ => SummaryAsync(), _ => !IsBusy);
 
     public AiAssistViewModel()
     {
-        _selectedFunction = Functions[0];
-        SelectedFunction = Functions[0]; // 触发面板可见性
-
-        InterpretCommand = new AsyncRelayCommand(_ => InterpretAsync(), _ => !IsBusy);
-        TranslateCommand = new AsyncRelayCommand(_ => TranslateAsync(), _ => !IsBusy);
-        RecommendCommand = new AsyncRelayCommand(_ => RecommendAsync(), _ => !IsBusy);
-        SummaryCommand = new AsyncRelayCommand(_ => SummaryAsync(), _ => !IsBusy);
+        // 设计稿问候语（首条助手气泡）
+        Messages.Add(new ChatMessage("assistant",
+            "你好！我是 MCLCS AI 助手。可直接输入问题，支持崩溃分析、Mod 推荐、翻译等。点击下方麦克风按钮可使用语音输入。"));
     }
 
-    private async Task InterpretAsync()
+    // ---- 自由对话 ----
+    private async Task SendAsync()
     {
-        if (string.IsNullOrWhiteSpace(CrashText)) { StatusMessage = "请粘贴崩溃日志"; return; }
+        var text = InputText?.Trim();
+        if (string.IsNullOrEmpty(text)) return;
+        InputText = "";
+        Messages.Add(new ChatMessage("user", text));
         IsBusy = true;
         try
         {
-            Interpretation = await Assistant.InterpretCrashAsync(CrashText);
-            StatusMessage = Assistant.Config.Enabled ? "已解读" : "已使用本地启发式解读";
+            var reply = await Assistant.ChatAsync(text);
+            Messages.Add(new ChatMessage("assistant", reply));
         }
         finally { IsBusy = false; }
     }
 
+    // ---- 快捷操作：崩溃分析 ----
+    private async Task CrashAnalyzeAsync()
+    {
+        IsBusy = true;
+        try
+        {
+            var root = Services.LauncherService.Instance.GameRoot;
+            var latest = CrashDetector.FindLatestCrashReport(root);
+            if (latest is null)
+            {
+                Messages.Add(new ChatMessage("user", "帮我分析上次崩溃"));
+                Messages.Add(new ChatMessage("assistant",
+                    "未找到崩溃报告文件（crash-reports 目录为空）。如有日志，可直接粘贴到下方输入框，我会帮你分析。"));
+                return;
+            }
+            Messages.Add(new ChatMessage("user", $"帮我分析上次崩溃（{Path.GetFileName(latest)}）"));
+            var result = await Assistant.InterpretCrashAsync(File.ReadAllText(latest));
+            Messages.Add(new ChatMessage("assistant", result));
+        }
+        catch (Exception ex)
+        {
+            Messages.Add(new ChatMessage("assistant", $"分析失败：{ex.Message}"));
+        }
+        finally { IsBusy = false; }
+    }
+
+    // ---- 快捷操作：Mod 描述翻译 ----
     private async Task TranslateAsync()
     {
-        if (string.IsNullOrWhiteSpace(ModText)) { StatusMessage = "请粘贴 Mod 描述"; return; }
+        var text = InputText?.Trim();
+        if (string.IsNullOrEmpty(text))
+        {
+            StatusMessage = "请在输入框粘贴 Mod 描述后点击「Mod 翻译」";
+            return;
+        }
+        Messages.Add(new ChatMessage("user", $"请翻译这段 Mod 描述：\n{text}"));
+        InputText = "";
         IsBusy = true;
-        try { Translated = await Assistant.TranslateModDescriptionAsync(ModText); }
+        try
+        {
+            var r = await Assistant.TranslateModDescriptionAsync(text);
+            Messages.Add(new ChatMessage("assistant", r));
+        }
         finally { IsBusy = false; }
     }
 
+    // ---- 快捷操作：配装推荐 ----
     private async Task RecommendAsync()
     {
-        if (string.IsNullOrWhiteSpace(RecommendInput)) { StatusMessage = "请描述你的玩法偏好"; return; }
+        var pref = InputText?.Trim();
+        if (string.IsNullOrEmpty(pref))
+        {
+            StatusMessage = "请在输入框描述你的玩法偏好后点击「配装推荐」";
+            return;
+        }
+        Messages.Add(new ChatMessage("user", $"帮我推荐适合的 Mod：{pref}"));
+        InputText = "";
         IsBusy = true;
         try
         {
-            if (Assistant.Config.Enabled)
-                RecommendOutput = await Assistant.InterpretCrashAsync($"请根据以下偏好推荐5个Minecraft Mod（仅列名称和简要理由）：{RecommendInput}");
-            else
-                RecommendOutput = "AI 未启用，请在设置中开启后使用此功能。\n\n你可以先在设置 → AI 助手中启用外部 API（填 Endpoint/Key）或本地 Ollama 部署。";
+            var r = Assistant.Config.Enabled
+                ? await Assistant.InterpretCrashAsync($"请根据以下偏好推荐5个Minecraft Mod（仅列名称和简要理由）：{pref}")
+                : "AI 未启用，请在「设置 → AI 助手」中开启后使用此功能。";
+            Messages.Add(new ChatMessage("assistant", r));
         }
-        catch (Exception ex) { RecommendOutput = $"推荐失败：{ex.Message}"; }
+        catch (Exception ex)
+        {
+            Messages.Add(new ChatMessage("assistant", $"推荐失败：{ex.Message}"));
+        }
         finally { IsBusy = false; }
     }
 
+    // ---- 快捷操作：年度总结 ----
     private async Task SummaryAsync()
     {
-        if (!AiEnabled) { AnnualSummary = "AI 未启用，请在设置中开启后使用此功能。"; return; }
+        Messages.Add(new ChatMessage("user", "生成我的年度总结"));
         IsBusy = true;
         try
         {
+            if (!AiEnabled)
+            {
+                Messages.Add(new ChatMessage("assistant", "AI 未启用，请在「设置 → AI 助手」中开启后使用此功能。"));
+                return;
+            }
             var data = AnnualReport.GenerateFrom(Services.LauncherService.Instance.GameRoot, DateTime.Now.Year);
             var md = data.HasData ? AnnualReport.RenderMarkdown(data) : "今年还没有游玩记录。";
-            AnnualSummary = await Assistant.InterpretCrashAsync($"请将以下年度游戏报告总结成一段100字以内的话：\n{md}");
+            var r = await Assistant.InterpretCrashAsync($"请将以下年度游戏报告总结成一段100字以内的话：\n{md}");
+            Messages.Add(new ChatMessage("assistant", r));
         }
-        catch (Exception ex) { AnnualSummary = $"生成失败：{ex.Message}"; }
+        catch (Exception ex)
+        {
+            Messages.Add(new ChatMessage("assistant", $"生成失败：{ex.Message}"));
+        }
         finally { IsBusy = false; }
     }
 }
