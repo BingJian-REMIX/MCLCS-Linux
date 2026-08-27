@@ -27,8 +27,9 @@
                  MinHeight="44" MaxHeight="120" TextWrapping="Wrap" VerticalContentAlignment="Top"
                  Watermark="输入你的问题…（可粘贴崩溃日志）"
                  Background="{DynamicResource InputBackground}" BorderBrush="{DynamicResource InputBorder}"/>
-        <Button Grid.Column="1" Classes="modal-btn accent" Content="发送" MinWidth="72"
-                Command="{Binding SendCommand}" IsEnabled="{Binding !IsBusy}" VerticalAlignment="Bottom" Height="44"/>
+        <Button Grid.Column="1" Classes="modal-btn primary" Content="发送" MinWidth="72"
+                Command="{Binding SendCommand}" IsEnabled="{Binding !IsBusy}" VerticalAlignment="Bottom"
+                Height="44" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
       </Grid>
       <TextBlock Classes="status" Text="{Binding StatusMessage}"/>
     </StackPanel>
@@ -53,8 +54,15 @@
                           MaxWidth="640" HorizontalAlignment="Left">
                 <Border Width="30" Height="30" CornerRadius="15"
                         Background="{DynamicResource ControlBackground}"
-                        BorderBrush="{DynamicResource ControlBorder}" BorderThickness="1">
-                  <TextBlock Text="🤖" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        BorderBrush="{DynamicResource ControlBorder}" BorderThickness="1"
+                        x:CompileBindings="False">
+                  <Grid>
+                    <Image Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center"
+                           Source="{Binding AssistantLogo, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl}}"
+                           IsVisible="{Binding HasLogo, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl}, Converter={StaticResource BoolToVis}}"/>
+                    <TextBlock Text="🤖" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"
+                               IsVisible="{Binding HasLogo, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl}, Converter={StaticResource InvBoolToVis}}"/>
+                  </Grid>
                 </Border>
                 <Border Background="{DynamicResource ControlBackground}" CornerRadius="12,12,12,4"
                         Padding="10,8" BorderBrush="{DynamicResource ControlBorder}" BorderThickness="1">

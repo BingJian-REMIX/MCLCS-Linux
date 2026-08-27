@@ -1,7 +1,9 @@
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Windows.Input;
+using Avalonia.Media.Imaging;
 using MCLCS.Core.Ai;
 using MCLCS.Core.Launcher;
 using MCLCS.Core.Mvvm;
@@ -41,6 +43,20 @@ public class AiAssistViewModel : ObservableObject
 
     public bool AiEnabled => Assistant.Config.Enabled;
 
+    private Bitmap? _assistantLogo;
+    public Bitmap? AssistantLogo
+    {
+        get => _assistantLogo;
+        private set => SetField(ref _assistantLogo, value);
+    }
+
+    private bool _hasLogo;
+    public bool HasLogo
+    {
+        get => _hasLogo;
+        private set => SetField(ref _hasLogo, value);
+    }
+
     public ICommand SendCommand => new AsyncRelayCommand(_ => SendAsync(), _ => !IsBusy);
     public ICommand CrashCommand => new AsyncRelayCommand(_ => CrashAnalyzeAsync(), _ => !IsBusy);
     public ICommand TranslateCommand => new AsyncRelayCommand(_ => TranslateAsync(), _ => !IsBusy);
@@ -51,7 +67,81 @@ public class AiAssistViewModel : ObservableObject
     {
         // 设计稿问候语（首条助手气泡）
         Messages.Add(new ChatMessage("assistant",
-            "你好！我是 MCLCS AI 助手。可直接输入问题，支持崩溃分析、Mod 推荐、翻译等。点击下方麦克风按钮可使用语音输入。"));
+            "你好！我是 MCLCS AI 助手。可直接输入问题，支持崩溃分析、Mod 推荐、翻译等。"));
+        _ = LoadAssistantLogoAsync();   // 异步拉取部署 AI 的 logo，失败则保持 null → emoji 兜底
+    }
+
+    // ---- 助手头像：按后端品牌拉取 favicon，失败回退 emoji ----
+    private async Task LoadAssistantLogoAsync()
+    {
+        try
+        {
+            var domain = ResolveProviderDomain();
+            if (string.IsNullOrEmpty(domain)) return;
+
+            var cacheDir = Path.Combine(Path.GetTempPath(), "MCLCS");
+            Directory.CreateDirectory(cacheDir);
+            var cacheFile = Path.Combine(cacheDir, domain + ".png");
+
+            byte[] data;
+            if (File.Exists(cacheFile))
+            {
+                data = await File.ReadAllBytesAsync(cacheFile);
+            }
+            else
+            {
+                using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(8) };
+                var url = $"https://www.google.com/s2/favicons?domain={domain}&sz=128";
+                data = await client.GetByteArrayAsync(url);
+                try { await File.WriteAllBytesAsync(cacheFile, data); } catch { /* 缓存写入失败忽略 */ }
+            }
+
+            // Avalonia 在构造时即完整解码，using 流安全
+            using var ms = new MemoryStream(data);
+            AssistantLogo = new Bitmap(ms);
+            HasLogo = true;
+        }
+        catch
+        {
+            // 离线/超时/解码失败：保持 AssistantLogo=null、HasLogo=false → XAML 显示 🤖
+        }
+    }
+
+    /// <summary>根据当前 AI 后端配置推断品牌域名，用于拉取 favicon。</summary>
+    private static string ResolveProviderDomain()
+    {
+        if (Assistant.Config.Mode == AiMode.Local)
+            return "ollama.com";
+
+        var ep = Assistant.Config.Endpoint ?? "";
+        if (string.IsNullOrWhiteSpace(ep)) return "";
+        string host;
+        try { host = new Uri(ep).Host; }
+        catch { return ""; }
+        if (string.IsNullOrWhiteSpace(host)) return "";
+        var h = host.ToLowerInvariant();
+
+        if (h.Contains("openai.com")) return "openai.com";
+        if (h.Contains("deepseek.com")) return "deepseek.com";
+        if (h.Contains("anthropic.com")) return "anthropic.com";
+        if (h.Contains("moonshot.cn")) return "moonshot.cn";          // Kimi
+        if (h.Contains("aliyun.com") || h.Contains("dashscope")) return "aliyun.com"; // 通义 / qwen
+        if (h.Contains("mistral.ai")) return "mistral.ai";
+        if (h.Contains("groq.com")) return "groq.com";
+        if (h.Contains("googleapis.com")) return "google.com";
+        return GetRegistrableDomain(host);
+    }
+
+    /// <summary>简化版注册域名提取（无额外依赖；未知品牌取二级域名，常见二级公共后缀单独处理）。</summary>
+    private static string GetRegistrableDomain(string host)
+    {
+        var parts = host.Split('.');
+        if (parts.Length <= 2) return host;
+        var lastTwo = parts[^2] + "." + parts[^1];
+        var twoLevelTlds = new[] { "co.uk", "com.cn", "org.cn", "net.cn", "com.au", "co.jp" };
+        return Array.Exists(twoLevelTlds, t => t == lastTwo)
+            ? parts[^3] + "." + lastTwo
+            : lastTwo;
     }
 
     // ---- 自由对话 ----

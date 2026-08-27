@@ -221,17 +221,13 @@
           </Transitions>
         </Border.Transitions>
         <Grid RowDefinitions="Auto,*">
-          <!-- 页头：有侧栏时显示标题 / 分组 / 描述 -->
+          <!-- 页头：有侧栏时显示标题 / 描述（工具箱页不显示「分组」与介绍） -->
           <StackPanel Grid.Row="0" Spacing="4" Margin="18,18,18,0"
                       IsVisible="{Binding HasSidebar}">
             <TextBlock Text="{Binding PanelTitle}" FontSize="16" FontWeight="Bold"
                        Foreground="{DynamicResource PrimaryForeground}"/>
-            <StackPanel Orientation="Horizontal" Spacing="8"
-                        IsVisible="{Binding PanelGroup, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-              <TextBlock Text="分组：" Foreground="{DynamicResource SecondaryForeground}"/>
-              <TextBlock Text="{Binding PanelGroup}" Foreground="{DynamicResource SecondaryForeground}"/>
-            </StackPanel>
-            <TextBlock Text="{Binding PanelDescription}" Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"/>
+            <TextBlock Text="{Binding PanelDescription}" Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"
+                       IsVisible="{Binding !IsToolboxTab}"/>
           </StackPanel>
           <!-- 页面宿主：按 SelectedTab / SelectedSidebarId 路由到具体功能页 -->
           <ContentControl x:Name="PageRegion" Grid.Row="1" Margin="0,12,0,0"/>

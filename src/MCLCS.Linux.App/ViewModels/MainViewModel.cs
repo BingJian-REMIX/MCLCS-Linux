@@ -208,6 +208,7 @@ public class MainViewModel : ObservableObject
                 OnPropertyChanged(nameof(ShowThemeEditor));
                 OnPropertyChanged(nameof(TitleBarColor));
                 OnPropertyChanged(nameof(HasSidebar));
+                OnPropertyChanged(nameof(IsToolboxTab));
                 OnPropertyChanged(nameof(SidebarItems));
                 SyncTabSelection();
             }
@@ -273,6 +274,9 @@ public class MainViewModel : ObservableObject
 
     /// <summary>当前主标签是否带侧边栏（游戏页无侧边栏，对齐 WPF 规格 2.1）。</summary>
     public bool HasSidebar => Sidebar.For(_selectedTab.Kind).Count > 0;
+
+    /// <summary>当前是否处于工具箱主标签（用于隐藏页头的「分组」与介绍段落）。</summary>
+    public bool IsToolboxTab => _selectedTab.Kind == MainTabKind.Toolbox;
 
     // ===== 状态栏（对齐 WPF 底部 StatusBar）=====
     private string? _javaVersionText;
