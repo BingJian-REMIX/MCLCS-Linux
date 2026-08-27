@@ -57,9 +57,13 @@
                         BorderBrush="{DynamicResource ControlBorder}" BorderThickness="1"
                         x:CompileBindings="False">
                   <Grid>
-                    <Image Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center"
-                           Source="{Binding AssistantLogo, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl}}"
-                           IsVisible="{Binding HasLogo, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl}, Converter={StaticResource BoolToVis}}"/>
+                    <!-- 品牌 logo：白色圆形衬底确保在暗色主题下也能看清深色 favicon -->
+                    <Border Width="22" Height="22" CornerRadius="11" HorizontalAlignment="Center" VerticalAlignment="Center"
+                            Background="#FFFFFF"
+                            IsVisible="{Binding HasLogo, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl}, Converter={StaticResource BoolToVis}}">
+                      <Image Source="{Binding AssistantLogo, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl}}"
+                             Stretch="Uniform" Margin="2"/>
+                    </Border>
                     <TextBlock Text="🤖" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"
                                IsVisible="{Binding HasLogo, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl}, Converter={StaticResource InvBoolToVis}}"/>
                   </Grid>
