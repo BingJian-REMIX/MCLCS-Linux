@@ -28,6 +28,8 @@
     <!-- 复用自 MCLCS-WPF 的图标资源（token 与 Core.SidebarItem.Icon 一致），供 Avalonia 通过 avares:// 加载。
          dark/light（+@2x）为 WPF 按主题分目录的四套图标：暗色主题用白系（dark）、亮色主题用黑系（light）。 -->
     <AvaloniaResource Include="Resources\Icons\**\*.png" />
+    <!-- 品牌图标（提取自 WPF 的 MCLCS.ico），用作窗口图标与发行包入口图标 -->
+    <AvaloniaResource Include="Resources\mclcs.png" />
   </ItemGroup>
 
   <ItemGroup>

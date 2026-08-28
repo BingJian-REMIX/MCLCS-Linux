@@ -21,6 +21,7 @@ TestResults/
 
 # 发布打包
 publish/
+dist/
 *.nupkg
 
 # 运行期数据（启动器本地目录，不入库）

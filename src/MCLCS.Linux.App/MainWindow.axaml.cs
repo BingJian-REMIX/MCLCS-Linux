@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Media.Transformation;
+using Avalonia.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using MCLCS.Core.Launcher;
@@ -37,6 +38,13 @@ public partial class MainWindow : Window
         GameLauncher.GameProcessStarted += OnGameProcessStarted;
         SyncSidebarSelection();
         UpdateMaxIcon();
+        // 品牌窗口图标（提取自 WPF 的 MCLCS.ico，保证跨平台品牌一致）
+        try
+        {
+            using var stream = AssetLoader.Open(new Uri("avares://MCLCS.Linux.App/Resources/mclcs.png"));
+            Icon = new WindowIcon(new Bitmap(stream));
+        }
+        catch { /* 图标缺失不致命 */ }
         // 语言切换时重绑侧栏（走 KeyToTextConverter 的项需重绑才能刷新）
         LocaleManager.LocaleChanged += OnLocaleChanged;
         // 上屏且屏幕信息就绪后再铺满（构造函数里 Screens.Primary 尚未可用）

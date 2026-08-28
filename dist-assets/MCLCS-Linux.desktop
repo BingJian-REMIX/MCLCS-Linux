@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Name=MCLCS-Linux
+Name[zh_CN]=MCLCS-Linux 启动器
+Comment=Minecraft launcher (Linux native, powered by the MCLCS-WPF engine)
+Comment[zh_CN]=Minecraft 启动器（Linux 原生版，基于 MCLCS-WPF 引擎）
+Exec=__INSTALL_DIR__/MCLCS.Linux.App
+Icon=__INSTALL_DIR__/mclcs.png
+Terminal=false
+Type=Application
+Categories=Game;
+StartupWMClass=MCLCS-Linux
