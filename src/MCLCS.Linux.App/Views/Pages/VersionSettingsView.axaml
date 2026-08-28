@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:MCLCS.Linux.App.ViewModels"
+             xmlns:core="using:MCLCS.Core.Profiles"
              x:Class="MCLCS.Linux.App.Views.Pages.VersionSettingsView"
              x:DataType="vm:VersionSettingsViewModel">
   <ScrollViewer MaxHeight="560">
@@ -169,13 +170,38 @@
         </StackPanel>
       </Border>
 
+      <!-- ⑨ 账户绑定 -->
+      <Border Padding="12" Background="{DynamicResource CardBackground}" CornerRadius="8">
+        <StackPanel Spacing="8">
+          <TextBlock Text="账户绑定" FontWeight="SemiBold" FontSize="14"/>
+          <TextBlock Text="绑定后，启动该版本时优先使用此账号；留空则跟随全局「最后使用」。"
+                     FontSize="11" Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"/>
+          <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+            <ComboBox Grid.Column="0" ItemsSource="{Binding Accounts}" SelectedItem="{Binding BoundAccount}"
+                      HorizontalAlignment="Stretch" MinWidth="280" PlaceholderText="（未绑定，跟随全局）">
+              <ComboBox.ItemTemplate>
+                <DataTemplate x:DataType="core:AccountEntry">
+                  <StackPanel Orientation="Horizontal" Spacing="6">
+                    <TextBlock Text="{Binding DisplayName}"/>
+                    <TextBlock Text="{Binding AuthType}" Foreground="{DynamicResource SecondaryForeground}" FontSize="11"/>
+                  </StackPanel>
+                </DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
+            <Button Grid.Column="1" Classes="modal-btn" Content="清除" Margin="8,0,0,0"
+                    IsEnabled="{Binding BoundAccount, Converter={x:Static ObjectConverters.IsNotNull}}"
+                    Command="{Binding ClearAccountBindingCommand}"/>
+          </Grid>
+        </StackPanel>
+      </Border>
+
       <!-- ⑧ 版本锁定 -->
       <Border Padding="12" Background="{DynamicResource CardBackground}" CornerRadius="8">
         <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
           <StackPanel Grid.Column="0" Spacing="2">
             <TextBlock Text="版本锁定" FontWeight="SemiBold" FontSize="14"/>
-            <TextBlock Text="锁定后阻止自动更新覆盖该版本。" FontSize="11"
-                       Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"/>
+            <TextBlock Text="锁定后阻止改写该版本文件（安装加载器 / 增删 Mod 等），但不影响启动游戏。"
+                       FontSize="11" Foreground="{DynamicResource SecondaryForeground}" TextWrapping="Wrap"/>
           </StackPanel>
           <ToggleSwitch Grid.Column="1" IsChecked="{Binding Locked}" OffContent="" OnContent=""/>
         </Grid>

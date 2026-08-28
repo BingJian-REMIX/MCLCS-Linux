@@ -83,6 +83,10 @@ public class VersionProfile
     [JsonPropertyName("locked")]
     public bool Locked { get; set; }
 
+    /// <summary>⑨ 绑定账号：启动该版本时优先使用的账号 Id（为空则回落全局「最后使用」）。</summary>
+    [JsonPropertyName("boundAccountId")]
+    public string? BoundAccountId { get; set; }
+
     /// <summary>最后更新时间。</summary>
     [JsonPropertyName("updatedAt")]
     public DateTime UpdatedAt { get; set; }

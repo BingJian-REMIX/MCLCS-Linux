@@ -44,6 +44,13 @@ public static class VersionProfileStore
         File.WriteAllText(path, json);
     }
 
+    /// <summary>该版本是否处于锁定状态（锁定后阻止改写其文件，如安装加载器 / 增删 Mod）。</summary>
+    public static bool IsLocked(string gameRoot, string id)
+    {
+        try { return Load(gameRoot, id).Locked; }
+        catch { return false; }
+    }
+
     /// <summary>
     /// 计算该版本运行时的有效游戏目录（纯函数，无副作用）。
     /// <list type="bullet">

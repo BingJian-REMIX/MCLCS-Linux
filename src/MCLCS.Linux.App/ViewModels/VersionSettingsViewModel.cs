@@ -107,6 +107,17 @@ public class VersionSettingsViewModel : ObservableObject
     private bool _locked;
     public bool Locked { get => _locked; set => SetField(ref _locked, value); }
 
+    // ---- ⑨ 账户绑定 ----
+    public ObservableCollection<AccountEntry> Accounts { get; } = new();
+    private AccountEntry? _boundAccount;
+    /// <summary>启动该版本时优先使用的账号；为空表示「跟随全局（最后使用）」。</summary>
+    public AccountEntry? BoundAccount
+    {
+        get => _boundAccount;
+        set => SetField(ref _boundAccount, value);
+    }
+    public ICommand ClearAccountBindingCommand => new RelayCommand(_ => BoundAccount = null);
+
     // ---- 模组管理 ⑦ ----
     public enum ModTabKind { Mods, ResourcePacks, Shaders }
     private ModTabKind _modTab = ModTabKind.Mods;
@@ -143,6 +154,12 @@ public class VersionSettingsViewModel : ObservableObject
         _fullscreen = p.Fullscreen;
         _locked = p.Locked;
 
+        foreach (var a in AccountStore.Load(gameRoot))
+            Accounts.Add(a);
+        _boundAccount = string.IsNullOrWhiteSpace(p.BoundAccountId)
+            ? null
+            : Accounts.FirstOrDefault(a => a.Id == p.BoundAccountId);
+
         DetectedLoader = VersionProfileStore.DetectLoader(gameRoot, versionId);
         RefreshInstalled();
     }
@@ -166,11 +183,31 @@ public class VersionSettingsViewModel : ObservableObject
             ResolutionWidth = (int?)ResolutionWidth,
             ResolutionHeight = (int?)ResolutionHeight,
             Fullscreen = Fullscreen,
-            Locked = Locked
+            Locked = Locked,
+            BoundAccountId = BoundAccount?.Id
         };
         VersionProfileStore.Save(_gameRoot, _versionId, p);
         VersionProfileStore.ApplyIsolation(_gameRoot, _versionId, p);
         Status = "已保存版本设置";
+    }
+
+    /// <summary>
+    /// 锁定守卫：若当前版本已锁定，弹出警示并返回 true（调用方应中止改写操作）。
+    /// 锁定只阻止「改写版本文件」（安装加载器 / 增删 Mod），不阻止启动游戏。
+    /// </summary>
+    private bool GuardLocked(string action)
+    {
+        if (!VersionProfileStore.IsLocked(_gameRoot, _versionId)) return false;
+        var msg = $"版本「{_versionId}」已锁定，无法{action}。请先在「版本锁定」中关闭锁定。";
+        Status = msg;
+        MCLCS.Linux.App.ToastService.Instance.Show(new MCLCS.Linux.App.ToastOptions
+        {
+            Title = "版本已锁定",
+            Message = msg,
+            DurationMs = 5000,
+            Danger = true
+        });
+        return true;
     }
 
     // ---- ③ 安装加载器 ----
@@ -179,6 +216,7 @@ public class VersionSettingsViewModel : ObservableObject
     {
         var name = loader as string;
         if (string.IsNullOrWhiteSpace(name)) return;
+        if (GuardLocked($"安装 {name} 加载器")) return;
         Busy = true; Status = $"正在安装 {name}（基于 {BaseMcVersion}）…";
         try
         {
@@ -263,6 +301,7 @@ public class VersionSettingsViewModel : ObservableObject
     {
         var name = fileName as string;
         if (string.IsNullOrEmpty(name)) return;
+        if (GuardLocked("移除文件")) return;
         var dir = EffectiveDir;
         var target = ModTab switch
         {
@@ -313,6 +352,7 @@ public class VersionSettingsViewModel : ObservableObject
     private async Task AddModAsync(object? param)
     {
         if (param is not ModSearchHit hit) return;
+        if (GuardLocked("添加模组 / 资源包 / 光影")) return;
         Busy = true; Status = $"正在添加 {hit.Title}…";
         try
         {

@@ -44,7 +44,9 @@ public class GameHomeViewModel : ObservableObject
         get => _selectedVersion;
         set
         {
-            if (SetField(ref _selectedVersion, value)) OnPropertyChanged(nameof(CanLaunch));
+            if (!SetField(ref _selectedVersion, value)) return;
+            OnPropertyChanged(nameof(CanLaunch));
+            SyncAccountForVersion();
         }
     }
 
@@ -276,7 +278,22 @@ public class GameHomeViewModel : ObservableObject
     private void LoadAccounts()
     {
         Accounts = new ObservableCollection<AccountEntry>(AccountStore.Load(_gameRoot));
-        SelectedAccount = AccountStore.GetLastUsed(_gameRoot);
+        SyncAccountForVersion();
+    }
+
+    /// <summary>
+    /// 依据当前所选版本解析应使用的账号：优先该版本绑定的账号，否则回落全局「最后使用」。
+    /// 实现「每版本独立账户绑定」——切换版本时账户下拉自动跟随。
+    /// </summary>
+    private void SyncAccountForVersion()
+    {
+        var id = SelectedVersion?.Id;
+        var bound = !string.IsNullOrWhiteSpace(id)
+            ? VersionProfileStore.Load(_gameRoot, id).BoundAccountId
+            : null;
+        var resolved = AccountStore.GetForVersion(_gameRoot, bound);
+        // 确保 ComboBox SelectedItem 引用与 ItemsSource 中的实例一致
+        SelectedAccount = resolved is null ? null : Accounts.FirstOrDefault(a => a.Id == resolved.Id) ?? resolved;
         if (SelectedAccount is not null) Username = SelectedAccount.Username;
     }
 

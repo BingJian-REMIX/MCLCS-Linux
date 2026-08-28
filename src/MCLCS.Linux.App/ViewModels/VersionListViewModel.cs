@@ -161,7 +161,7 @@ public class VersionListViewModel : ObservableObject
                 GameDir = effectiveDir
             };
 
-            var account = AccountStore.GetLastUsed(_gameRoot);
+            var account = AccountStore.GetForVersion(_gameRoot, vp.BoundAccountId);
             if (account is { } a && !string.IsNullOrEmpty(a.Uuid))
             {
                 opts.Username = a.Username;

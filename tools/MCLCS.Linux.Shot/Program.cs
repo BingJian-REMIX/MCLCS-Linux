@@ -17,6 +17,7 @@ using MCLCS.Linux.App.Services;
 using MCLCS.Linux.App.ViewModels;
 using MCLCS.Linux.App.Views;
 using MCLCS.Linux.App.Views.Pages;
+using MCLCS.Core.Profiles;
 using MCLCS.Core.Skin;
 using MCLCS.Core.Theme;
 using MCLCS.Core.Toolbox;
@@ -330,6 +331,14 @@ internal static class Program
         if (sel is null) return;
 
         var vm = new VersionSettingsViewModel(sel.Id, sel.Type, GameConstants.DefaultGameRoot);
+        // 演示：注入账号以展示「账户绑定」选择器，并预选第一个 + 打开版本锁定
+        if (vm.Accounts.Count == 0)
+        {
+            vm.Accounts.Add(new AccountEntry { Id = "demo-steve", DisplayName = "Steve", AuthType = "offline" });
+            vm.Accounts.Add(new AccountEntry { Id = "demo-alex", DisplayName = "Alex（微软）", AuthType = "microsoft" });
+        }
+        vm.BoundAccount = vm.Accounts[0];
+        vm.Locked = true;
         var view = new VersionSettingsView { DataContext = vm };
         _ = DialogService.Instance.ShowAsync(new DialogOptions
         {
@@ -342,6 +351,10 @@ internal static class Program
         Dispatcher.UIThread.RunJobs();
         Thread.Sleep(300);
         Dispatcher.UIThread.RunJobs();
+        // 滚动到「账户绑定 / 版本锁定」区域以完整展示新增功能
+        if (view.Content is Avalonia.Controls.ScrollViewer sv) sv.ScrollToEnd();
+        Dispatcher.UIThread.RunJobs();
+        Thread.Sleep(300);
 
         var path = Path.Combine(outDir, $"version-settings{suffix}.png");
         Capture(mw, path);
