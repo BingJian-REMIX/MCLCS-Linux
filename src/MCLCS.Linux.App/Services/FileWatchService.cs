@@ -1,0 +1,70 @@
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using MCLCS.Core.Profiles;
+using MCLCS.Core.Toolbox;
+using MCLCS.Core.Utils;
+using MCLCS.Linux.App.Views;
+
+namespace MCLCS.Linux.App.Services;
+
+/// <summary>
+/// 文件变更自动检测服务（规格 2.3-16 / 用户需求：启动器启动或焦点回到启动器时自动检测）：
+/// 对默认游戏目录下的 mods / resourcepacks / shaderpacks 做两段式检测（先比元数据、变了再哈希），
+/// 发现新增文件则弹右下角 Toast（"查看详情"打开 <see cref="FileWatchWindow"/>）。
+/// 由 MainWindow 的 Opened / Activated 事件驱动；受「启用文件监控」开关控制。
+/// </summary>
+public sealed class FileWatchService
+{
+    public static readonly FileWatchService Instance = new();
+
+    private bool _scanning;
+    private DateTime _lastScan = DateTime.MinValue;
+    private static readonly TimeSpan Debounce = TimeSpan.FromSeconds(30);
+
+    /// <summary>后台扫描：去抖 + 开关门控 + 新文件 Toast。异常静默吞掉，不污染主流程。</summary>
+    public async Task RunScanAsync()
+    {
+        if (_scanning) return;
+        var now = DateTime.Now;
+        if (now - _lastScan < Debounce) return;   // 焦点频繁抖动时最多每 30s 扫一次
+
+        _scanning = true;
+        _lastScan = now;
+        try
+        {
+            var gameRoot = GameConstants.DefaultGameRoot;
+            if (!ProfileStore.Load(gameRoot).FileWatchEnabled) return;
+
+            var diff = await Task.Run(() => FileChangeDetector.DetectTwoStage(gameRoot));
+            var added = FileChangeDetector.NewFilesOnly(diff);
+            if (added.Count == 0) return;
+
+            var preview = string.Join("、", added.Take(3).Select(c => c.Path));
+            var more = added.Count > 3 ? $" 等共 {added.Count} 个" : "";
+            MCLCS.Linux.App.ToastService.Instance.Show(new ToastOptions
+            {
+                Title = "文件变更检测",
+                Message = $"检测到新增文件：{preview}{more}",
+                DurationMs = 8000,
+                ActionText = "查看详情",
+                Action = OpenDetails
+            });
+        }
+        catch
+        {
+            // 检测失败不打扰用户（目录权限 / IO 异常等）
+        }
+        finally
+        {
+            _scanning = false;
+        }
+    }
+
+    private static void OpenDetails()
+    {
+        var win = new FileWatchWindow();
+        if (App.MainWindow is { } owner) win.Show(owner);
+        else win.Show();
+    }
+}

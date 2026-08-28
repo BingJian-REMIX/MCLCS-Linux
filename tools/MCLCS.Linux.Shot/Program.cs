@@ -1,4 +1,5 @@
 using System;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Threading.Tasks;
 using Avalonia;
@@ -14,6 +15,7 @@ using MCLCS.Linux.App;
 using MCLCS.Linux.App.Controls;
 using MCLCS.Linux.App.Services;
 using MCLCS.Linux.App.ViewModels;
+using MCLCS.Linux.App.Views;
 using MCLCS.Linux.App.Views.Pages;
 using MCLCS.Core.Skin;
 using MCLCS.Core.Theme;
@@ -59,7 +61,6 @@ internal static class Program
         (MainTabKind.Toolbox, "saves", "tb-saves"),
         (MainTabKind.Toolbox, "skin", "tb-skin"),
         (MainTabKind.Toolbox, "network", "tb-network"),
-        (MainTabKind.Toolbox, "filewatch", "tb-filewatch"),
         (MainTabKind.Toolbox, "nbt", "tb-nbt"),
         (MainTabKind.Toolbox, "shortcut", "tb-shortcut"),
         (MainTabKind.Toolbox, "afk", "tb-afk"),
@@ -246,6 +247,48 @@ internal static class Program
             Console.Error.WriteLine($"[fail] ui-toast: {ex.GetType().Name}: {ex.Message}");
         }
 
+        // 文件变更检测详情窗口（自动检测 Toast「查看详情」打开的窗口）
+        try
+        {
+            var fwWin = new FileWatchWindow();
+            fwWin.Show();
+            Dispatcher.UIThread.RunJobs();
+
+            FileWatchViewModel? fwvm = null;
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            var sawBusy = false;
+            while (sw.ElapsedMilliseconds < 5000)
+            {
+                fwvm = fwWin.GetVisualDescendants().OfType<FileWatchView>().FirstOrDefault()?.DataContext as FileWatchViewModel;
+                if (fwvm is null) { Dispatcher.UIThread.RunJobs(); Thread.Sleep(50); continue; }
+                if (fwvm.IsBusy) sawBusy = true;
+                else if (sawBusy) break;   // 等 RefreshAsync 完成一轮「忙→闲」再注入，避免被覆盖
+                Dispatcher.UIThread.RunJobs();
+                Thread.Sleep(50);
+            }
+            fwvm ??= fwWin.GetVisualDescendants().OfType<FileWatchView>().FirstOrDefault()?.DataContext as FileWatchViewModel;
+            if (fwvm is not null)
+            {
+                fwvm.Changes = new ObservableCollection<FileChange>(new[]
+                {
+                    new FileChange(FileChangeKind.Modified, "mods/optifine_1.20.1.jar", "哈希变化 a1b2→c3d4"),
+                    new FileChange(FileChangeKind.Added, "resourcepacks/faithful-64x.zip"),
+                    new FileChange(FileChangeKind.Removed, "config/old-mod.toml"),
+                });
+                fwvm.Summary = "新增 1 个，删除 1 个，修改 1 个";
+                fwvm.Status = "下列变更尚未「标记为已知」，下次启动 / 回到启动器会再次提醒";
+            }
+            Dispatcher.UIThread.RunJobs();
+            var p3 = Path.Combine(outDir, "ui-filewatch.png");
+            RenderWindow(fwWin, p3);
+            Console.WriteLine($"[ok]   ui-filewatch   -> {p3}");
+        }
+        catch (Exception ex)
+        {
+            failures++;
+            Console.Error.WriteLine($"[fail] ui-filewatch: {ex.GetType().Name}: {ex.Message}");
+        }
+
         Console.WriteLine(failures == 0 ? "ALL OK" : $"{failures} FAILED");
         return failures == 0 ? 0 : 1;
     }
@@ -345,14 +388,6 @@ internal static class Program
     {
         switch (sid)
         {
-            case "filewatch":
-                if (mw.GetVisualDescendants().OfType<FileWatchView>().FirstOrDefault()?.DataContext is FileWatchViewModel fw)
-                {
-                    fw.Changes.Add(new FileChange(FileChangeKind.Modified, "mods/optifine_1.20.1.jar", "哈希变化 a1b2→c3d4"));
-                    fw.Changes.Add(new FileChange(FileChangeKind.Added, "resourcepacks/faithful-64x.zip"));
-                    fw.Changes.Add(new FileChange(FileChangeKind.Removed, "config/old-mod.toml"));
-                }
-                break;
             case "network":
                 if (mw.GetVisualDescendants().OfType<NetworkView>().FirstOrDefault()?.DataContext is NetworkViewModel nv)
                 {

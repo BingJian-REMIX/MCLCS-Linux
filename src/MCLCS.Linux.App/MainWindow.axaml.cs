@@ -45,6 +45,10 @@ public partial class MainWindow : Window
         Opened += (_, _) => App.ApplyAppearanceFromProfile();
         // 窗口打开后异步扫描 Java，让状态栏显示真实结果（此前为永久占位）
         Opened += (_, _) => _ = _vm.DetectJavaAsync();
+        // 启动后自动跑一次文件变更检测（建基线 / 提示新增文件）；同时绑定 Activated，
+        // 焦点每次回到启动器时也重新检测（规格 2.3-16 / 用户需求）
+        Opened += (_, _) => _ = FileWatchService.Instance.RunScanAsync();
+        Activated += (_, _) => _ = FileWatchService.Instance.RunScanAsync();
         // 初始页面路由（默认主页为游戏页，无侧栏）
         ShowPage();
     }

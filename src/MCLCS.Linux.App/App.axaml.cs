@@ -105,6 +105,9 @@ public class App : Application
             ? dt.MainWindow as MainWindow
             : null;
 
+    /// <summary>当前主窗口（供 Toast 等操作拿 owner 开窗；未就绪时为 null）。</summary>
+    public static MainWindow? MainWindow => CurrentMainWindow;
+
     public override void OnFrameworkInitializationCompleted()
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)

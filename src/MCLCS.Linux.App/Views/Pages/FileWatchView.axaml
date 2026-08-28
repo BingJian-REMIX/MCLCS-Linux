@@ -8,16 +8,24 @@
     <conv:FileChangeKindToTextConverter x:Key="FileChangeKindToText"/>
     <conv:FileChangeKindToBrushConverter x:Key="FileChangeKindToBrush"/>
     <conv:CountToVisibleConverter x:Key="CountToVisible"/>
+    <conv:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
   </UserControl.Resources>
   <ScrollViewer Margin="18">
     <StackPanel Spacing="16" MaxWidth="900" HorizontalAlignment="Left">
 
-      <Button Classes="modal-btn accent" Content="扫描变更" Command="{Binding ScanCommand}"
-              HorizontalAlignment="Left"/>
+      <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+        <Button Classes="modal-btn primary" Content="重新扫描" Command="{Binding RefreshCommand}"
+                IsEnabled="{Binding !IsBusy}" HorizontalAlignment="Left"/>
+        <Button Classes="modal-btn ghost" Content="标记为已知" Command="{Binding ResetBaselineCommand}"
+                IsEnabled="{Binding !IsBusy}" HorizontalAlignment="Left"/>
+        <ToggleSwitch IsChecked="{Binding FileWatchEnabled}" Content="启用文件监控"
+                      VerticalAlignment="Center" Margin="8,0,0,0"/>
+      </StackPanel>
 
       <StackPanel Spacing="8">
-        <TextBlock Text="变更列表（mods / resourcepacks / shaderpacks）" FontWeight="Bold" FontSize="14"/>
-        <TextBlock Text="（首次扫描会建立基准快照，之后对比显示差异）" FontSize="11" Foreground="{DynamicResource SecondaryForeground}"/>
+        <TextBlock Text="未确认的变更（mods / resourcepacks / shaderpacks）" FontWeight="Bold" FontSize="14"/>
+        <TextBlock Text="{Binding Summary}" FontSize="11" Foreground="{DynamicResource SecondaryForeground}"/>
+
         <ItemsControl ItemsSource="{Binding Changes}" IsVisible="{Binding Changes.Count, Converter={StaticResource CountToVisible}}">
           <ItemsControl.ItemTemplate>
             <DataTemplate>
@@ -37,6 +45,9 @@
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
+
+        <TextBlock Text="没有未确认的变更" IsVisible="{Binding Changes.Count, Converter={StaticResource InvBoolToVis}}"
+                   Foreground="{DynamicResource SecondaryForeground}" FontSize="12"/>
       </StackPanel>
 
       <TextBlock Classes="status" Text="{Binding Status}"/>
