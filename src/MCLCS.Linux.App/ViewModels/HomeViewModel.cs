@@ -215,7 +215,7 @@ public class HomeViewModel : ObservableObject
         var vp = VersionProfileStore.Load(_gameRoot, id);
         var effectiveDir = VersionProfileStore.EffectiveGameDir(_gameRoot, id, vp);
 
-        var java = await ResolveJavaAsync(vp.JavaPath ?? profile.JavaPath);
+        var java = await ResolveJavaAsync(vp.JavaPath ?? profile.JavaPath, _gameRoot, id);
         if (java is null)
         {
             Status = "未检测到 Java，请在「设置 → 启动」或该版本设置中配置 Java 路径";
@@ -285,16 +285,10 @@ public class HomeViewModel : ObservableObject
         }
     }
 
-    private static async Task<JavaInfo?> ResolveJavaAsync(string? javaPath)
+    private static async Task<JavaInfo?> ResolveJavaAsync(string? javaPath, string gameRoot, string versionId)
     {
         var list = await JavaDetector.DetectAsync();
         if (list.Count == 0) return null;
-        if (!string.IsNullOrWhiteSpace(javaPath))
-        {
-            var match = list.FirstOrDefault(j =>
-                string.Equals(j.JavaExe, javaPath, StringComparison.OrdinalIgnoreCase));
-            if (match is not null) return match;
-        }
-        return list.OrderByDescending(j => j.MajorVersion).FirstOrDefault();
+        return JavaDetector.SelectForVersion(list, gameRoot, versionId, javaPath);
     }
 }

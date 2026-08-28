@@ -117,6 +117,12 @@ public static class ArgumentProcessor
         if (!jvm.Any(a => a.Contains("org.lwjgl.librarypath")))
             jvm.Add($"-Dorg.lwjgl.librarypath={nativesDir}");
 
+        // 字符编码：强制 UTF-8，避免中文模组名/路径在 JVM 参数里乱码（很多启动器漏掉此项）
+        if (!jvm.Any(a => a.StartsWith("-Dfile.encoding=", StringComparison.OrdinalIgnoreCase)))
+            jvm.Add("-Dfile.encoding=UTF-8");
+        if (!jvm.Any(a => a.StartsWith("-Dsun.jnu.encoding=", StringComparison.OrdinalIgnoreCase)))
+            jvm.Add("-Dsun.jnu.encoding=UTF-8");
+
         // 内存：确保 -Xmx 存在并采用用户设置
         var hasXmx = false;
         var hasXms = false;

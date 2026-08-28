@@ -286,7 +286,7 @@ public class GameHomeViewModel : ObservableObject
         if (string.IsNullOrWhiteSpace(id)) { Status = "请先选择一个版本"; return; }
 
         var profile = ProfileStore.Load(_gameRoot);
-        var java = await ResolveJavaAsync(profile.JavaPath);
+        var java = await ResolveJavaAsync(profile.JavaPath, profile.GameRoot, id);
         if (java is null)
         {
             Status = "未检测到 Java，请在「设置 → 启动」中配置 Java 路径";
@@ -348,18 +348,12 @@ public class GameHomeViewModel : ObservableObject
         }
     }
 
-    /// <summary>从设置中保存的 Java 路径解析 JavaInfo；未配置则取检测到的版本最高者（对齐 WPF 从 profile.JavaPath 解析）。</summary>
-    private static async Task<JavaInfo?> ResolveJavaAsync(string? javaPath)
+    /// <summary>从设置路径解析 JavaInfo；未配置则按游戏版本自动挑选合适 Java（避免高版本 Java 启动低版本 MC 失败）。</summary>
+    private static async Task<JavaInfo?> ResolveJavaAsync(string? javaPath, string gameRoot, string versionId)
     {
         var list = await JavaDetector.DetectAsync();
         if (list.Count == 0) return null;
-        if (!string.IsNullOrWhiteSpace(javaPath))
-        {
-            var match = list.FirstOrDefault(j =>
-                string.Equals(j.JavaExe, javaPath, StringComparison.OrdinalIgnoreCase));
-            if (match is not null) return match;
-        }
-        return list.OrderByDescending(j => j.MajorVersion).FirstOrDefault();
+        return JavaDetector.SelectForVersion(list, gameRoot, versionId, javaPath);
     }
 }
 
