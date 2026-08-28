@@ -243,13 +243,6 @@
         <TextBlock Text="{Binding JavaVersionText}"/>
         <TextBlock Text="{Binding InstalledCountText}"/>
         <TextBlock Text="{Binding RunningInstancesText}"/>
-        <StackPanel Orientation="Horizontal" Spacing="6">
-          <ProgressBar Width="120" Height="12" Minimum="0" Maximum="100"
-                        Value="{Binding DownloadProgress}"
-                        Foreground="{DynamicResource AccentBrush}"
-                        Background="{DynamicResource ProgressBackground}"/>
-          <TextBlock Text="{Binding DownloadText}"/>
-        </StackPanel>
       </StackPanel>
 
       <!-- 音乐播放器迷你条（规格 2.3：状态栏迷你条可展开为完整列表） -->

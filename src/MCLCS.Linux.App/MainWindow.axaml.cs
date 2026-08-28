@@ -43,6 +43,8 @@ public partial class MainWindow : Window
         Opened += (_, _) => FitToScreen();
         // 窗口就绪后应用外观偏好（主题色/字体缩放/背景图）——启动时 MainWindow 尚未创建，此处补全
         Opened += (_, _) => App.ApplyAppearanceFromProfile();
+        // 窗口打开后异步扫描 Java，让状态栏显示真实结果（此前为永久占位）
+        Opened += (_, _) => _ = _vm.DetectJavaAsync();
         // 初始页面路由（默认主页为游戏页，无侧栏）
         ShowPage();
     }
