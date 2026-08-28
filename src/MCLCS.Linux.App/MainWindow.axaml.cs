@@ -219,7 +219,6 @@ public partial class MainWindow : Window
             (MainTabKind.Toolbox, "saves") => new SavesView(),
             (MainTabKind.Toolbox, "skin") => new SkinEditorView(),
             (MainTabKind.Toolbox, "network") => new NetworkView(),
-            (MainTabKind.Toolbox, "filewatch") => new FileWatchView(),
             (MainTabKind.Toolbox, "nbt") => new NbtView(),
             (MainTabKind.Toolbox, "shortcut") => new ShortcutView(),
             (MainTabKind.Toolbox, "afk") => new AfkView(),

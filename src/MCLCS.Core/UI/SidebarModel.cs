@@ -155,8 +155,7 @@ public static class Sidebar
         new("crash",      "tool.crash",      "bug",       1, "tool.group.diag"),
         new("perf",       "tool.perf",       "perf",      2, "tool.group.diag"),
         new("network",    "tool.network",    "net",       3, "tool.group.diag"),
-        new("filewatch",  "tool.filewatch",  "fcd",       4, "tool.group.diag"),
-        new("datapack",   "tool.datapack",   "dp",        5, "tool.group.diag"),
+        new("datapack",   "tool.datapack",   "dp",        4, "tool.group.diag"),
 
         // 资源与内容
         new("saves",      "tool.saves",      "save",      6, "tool.group.resource"),

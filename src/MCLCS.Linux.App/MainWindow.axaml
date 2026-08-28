@@ -27,6 +27,7 @@
     <conv:BoolToVisibleConverter x:Key="BoolToVis"/>
     <conv:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
     <conv:PlayPauseGlyphConverter x:Key="PlayPauseGlyph"/>
+    <conv:ProgressToAngleConverter x:Key="ProgressToAngle"/>
   </Window.Resources>
 
   <Grid RowDefinitions="52,* 30">
@@ -58,12 +59,18 @@
                  Background="#30FFFFFF" Foreground="White" CaretBrush="White"
                  BorderBrush="#40FFFFFF" BorderThickness="1" Watermark="{Binding SearchWatermark}"/>
         <Button x:Name="DownloadBtn" Grid.Column="1" Width="34" Height="28" Margin="6,0,0,0" Cursor="Hand"
-                Background="#30FFFFFF" BorderThickness="0" ToolTip.Tip="下载队列" Click="DownloadBtn_Click">
-          <Image Width="14" Height="14">
-            <Image.Source>
-              <Binding Source="download" Converter="{StaticResource TokenToBitmap}"/>
-            </Image.Source>
-          </Image>
+                Background="#30FFFFFF" BorderThickness="0" Padding="0" ToolTip.Tip="下载队列" Click="DownloadBtn_Click">
+          <Grid Width="24" Height="24">
+            <Ellipse Width="20" Height="20" Stroke="#30FFFFFF" StrokeThickness="2.5"/>
+            <Arc Width="20" Height="20" StartAngle="-90"
+                 SweepAngle="{Binding DownloadProgress, Converter={StaticResource ProgressToAngle}}"
+                 Stroke="#FFFFFF" StrokeThickness="2.5" StrokeLineCap="Round"/>
+            <Image Width="12" Height="12" HorizontalAlignment="Center" VerticalAlignment="Center">
+              <Image.Source>
+                <Binding Source="download" Converter="{StaticResource TokenToBitmap}"/>
+              </Image.Source>
+            </Image>
+          </Grid>
         </Button>
       </Grid>
 

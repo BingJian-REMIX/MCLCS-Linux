@@ -32,7 +32,6 @@ public static class Localization
         ["crash"] = "tool.crash.desc",
         ["perf"] = "tool.perf.desc",
         ["network"] = "tool.network.desc",
-        ["filewatch"] = "tool.filewatch.desc",
         ["datapack"] = "tool.datapack.desc",
         ["saves"] = "tool.saves.desc",
         ["backup"] = "tool.backup.desc",

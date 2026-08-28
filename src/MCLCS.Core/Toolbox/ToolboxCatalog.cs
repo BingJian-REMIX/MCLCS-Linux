@@ -40,13 +40,13 @@ public sealed class ToolboxPanel
 }
 
 /// <summary>
-/// 工具箱面板注册表（v2.0：15 个面板）。
+/// 工具箱面板注册表（v2.0：14 个面板）。
 /// 界面层遍历此表生成入口卡片，避免面板增减时改动多处。
 /// </summary>
 public static class ToolboxCatalog
 {
     /// <summary>规格要求的面板总数。</summary>
-    public const int RequiredPanelCount = 15;
+    public const int RequiredPanelCount = 14;
 
     public static IReadOnlyList<ToolboxPanel> Panels { get; } = new List<ToolboxPanel>
     {
@@ -55,7 +55,6 @@ public static class ToolboxCatalog
         new("crash",      "崩溃分析",     "解析崩溃报告并给出修复建议",             ToolboxGroup.Diagnostics, "bug",        1),
         new("network",    "网络诊断",     "测试各下载源连通性与延迟",               ToolboxGroup.Diagnostics, "activity",   2),
         new("perf",       "性能监控",     "监控 CPU / 内存 / FPS，可投送到 HUD",    ToolboxGroup.Diagnostics, "gauge",      3),
-        new("filewatch",  "文件变更检测", "对比目录快照，找出被改动的文件",         ToolboxGroup.Diagnostics, "search",     4, since2: true),
 
         // 资源与内容
         new("saves",      "存档管理",     "存档兼容性检测、降级与备份回滚",         ToolboxGroup.Content,     "database",   5),
